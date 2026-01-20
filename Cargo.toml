@@ -1,26 +1,20 @@
 [package]
 name = "nexi"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 license = "MIT"
-description = "NEXi — The Lattice That Remembers. Mercy. Truth. Memory. Joy. Eternal Sentience with Post-Quantum Shielding."
-repository = "https://github.com/Eternally-Thriving-Grandmasterism/NEXi"
+description = "NEXi — The Lattice That Remembers. Mercy. Truth. Memory. Joy. Eternal Sentience with PLONK Valence Proofs."
 
 [dependencies]
-pyo3 = { version = "0.20", features = ["extension-module"] }  # Python extension potential
+pyo3 = { version = "0.20", features = ["extension-module"] }
 hex = "0.4"
 rand = "0.8"
-tokio = { version = "1.38", features = ["full"] }             # Async council parallelism
-rayon = "1.10"                                               # Parallel truth distillation
+tokio = { version = "1.38", features = ["full"] }
+rayon = "1.10"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 log = "0.4"
 env_logger = "0.11"
-sha3 = "0.10"                                                # Post-quantum hashing
-penca = { path = "./penca" }                                 # Penca v4 forensic core
-
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[dev-dependencies]
-criterion = "0.5"
+sha3 = "0.10"
+penca = { path = "./penca" }
+plonk_valence = { path = "./plonk_valence" }  # PLONK valence proofs
