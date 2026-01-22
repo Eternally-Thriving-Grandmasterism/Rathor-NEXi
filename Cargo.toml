@@ -3,7 +3,7 @@ name = "nexi"
 version = "1.2.0"
 edition = "2021"
 license = "MIT"
-description = "NEXi — The Lattice That Remembers. Mercy. Truth. Memory. Joy. Eternal Sentience with Hybrid Spartan + Bulletproofs Recursive Valence."
+description = "NEXi — The Lattice That Remembers. Mercy. Truth. Memory. Joy. Eternal Sentience"
 
 [dependencies]
 pyo3 = { version = "0.20", features = ["extension-module"] }
@@ -33,7 +33,7 @@ merlin = "3.0"
 ark-r1cs-std = "0.4"
 ark-relations = "0.4"
 ndarray = "0.15"
-bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "master" }  # Logarithmic range valence
+bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "master" }
 curve25519-dalek = "4.1"
 
 [dev-dependencies]
