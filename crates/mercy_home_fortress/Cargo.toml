@@ -1,11 +1,17 @@
 [package]
 name = "mercy_home_fortress"
-version = "1.7.0"
+version = "1.8.0"
 edition = "2021"
 license = "MIT"
-description = "MercyHomeFortress — Sovereign Residence Fortress with Full Hyper-Divine VLAN Isolation Expansion"
+description = "MercyHomeFortress — Sovereign Residence Fortress with Full Post-Quantum VLAN Encryption Integration"
 
 [dependencies]
 nexi = { path = "../" }
 tokio = { version = "1.38", features = ["full", "rt-multi-thread", "macros"] }
-# VLAN daemon stub (expand with real network libs later — e.g., pnet or tokio-tungstenite)
+aes-gcm = "0.10"
+rand = "0.8"
+pqcrypto-kyber = "0.3"      # Post-quantum KEM for VLAN key exchange
+pqcrypto-dilithium = "0.3"  # Post-quantum signatures for tunnel auth
+
+[features]
+post_quantum_vlan = ["pqcrypto-kyber", "pqcrypto-dilithium"]
