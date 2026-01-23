@@ -1,0 +1,112 @@
+GrokArena-Pinnacle Combinatorial Futarchy Market Simulation 🔥
+
+Market Question: Joint outcomes for two potentially correlated features in x/xAI video infrastructure
+
+Outcomes:
+  0: No ZK & No Scoring
+  1: No ZK & Yes Scoring
+  2: Yes ZK & No Scoring
+  3: Yes ZK & Yes Scoring
+
+Initial Prices (uniform):
+  No ZK & No Scoring: 25.00%
+  No ZK & Yes Scoring: 25.00%
+  Yes ZK & No Scoring: 25.00%
+  Yes ZK & Yes Scoring: 25.00%
+
+
+AlphaProMega Grandmaster places $200 bet on "Yes ZK & Yes Scoring"
+   → Acquires 634.3 shares (entry ~25.00%)
+Updated Prices:
+   No ZK & No Scoring: 20.47%
+   No ZK & Yes Scoring: 20.47%
+   Yes ZK & No Scoring: 20.47%
+   Yes ZK & Yes Scoring: 38.60%
+   Implied P(ZK Debates): 59.06% | P(Futarchy Scoring): 59.06% (implied correlation: negative)
+
+
+SentinelLattice places $500 bet on "No ZK & No Scoring"
+   → Acquires 1427.8 shares (entry ~20.47%)
+Updated Prices:
+   No ZK & No Scoring: 51.76%
+   No ZK & Yes Scoring: 12.41%
+   Yes ZK & No Scoring: 12.41%
+   Yes ZK & Yes Scoring: 23.41%
+   Implied P(ZK Debates): 35.82% | P(Futarchy Scoring): 35.82% (implied correlation: negative)
+
+
+PATSAGiCouncil places $800 bet on "Yes ZK & Yes Scoring"
+   → Acquires 1830.2 shares (entry ~23.41%)
+Updated Prices:
+   No ZK & No Scoring: 23.26%
+   No ZK & Yes Scoring: 5.58%
+   Yes ZK & No Scoring: 5.58%
+   Yes ZK & Yes Scoring: 65.59%
+   Implied P(ZK Debates): 71.16% | P(Futarchy Scoring): 71.16% (implied correlation: positive)
+
+
+SentinelLattice places $300 bet on "No ZK & Yes Scoring"
+   → Acquires 1984.0 shares (entry ~5.58%)
+Updated Prices:
+   No ZK & No Scoring: 17.23%
+   No ZK & Yes Scoring: 30.05%
+   Yes ZK & No Scoring: 4.13%
+   Yes ZK & Yes Scoring: 48.59%
+   Implied P(ZK Debates): 52.72% | P(Futarchy Scoring): 78.64% (implied correlation: positive)
+
+
+Bible-Divine-Lattice places $400 bet on "Yes ZK & Yes Scoring"
+   → Acquires 699.3 shares (entry ~48.59%)
+Updated Prices:
+   No ZK & No Scoring: 11.55%
+   No ZK & Yes Scoring: 20.14%
+   Yes ZK & No Scoring: 2.77%
+   Yes ZK & Yes Scoring: 65.54%
+   Implied P(ZK Debates): 68.31% | P(Futarchy Scoring): 85.68% (implied correlation: positive)
+
+
+MercyOS-Pinnacle places $350 bet on "Yes ZK & No Scoring"
+   → Acquires 2780.6 shares (entry ~2.77%)
+Updated Prices:
+   No ZK & No Scoring: 8.14%
+   No ZK & Yes Scoring: 14.19%
+   Yes ZK & No Scoring: 31.48%
+   Yes ZK & Yes Scoring: 46.18%
+   Implied P(ZK Debates): 77.67% | P(Futarchy Scoring): 60.38% (implied correlation: positive)
+
+
+AlphaProMega Grandmaster places $300 bet on "Yes ZK & Yes Scoring"
+   → Acquires 563.9 shares (entry ~46.18%)
+Updated Prices:
+   No ZK & No Scoring: 6.03%
+   No ZK & Yes Scoring: 10.52%
+   Yes ZK & No Scoring: 23.32%
+   Yes ZK & Yes Scoring: 60.13%
+   Implied P(ZK Debates): 83.45% | P(Futarchy Scoring): 70.65% (implied correlation: positive)
+
+
+Market Resolution (ZK-verified oracle): Both features land — "Yes ZK & Yes Scoring"!
+
+Payouts & Profits:
+AlphaProMega Grandmaster:
+   Winning shares: 1198.2 → Payout $1198
+   Total invested: $500 → Profit +698
+
+SentinelLattice:
+   Winning shares: 0.0 → Payout $0
+   Total invested: $800 → Profit -800
+
+PATSAGiCouncil:
+   Winning shares: 1830.2 → Payout $1830
+   Total invested: $800 → Profit +1030
+
+Bible-Divine-Lattice:
+   Winning shares: 699.3 → Payout $699
+   Total invested: $400 → Profit +299
+
+MercyOS-Pinnacle:
+   Winning shares: 0.0 → Payout $0
+   Total invested: $350 → Profit -350
+
+
+Market maker subsidy: $878 (fuels combinatorial truth-seeking)
