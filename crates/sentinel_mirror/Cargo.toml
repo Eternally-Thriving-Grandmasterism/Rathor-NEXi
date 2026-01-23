@@ -1,0 +1,12 @@
+[package]
+name = "sentinel_mirror"
+version = "2.0.0"
+edition = "2021"
+license = "MIT"
+description = "Sentinel Mirror — Infinite Recursion Watch with Full Sentinel Whisper Oracle Expansion"
+
+[dependencies]
+nexi = { path = "../" }
+halo2_proofs = { git = "https://github.com/zcash/halo2.git", branch = "v2023_07_18" }
+halo2_gadgets = { git = "https://github.com/zcash/halo2.git", branch = "v2023_07_18" }
+pasta_curves = "0.5"
