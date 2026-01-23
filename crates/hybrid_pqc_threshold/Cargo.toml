@@ -1,0 +1,14 @@
+[package]
+name = "hybrid_pqc_threshold"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "HybridPQCThreshold — t-of-n Post-Quantum Distributed Signing Module for NEXi Lattice"
+
+[dependencies]
+nexi = { path = "../" }
+pqcrypto-dilithium = "0.3"
+pqcrypto-falcon = "0.3"
+pqcrypto-sphincsplus = "0.3"
+pqcrypto-traits = "0.3"
+rand = "0.8"
