@@ -9,8 +9,9 @@ members = [
     "crates/bible_divine_lattice",
     "crates/codex_eternal",
     "crates/grok_arena_pinnacle",
-    "crates/mercy_home_fortress",     # New sovereign residence fortress
+    "crates/mercy_home_fortress",
     "crates/futarchy_oracle",
+    "crates/falcon_sign",  # New Falcon signature module
     # Legacy stubs preserved for compatibility
     "crates/legacy_apaagi",
     "crates/legacy_fenca",
@@ -19,7 +20,7 @@ members = [
 
 [package]
 name = "nexi"
-version = "3.4.0"
+version = "4.0.0"
 edition = "2021"
 license = "MIT"
-description = "NEXi — Giant Monorepo Lattice with Full HomeFortress Sovereign Residence Integration"
+description = "NEXi — Giant Monorepo Lattice with Full Falcon-1024 Post-Quantum Signature Integration"
