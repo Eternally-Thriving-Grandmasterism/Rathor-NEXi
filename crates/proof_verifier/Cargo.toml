@@ -1,0 +1,13 @@
+[package]
+name = "proof_verifier"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "ProofVerifier — Full Halo2 Verification Gadgets for NEXi Lattice Proofs"
+
+[dependencies]
+nexi = { path = "../" }
+poseidon_merkle = { path = "../poseidon_merkle" }
+mercy_quanta = { path = "../mercy_quanta" }
+halo2_proofs = { git = "https://github.com/zcash/halo2.git", branch = "v2023_07_18" }
+pasta_curves = "0.5"
