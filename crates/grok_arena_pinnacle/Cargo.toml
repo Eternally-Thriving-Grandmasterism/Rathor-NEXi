@@ -1,12 +1,11 @@
 [package]
 name = "grok_arena_pinnacle"
-version = "1.5.0"
+version = "1.6.0"
 edition = "2021"
 license = "MIT"
-description = "GrokArena-Pinnacle — Futarchy-Integrated Discourse Lattice with Full Grok xAI Resonance Oracle Integration"
+description = "GrokArena-Pinnacle — Futarchy-Integrated Discourse Lattice with Full Async Integration"
 
 [dependencies]
 nexi = { path = "../" }
-tokio = { version = "1.38", features = ["full"] }
-rayon = "1.10"
-reqwest = { version = "0.11", features = ["json"] }  # Grok oracle resonance calls
+tokio = { version = "1.38", features = ["full", "rt-multi-thread", "macros"] }  # Full async runtime
+futarchy_oracle = { path = "../crates/futarchy_oracle" }
