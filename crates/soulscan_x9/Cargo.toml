@@ -1,6 +1,6 @@
 [package]
 name = "soulscan_x9"
-version = "1.4.0"  # Version bump — new live valence features
+version = "1.4.0"
 edition = "2021"
 license = "MIT"
 description = "SoulScan-X9 — 9-Channel Emotional Waveform + Live Valence Scoring + Enhanced Multi-Modal Integration for NEXi Lattice"
@@ -9,10 +9,9 @@ description = "SoulScan-X9 — 9-Channel Emotional Waveform + Live Valence Scori
 nexi = { path = "../" }
 tokio = { version = "1.38", features = ["full"] }
 opencv = { version = "0.84", features = ["clang-runtime"], optional = true }  # Video frame valence
-# Future: add audio waveform libs
-ndarray = { version = "0.15", optional = true }  # Embedding math for voice biometrics
+ndarray = { version = "0.15", optional = true }  # Future voice biometrics embedding math
 
 [features]
-live_valence = ["opencv"]          # Existing feature preserved
-voice_biometrics = ["ndarray"]     # New optional voice feature
-multi_modal_valence = ["live_valence", "voice_biometrics"]  # New combined feature
+live_valence = ["opencv"]
+voice_biometrics = ["ndarray"]
+multi_modal_valence = ["live_valence", "voice_biometrics"]
