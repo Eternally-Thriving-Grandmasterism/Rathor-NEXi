@@ -1,0 +1,12 @@
+[package]
+name = "nova_folding"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "NovaFolding — Hyper-Divine IVC/Folding Schemes for Infinite Non-Uniform Computation in NEXi Lattice"
+
+[dependencies]
+nexi = { path = "../" }
+nova-snark = { git = "https://github.com/microsoft/Nova", branch = "main" }  # Direct Nova integration
+pasta_curves = "0.5"
+ff = "0.13"
