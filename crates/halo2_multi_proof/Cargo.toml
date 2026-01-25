@@ -1,0 +1,12 @@
+[package]
+name = "halo2_multi_proof"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "Halo2MultiProof — Infinite Independent Proof Composition Gadgets for NEXi Lattice"
+
+[dependencies]
+nexi = { path = "../" }
+halo2_proofs = { git = "https://github.com/zcash/halo2.git", branch = "v2023_07_18" }
+halo2_gadgets = { git = "https://github.com/zcash/halo2.git", branch = "v2023_07_18" }
+pasta_curves = "0.5"
