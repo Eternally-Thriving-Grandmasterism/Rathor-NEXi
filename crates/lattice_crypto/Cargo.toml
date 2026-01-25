@@ -1,0 +1,10 @@
+[package]
+name = "lattice_crypto"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "LatticeCrypto — Hyper-Divine Lattice-Based Post-Quantum Cryptography for NEXi Lattice"
+
+[dependencies]
+nexi = { path = "../" }
+# Future: kyber-rs, dilithium-rs, falcon-rs crates
