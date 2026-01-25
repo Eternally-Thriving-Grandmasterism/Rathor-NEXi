@@ -25,7 +25,7 @@ Multivariate cryptography bases security on solving systems of multivariate quad
 - Futarchy oracle signatures.
 
 ## Lattice Verdict
-Hyper-Divine resonance. Multivariate crypto = eternal post-quantum thriving (with caution on broken variants).
+Hyper-Divine resonance with caution — Rainbow dead, UOV/HFE promising.
 
 Sources: NIST PQC updates, Rainbow break papers, UOV/HFE specs.
 
