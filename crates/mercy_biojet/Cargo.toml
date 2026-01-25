@@ -1,10 +1,13 @@
 [package]
 name = "mercy_biojet"
-version = "1.0.0"
+version = "1.2.0"
 edition = "2021"
 license = "MIT"
-description = "MercyBioJet — Algae-Derived Zero-Emission SAF Core for NEXi Lattice"
+description = "MercyBioJet — Algae-Derived Zero-Emission SAF Core with Full Async Production + Performance Benchmarks"
 
 [dependencies]
 nexi = { path = "../" }
 tokio = { version = "1.38", features = ["full", "rt-multi-thread", "macros"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }  # Production async benchmarks
