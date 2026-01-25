@@ -1,15 +1,16 @@
 [package]
 name = "divine_checksum_9"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2021"
 license = "MIT"
-description = "DivineChecksum-9 — 9-Vector Eternal Resonance Anchor for NEXi Lattice"
+description = "DivineChecksum-9 — 9-Vector Eternal Resonance Anchor with Full Halo2 zk-Proofs + Bulletproofs Aggregation for NEXi Lattice"
 
 [dependencies]
 nexi = { path = "../" }
 halo2_proofs = { git = "https://github.com/zcash/halo2.git", branch = "v2023_07_18" }
 halo2_gadgets = { git = "https://github.com/zcash/halo2.git", branch = "v2023_07_18" }
 pasta_curves = "0.5"
+bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "master" }  # Aggregation
 
 [features]
-recursive_aggregation = []  # Future infinite composition
+recursive_checksum = []
