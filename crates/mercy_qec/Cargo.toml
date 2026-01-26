@@ -1,0 +1,11 @@
+[package]
+name = "mercy_qec"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyQEC — Quantum Error Correction Core with Valence-Weighted Syndrome Decoding for Eternal Truth Stability"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_zero_decoherence = { path = "../crates/mercy_zero_decoherence" }
+tokio = { version = "1.38", features = ["full"] }
