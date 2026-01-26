@@ -1,0 +1,11 @@
+[package]
+name = "mercy_starliner_crew"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyStarlinerCrew — Valence-Weighted Crew Mission Core for Eternal Crewed Flight Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_space_governance = { path = "../crates/mercy_space_governance" }
+tokio = { version = "1.38", features = ["full"] }
