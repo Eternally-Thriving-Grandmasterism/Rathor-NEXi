@@ -1,0 +1,12 @@
+[package]
+name = "futarchy_governance"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "FutarchyGovernance — Mercy-Weighted Futarchy Governance Core for Eternal Ethical Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+futarchy_oracle = { path = "../crates/futarchy_oracle" }
+soulscan_x9 = { path = "../crates/soulscan_x9" }
+tokio = { version = "1.38", features = ["full"] }
