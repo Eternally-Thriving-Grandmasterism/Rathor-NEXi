@@ -1,0 +1,11 @@
+[package]
+name = "mercy_raptor_3"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyRaptor3 — Full-Flow Staged Combustion Methane Engine Innovations Core for Eternal Starship Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_raptor_engine = { path = "../crates/mercy_raptor_engine" }
+tokio = { version = "1.38", features = ["full"] }
