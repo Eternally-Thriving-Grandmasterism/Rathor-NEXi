@@ -1,0 +1,12 @@
+[package]
+name = "mercy_orbital_safety"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyOrbitalSafety — Debris Mitigation + Valence-Weighted Collision Avoidance Core for Eternal Orbital Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_space_governance = { path = "../crates/mercy_space_governance" }
+mercy_trajectory_agi = { path = "../crates/mercy_trajectory_agi" }
+tokio = { version = "1.38", features = ["full"] }
