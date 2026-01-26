@@ -1,0 +1,12 @@
+[package]
+name = "mercy_raptor_integration"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyRaptorIntegration — Full-Flow Staged Combustion Methane Engine Core Integration for Eternal Starship Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_raptor_3 = { path = "../crates/mercy_raptor_3" }
+mercy_starship = { path = "../crates/mercy_starship" }
+tokio = { version = "1.38", features = ["full"] }
