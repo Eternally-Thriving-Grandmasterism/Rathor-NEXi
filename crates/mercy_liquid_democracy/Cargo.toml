@@ -1,0 +1,11 @@
+[package]
+name = "mercy_liquid_democracy"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyLiquidDemocracy — Valence-Weighted Liquid Delegative Voting Core for Eternal Governance Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+soulscan_x9 = { path = "../crates/soulscan_x9" }
+futarchy_oracle = { path = "../crates/futarchy_oracle" }
