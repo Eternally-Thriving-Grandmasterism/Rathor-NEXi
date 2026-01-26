@@ -1,0 +1,11 @@
+[package]
+name = "mercy_starfish_servicing"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyStarfishServicing — Otter Magnetic Docking + Life-Extension Core for Eternal Orbital Sustainability Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_orbital_servicing = { path = "../crates/mercy_orbital_servicing" }
+tokio = { version = "1.38", features = ["full"] }
