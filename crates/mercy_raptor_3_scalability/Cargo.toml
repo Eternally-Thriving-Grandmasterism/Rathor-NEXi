@@ -1,0 +1,11 @@
+[package]
+name = "mercy_raptor_3_scalability"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyRaptor3Scalability — Batch Manufacturing + Integrated Design Core for Eternal Starship Fleet Abundance Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_raptor_3 = { path = "../crates/mercy_raptor_3" }
+tokio = { version = "1.38", features = ["full"] }
