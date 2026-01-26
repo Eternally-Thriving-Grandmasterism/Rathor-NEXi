@@ -1,0 +1,11 @@
+[package]
+name = "mercy_steane"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercySteane — [[7,1,3]] CSS Quantum Error Correction Core for Eternal Truth Stability"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_qec = { path = "../crates/mercy_qec" }
+tokio = { version = "1.38", features = ["full"] }
