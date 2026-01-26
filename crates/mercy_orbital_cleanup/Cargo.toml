@@ -1,0 +1,11 @@
+[package]
+name = "mercy_orbital_cleanup"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyOrbitalCleanup — Active Debris Removal Core for Eternal Orbital Sustainability Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_orbital_safety = { path = "../crates/mercy_orbital_safety" }
+tokio = { version = "1.38", features = ["full"] }
