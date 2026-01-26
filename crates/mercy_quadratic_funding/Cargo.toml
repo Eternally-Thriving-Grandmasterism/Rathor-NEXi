@@ -1,0 +1,11 @@
+[package]
+name = "mercy_quadratic_funding"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyQuadraticFunding — Valence-Weighted Quadratic Funding Core for Eternal Public Goods Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+soulscan_x9 = { path = "../crates/soulscan_x9" }
+futarchy_oracle = { path = "../crates/futarchy_oracle" }
