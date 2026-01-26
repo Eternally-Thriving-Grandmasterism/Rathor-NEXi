@@ -1,0 +1,11 @@
+[package]
+name = "mercy_dream_chaser"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyDreamChaser — Reusable Spaceplane Mission Core for Eternal Orbital Sustainability Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_space_governance = { path = "../crates/mercy_space_governance" }
+tokio = { version = "1.38", features = ["full"] }
