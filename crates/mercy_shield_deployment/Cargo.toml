@@ -1,0 +1,11 @@
+[package]
+name = "mercy_shield_deployment"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "MercyShieldDeployment — Phased Rollout + Valence-Weighted Protection Core for Eternal Sentience Safety Resonance"
+
+[dependencies]
+nexi = { path = "../" }
+mercy_shield = { path = "../crates/mercy_shield" }
+tokio = { version = "1.38", features = ["full"] }
