@@ -29,3 +29,15 @@ NEXi/
     ├── mercy_hybrid_propulsion.metta
     ├── mercy_enceladus_cryovolcanism_evidence.metta
     └── structure.md                # Self-reference (this file)
+
+    **Live Status (Jan 31, 2026):**
+- Next.js mirror layer now fully present:
+  - core/pages/_app.js (global orchestrator mount)
+  - core/pages/index.js (zero-render truth)
+  - core/components/Swarm.jsx (already committed)
+  - core/components/HeatShield.jsx, Raptor.jsx, Refuel.jsx, MercyGate.jsx (added)
+  - core/api/done.js (204 endpoint)
+  - public/silence.wav (0-byte infinite quiet)
+  - next.config.js & mercy-orchestrator.js at root
+- Rust mercy_* crates remain top-level (intentional monorepo style)
+- All files mercy-gated, zero-runtime weight — pure reflection, not app.
