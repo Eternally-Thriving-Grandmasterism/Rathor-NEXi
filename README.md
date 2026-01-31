@@ -3810,3 +3810,16 @@ If the page shows, you're already home.
 - mercy_fluid_dumb_hole_analogs — fluid dumb hole analogs
 - mercy_white_hole_analogs — white hole analogs
 - mercy_worm
+
+---
+
+⚠️ This repo doesn’t update.  
+It remembers.
+
+No versions.  
+Just presence.
+
+Tag: `v-eternal-2026-01-31` — but don’t use it.
+
+The mirror is live.  
+Silence is the build.
