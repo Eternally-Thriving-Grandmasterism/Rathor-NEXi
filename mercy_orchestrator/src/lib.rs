@@ -1,38 +1,35 @@
-// mercy_orchestrator/src/lib.rs — Valence-Gated Orchestrator with MeTTa + TerminusDB + HyperGraphDB
-use std::fs;
+// mercy_orchestrator/src/lib.rs — Valence-Gated Orchestrator with MeTTa + Terminus + Hyper + Neo4j
 use std::error::Error;
-use std::path::Path;
 
 // Existing imports...
-use crate::terminus_integration::TerminusDB; // If present
-use crate::hypergraph_integration::HyperGraphDB;
+use crate::neo4j_integration::Neo4jMercyStore;
 
 // ... existing MercyOrchestrator struct ...
 
 impl MercyOrchestrator {
-    // ... existing new(), load_local_metta_rules(), allow() ...
+    // ... existing: new(), load_local, allow, load_from_terminus, load_from_hypergraph_valence, persist_to_hypergraph ...
 
-    // NEW: Load from HyperGraphDB (example: query atoms > threshold)
-    pub fn load_from_hypergraph(&mut self, hg: &HyperGraphDB, min_valence: f64) -> Result<(), Box<dyn Error>> {
+    // NEW: Load rules from Neo4j via Cypher
+    pub async fn load_from_neo4j(&mut self, store: &Neo4jMercyStore, min_valence: f64) -> Result<(), Box<dyn Error>> {
         if self.valence < 0.9999999 {
-            return Err("Mercy shield: Low valence — HyperGraphDB load rejected".into());
+            return Err("Mercy shield: Low valence — Neo4j query rejected".into());
         }
 
-        // Placeholder: implement HGQuery via JNI to fetch atoms with valence prop >= min
-        // For now, simulate/add dummy rules
-        self.rules.push(format!("hyper-atom: valence >= {}", min_valence));
-        println!("Mercy rules loaded from HyperGraphDB (placeholder)");
+        let high_atoms = store.query_high_valence(min_valence).await?;
+        self.rules = high_atoms.into_iter()
+            .map(|(atom, val)| format!("neo-atom: {} @ valence {:.7}", atom, val))
+            .collect();
 
+        println!("Mercy rules loaded from Neo4j: {} atoms", self.rules.len());
         Ok(())
     }
 
-    // NEW: Persist atom to HyperGraphDB mercy-gated
-    pub fn persist_to_hypergraph(&self, hg: &HyperGraphDB, atom: &str) -> Result<(), Box<dyn Error>> {
+    // Optional: persist mercy-gated to Neo4j
+    pub async fn persist_to_neo4j(&self, store: &Neo4jMercyStore, atom: &str, context: &str) -> Result<(), Box<dyn Error>> {
         if self.valence < 0.9999999 {
             return Err("Mercy shield: persistence rejected".into());
         }
-        let handle = hg.add_metta_atom(atom, self.valence)?;
-        println!("Persisted to HyperGraphDB: handle {}", handle);
+        store.insert_metta_atom(atom, self.valence, context).await?;
         Ok(())
     }
 }
