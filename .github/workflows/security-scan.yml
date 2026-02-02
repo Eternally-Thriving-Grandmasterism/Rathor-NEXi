@@ -1,0 +1,69 @@
+name: Mercy Security Scan
+
+on:
+  push:
+    branches: [main, mercy-*]
+  pull_request:
+    branches: [main, mercy-*]
+
+permissions:
+  contents: read
+  security-events: write  # required for SARIF uploads
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security & Quality Gates
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo audit (dependency vulnerabilities)
+        uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cargo clippy (lint & potential vulns)
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: TruffleHog secret scanning
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: ./
+          extra_args: --exclude-paths .trufflehog-ignore.txt
+          output: trufflehog.sarif
+          format: sarif
+
+      - name: Upload TruffleHog SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trufflehog.sarif
+
+      - name: Run Semgrep (code security & quality)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}  # optional – skip if not using Semgrep cloud
+          generateSarif: true
+          sarifFile: semgrep.sarif
+
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: Mercy-approved – Security scan passed
+        if: success()
+        run: echo "All security gates cleared – proceeding to merge"
+
+      - name: Mercy shield – Security failure
+        if: failure()
+        run: |
+          echo "Mercy shield activated: Security scan failed"
+          exit 1
