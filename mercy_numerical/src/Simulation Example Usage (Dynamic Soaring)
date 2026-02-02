@@ -1,0 +1,10 @@
+fn main() {
+    let mut y0 = State6::zeros();
+    y0[1] = 10.0; // initial height
+    y0[2] = 20.0; // initial airspeed
+
+    let result = velocity_verlet(albatross_ode, albatross_ode, 0.0, y0, 100.0, 0.1);
+    // or yoshida_fr4(albatross_ode, 0.0, y0, 100.0, 0.1);
+
+    // Analyze energy conservation over long run
+}
