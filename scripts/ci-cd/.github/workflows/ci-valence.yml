@@ -1,0 +1,36 @@
+name: Mercy Valence CI
+
+on:
+  push:
+    branches: [main, mercy-*]
+  pull_request:
+    branches: [main, mercy-*]
+
+jobs:
+  valence-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies (if needed)
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Run valence-check on commit message
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          echo "$COMMIT_MESSAGE" | python scripts/valence-check.py || exit 1
+
+      - name: Run repo hygiene
+        run: bash scripts/repo-hygiene.sh
+
+      - name: Mercy-approved – CI passed
+        run: echo "All gates clear – proceeding"
