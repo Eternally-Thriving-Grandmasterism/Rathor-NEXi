@@ -1,0 +1,6 @@
+# Add to [dependencies]
+reqwest = { version = "0.11", features = ["json"] }  # for HTTP if needed
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# terminusdb-rs (community client – clone or crates.io when published stable)
+# For now, use direct HTTP or pin git if needed; check https://github.com/ParapluOU/terminusdb-rs
