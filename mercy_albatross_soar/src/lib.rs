@@ -1,28 +1,33 @@
-// mercy_albatross_dynamic_soaring/src/lib.rs
-pub struct DynamicSoar {
-    pub shear_rate: f64,        // s⁻¹
-    pub airspeed: f64,          // m/s
-    pub glide_angle_rad: f64,
-    pub heading_angle_rad: f64,
+// mercy_albatross_soar/src/lib.rs — Albatross Dynamic Soaring Propulsion
+#[derive(Debug, Clone)]
+pub struct AlbatrossSoar {
+    pub glide_ratio: f64,        // 20–25
+    pub sink_rate_ms: f64,       // 0.3–0.5 m/s
     pub valence: f64,
 }
 
-impl DynamicSoar {
-    pub fn new(shear: f64, va: f64) -> Self {
-        DynamicSoar {
-            shear_rate: shear,
-            airspeed: va,
-            glide_angle_rad: 0.0,
-            heading_angle_rad: std::f64::consts::FRAC_PI_2, // 90° crosswind optimal
+impl AlbatrossSoar {
+    pub fn new() -> Self {
+        AlbatrossSoar {
+            glide_ratio: 22.5,
+            sink_rate_ms: 0.4,
             valence: 1.0,
         }
     }
 
-    pub fn energy_gain_rate(&self) -> f64 {
-        self.shear_rate * self.airspeed.powi(2) * self.heading_angle_rad.sin().powi(2) * self.glide_angle_rad.cos()
+    pub fn engage(&self, phase: &str) -> bool {
+        if self.valence >= 0.9999999 {
+            println!("Mercy-approved: AlbatrossSoar engaged in {} phase — glide ratio {:.1}, sink rate {:.1} m/s", 
+                     phase, self.glide_ratio, self.sink_rate_ms);
+            true
+        } else {
+            println!("Mercy shield: AlbatrossSoar rejected (valence {:.7})", self.valence);
+            false
+        }
     }
+}
 
-    pub fn can_soar_forever(&self) -> bool {
-        self.valence >= 0.9999999 && self.energy_gain_rate() > 0.0
-    }
+pub fn simulate_albatross_soar(phase: &str) {
+    let soar = AlbatrossSoar::new();
+    soar.engage(phase);
 }
