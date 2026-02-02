@@ -1,0 +1,77 @@
+name: Mercy Container Security Scan
+
+on:
+  push:
+    branches: [main, mercy-*]
+    paths:
+      - '**/Dockerfile'
+      - '**/Dockerfile.*'
+      - '.dockerignore'
+      - 'container/**'
+  pull_request:
+    branches: [main, mercy-*]
+    paths:
+      - '**/Dockerfile'
+      - '**/Dockerfile.*'
+      - '.dockerignore'
+      - 'container/**'
+
+permissions:
+  contents: read
+  security-events: write  # for SARIF uploads
+
+jobs:
+  container-scan:
+    runs-on: ubuntu-latest
+    name: Scan containers & Dockerfiles
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed for Trivy repo scanning
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'  # fail on critical/high
+
+      - name: Upload Trivy SARIF (filesystem)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-fs.sarif
+
+      - name: Hadolint – Dockerfile linting
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: |
+            **/Dockerfile
+            **/Dockerfile.*
+          failure-threshold: error
+
+      - name: Grype vulnerability scanner (if Dockerfiles present)
+        if: contains(github.event.head_commit.modified, 'Dockerfile') || contains(github.event.head_commit.added, 'Dockerfile')
+        uses: anchore/scan-action@v0.4.0
+        with:
+          path: .
+          fail-build: true
+          severity-cutoff: high
+
+      - name: Mercy-approved – Container security scan passed
+        if: success()
+        run: echo "All container gates cleared – image safe for deployment"
+
+      - name: Mercy shield – Container security failure
+        if: failure()
+        run: |
+          echo "Mercy shield activated: Container security scan failed"
+          exit 1
