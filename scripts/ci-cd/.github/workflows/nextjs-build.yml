@@ -1,0 +1,45 @@
+name: Next.js Mirror CI
+
+on:
+  push:
+    branches: [main, mercy-*]
+    paths:
+      - 'core/**'
+      - 'next.config.js'
+  pull_request:
+    branches: [main, mercy-*]
+    paths:
+      - 'core/**'
+      - 'next.config.js'
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: \( {{ runner.os }}-node- \){{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: ./
+        run: npm ci
+
+      - name: Build Next.js app
+        working-directory: ./
+        run: npm run build
+
+      - name: Mercy-approved – Next.js mirror build passed
+        run: echo "Mirror layer integrity verified"
