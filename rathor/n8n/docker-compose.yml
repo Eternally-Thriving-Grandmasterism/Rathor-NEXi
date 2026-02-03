@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  n8n:
+    # ... existing n8n config ...
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rathor_log
+      POSTGRES_PASSWORD: change-this-strong-2026-log-pass
+      POSTGRES_DB: rathor_logs
+    ports:
+      - "5432:5432"  # Optional – expose only if needed for admin tool
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rathor_log"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  n8n_data:
+  postgres_data:
