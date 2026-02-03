@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  # ... existing n8n, plausible, etc. ...
+
+  friendly-captcha:
+    image: friendlycaptcha/friendly-captcha:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # UI & API
+    environment:
+      FRIENDLY_CAPTCHA_SECRET: "generate-long-secret-64-char-here"  # openssl rand -base64 48
+      FRIENDLY_CAPTCHA_SITEKEY: "FC-your-generated-sitekey"  # auto-generated on first run
+      FRIENDLY_CAPTCHA_ALLOWED_ORIGINS: "https://rathor.ai"
+      FRIENDLY_CAPTCHA_DIFFICULTY: "medium"  # easy / medium / hard
+      FRIENDLY_CAPTCHA_MAX_INSTANCES: "100"  # concurrent puzzles
+    volumes:
+      - friendly-captcha-data:/data
+
+volumes:
+  friendly-captcha-data:
