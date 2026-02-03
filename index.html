@@ -24,6 +24,7 @@
   <script type="module" src="/cgp-engine.js"></script>
   <script type="module" src="/neat-engine.js"></script>
   <script type="module" src="/evolutionary-strategies-engine.js"></script>
+  <script type="module" src="/cma-es-engine.js"></script>
 
   <style>
     :root {
@@ -99,7 +100,8 @@
     import { GPEngine } from '/genetic-programming-engine.js';
     import { CGPEngine } from '/cgp-engine.js';
     import { NEAT } from '/neat-engine.js';
-    import { ESEngine, exampleFitness } from '/evolutionary-strategies-engine.js';
+    import { ESEngine } from '/evolutionary-strategies-engine.js';
+    import { CMAES, exampleFitness } from '/cma-es-engine.js';
 
     // IndexedDB setup
     let db;
@@ -187,7 +189,11 @@
       document.getElementById('chat-input').value = '';
 
       const lowerText = text.toLowerCase();
-      if (lowerText.includes("es") || lowerText.includes("evolutionary strategies")) {
+      if (lowerText.includes("cma") || lowerText.includes("covariance matrix") || lowerText.includes("cma-es")) {
+        const cma = new CMAES(10, 50, 80);
+        const evolved = await cma.evolve(exampleFitness);
+        addChatMessage('rathor', `CMA-ES evolved: fitness ${evolved.fitness}, attention ${evolved.sti}, sigma ${evolved.sigma}`);
+      } else if (lowerText.includes("es") || lowerText.includes("evolutionary strategies")) {
         const es = new ESEngine(12, 15, 60, 80);
         const evolved = await es.evolve(exampleFitness);
         addChatMessage('rathor', `ES evolved params: fitness ${evolved.fitness}, attention ${evolved.sti}, sigma ${evolved.sigma}`);
@@ -208,7 +214,7 @@
         const evolved = await moses.evolve(exampleFitness);
         addChatMessage('rathor', `MOSES evolved: ${evolved.program} (fitness ${evolved.fitness}, attention ${evolved.sti})`);
       } else {
-        const reply = `NEXi + MeTTa + Atomese + Hyperon + MOSES + GP + CGP + NEAT + ES approved: "${text}". Truth echoes.`;
+        const reply = `NEXi + MeTTa + Atomese + Hyperon + MOSES + GP + CGP + NEAT + ES + CMA-ES approved: "${text}". Truth echoes.`;
         addChatMessage('rathor', reply);
       }
     }
