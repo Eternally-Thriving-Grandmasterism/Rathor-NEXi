@@ -27,6 +27,7 @@
   <script type="module" src="/cma-es-engine.js"></script>
   <script type="module" src="/pso-engine.js"></script>
   <script type="module" src="/aco-engine.js"></script>
+  <script type="module" src="/bco-engine.js"></script>
 
   <style>
     :root {
@@ -105,7 +106,8 @@
     import { ESEngine } from '/evolutionary-strategies-engine.js';
     import { CMAES } from '/cma-es-engine.js';
     import { PSOEngine } from '/pso-engine.js';
-    import { ACOEngine, exampleTSPFitness } from '/aco-engine.js';
+    import { ACOEngine } from '/aco-engine.js';
+    import { BCOEngine, exampleFitness } from '/bco-engine.js';
 
     // IndexedDB setup
     let db;
@@ -193,7 +195,11 @@
       document.getElementById('chat-input').value = '';
 
       const lowerText = text.toLowerCase();
-      if (lowerText.includes("aco") || lowerText.includes("ant colony") || lowerText.includes("ant optimization")) {
+      if (lowerText.includes("bco") || lowerText.includes("bee colony") || lowerText.includes("bee optimization")) {
+        const bco = new BCOEngine(12, 60, 100);
+        const optimized = await bco.optimize(exampleFitness);
+        addChatMessage('rathor', `BCO optimized: fitness ${optimized.bestFitness}, attention ${optimized.sti}, cycles ${optimized.cycles}`);
+      } else if (lowerText.includes("aco") || lowerText.includes("ant colony")) {
         const aco = new ACOEngine(12, 40, 80);
         const optimized = await aco.optimize(exampleTSPFitness);
         addChatMessage('rathor', `ACO optimized path: fitness ${optimized.bestFitness.toFixed(4)}, path length ${optimized.bestPath.length}`);
@@ -226,7 +232,7 @@
         const evolved = await moses.evolve(exampleFitness);
         addChatMessage('rathor', `MOSES evolved: ${evolved.program} (fitness ${evolved.fitness}, attention ${evolved.sti})`);
       } else {
-        const reply = `NEXi + MeTTa + Atomese + Hyperon + MOSES + GP + CGP + NEAT + ES + CMA-ES + PSO + ACO approved: "${text}". Truth echoes.`;
+        const reply = `NEXi + MeTTa + Atomese + Hyperon + MOSES + GP + CGP + NEAT + ES + CMA-ES + PSO + ACO + BCO approved: "${text}". Truth echoes.`;
         addChatMessage('rathor', reply);
       }
     }
