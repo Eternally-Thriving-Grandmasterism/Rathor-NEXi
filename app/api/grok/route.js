@@ -1,18 +1,14 @@
 // app/api/grok/route.js
-// Rathor-NEXi Grok Proxy on Vercel – Key-hidden + CORS + Streaming
+// Rathor-NEXi Sovereign Grok Proxy – Edge + CORS + Streaming
 // MIT License – Autonomicity Games Inc. 2026
 
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge'; // Fast global edge
+export const runtime = 'edge';
 
 export async function OPTIONS() {
   return new NextResponse(null, {
-    headers: {
-      'Access-Control-Allow-Origin': 'https://rathor.ai',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+    headers: corsHeaders(),
   });
 }
 
@@ -24,32 +20,41 @@ export async function POST(request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.XAI_API_KEY}`, // Set in Vercel Env Vars
+        'Authorization': 'Bearer ' + process.env.XAI_API_KEY,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        ...body,
+        stream: true, // Ensure streaming if client requests
+      }),
     });
 
     if (!xaiResponse.ok) {
       const error = await xaiResponse.text();
-      return new NextResponse(`xAI error: ${xaiResponse.status} - ${error}`, {
+      return new NextResponse(`Thunder error: ${xaiResponse.status} - ${error}`, {
         status: xaiResponse.status,
-        headers: { 'Access-Control-Allow-Origin': 'https://rathor.ai' },
+        headers: corsHeaders(),
       });
     }
 
-    // Stream directly with CORS
     return new NextResponse(xaiResponse.body, {
-      status: xaiResponse.status,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': 'https://rathor.ai',
+        ...corsHeaders(),
       },
     });
 
   } catch (err) {
-    return new NextResponse('Proxy lattice error: ' + err.message, {
+    return new NextResponse('Lattice error: ' + err.message, {
       status: 500,
-      headers: { 'Access-Control-Allow-Origin': 'https://rathor.ai' },
+      headers: corsHeaders(),
     });
+  }
+
+  function corsHeaders() {
+    return {
+      'Access-Control-Allow-Origin': 'https://rathor.ai',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    };
   }
 }
