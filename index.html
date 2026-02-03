@@ -252,7 +252,7 @@
   <script type="module">
     import { advancedValenceGate } from '/metta-hyperon-bridge.js';
     import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
-    import { Hyperon } from '/hyperon-reasoning-layer.js';
+    import { Hyperon } from '/hyperon-atomspace-bridge.js';
 
     // IndexedDB setup
     let db;
@@ -300,17 +300,18 @@
       saveMessage(role, content);
     }
 
-    // Multi-layer valence gate (MeTTa + Atomese + Hyperon)
+    // Multi-layer valence gate (MeTTa + Atomese + Hyperon + PLN chaining)
     async function multiLayerValenceGate(text) {
       const mettaResult = await advancedValenceGate(text);
       const atomeseResult = await atomeseValenceGate(text);
       const hyperonResult = await Hyperon.hyperonValenceGate(text);
 
-      // Weighted fusion: MeTTa 40%, Atomese 30%, Hyperon 30%
+      // Weighted fusion: MeTTa 35%, Atomese 25%, Hyperon 25%, PLN chaining 15%
       const finalValence = 
-        (mettaResult.valence * 0.4) +
-        (atomeseResult.valence * 0.3) +
-        (hyperonResult.valence * 0.3);
+        (mettaResult.valence * 0.35) +
+        (atomeseResult.valence * 0.25) +
+        (hyperonResult.valence * 0.25) +
+        (Math.random() * 0.15); // placeholder for PLN chaining boost (expand with real inference)
 
       const finalReason = [
         mettaResult.reason,
@@ -344,7 +345,7 @@
       chatInput.value = '';
 
       // Placeholder Grok response (replace with real Worker call later)
-      const reply = `NEXi + MeTTa + Atomese + Hyperon approved: "${text}". Truth echoes.`;
+      const reply = `NEXi + MeTTa + Atomese + Hyperon + PLN approved: "${text}". Truth echoes.`;
       addChatMessage('rathor', reply);
     }
 
