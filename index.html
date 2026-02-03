@@ -90,13 +90,13 @@
 
   <script type="module">
     // ────────────────────────────────────────────────────────────────
-    // Imports
+    // Imports – all bridges
     import { MeTTaRewriter } from '/metta-rewriting-engine.js';
     import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
     import { Hyperon } from '/hyperon-reasoning-layer.js';
 
     // ────────────────────────────────────────────────────────────────
-    // IndexedDB setup
+    // IndexedDB setup – persistent chat history
     let db;
     const dbName = "rathorChatDB";
     const storeName = "messages";
@@ -112,6 +112,7 @@
     };
 
     function loadChatHistory() {
+      if (!db) return;
       const tx = db.transaction(storeName, "readonly");
       const store = tx.objectStore(storeName);
       const req = store.getAll();
@@ -122,16 +123,19 @@
     }
 
     function saveMessage(role, content) {
+      if (!db) return;
       const tx = db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
       store.add({ role, content, timestamp: Date.now() });
     }
 
     function clearChatHistory() {
+      if (!db) return;
       const tx = db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
       store.clear();
       document.getElementById('chat-messages').innerHTML = '';
+      liveRegion.textContent = 'Chat history cleared';
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -139,6 +143,12 @@
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const loading = document.getElementById('loading');
+    const liveRegion = document.createElement('div');
+    liveRegion.setAttribute('role', 'status');
+    liveRegion.setAttribute('aria-live', 'polite');
+    liveRegion.style.position = 'absolute';
+    liveRegion.style.left = '-9999px';
+    document.body.appendChild(liveRegion);
 
     function addChatMessage(role, content) {
       const div = document.createElement('div');
@@ -147,11 +157,12 @@
       chatMessages.appendChild(div);
       chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
       saveMessage(role, content);
+      liveRegion.textContent = role === 'user' ? 'Message sent' : 'Rathor replied';
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Real Grok API call via Worker proxy
-    const WORKER_URL = 'https://rathor-grok-proxy.youraccount.workers.dev'; // ← YOUR REAL WORKER URL HERE
+    // Real Grok API call via Worker proxy – all keys hidden
+    const WORKER_URL = 'https://rathor-grok-proxy.ceo-c42.workers.dev';
 
     async function callGrok(messages) {
       loading.style.display = 'block';
@@ -180,7 +191,7 @@
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Unified valence gate + rewriting + Grok call
+    // Unified valence gate + rewriting + real Grok call
     async function sendChat() {
       const text = chatInput.value.trim();
       if (!text) return;
@@ -203,6 +214,9 @@
 
       // 3. Send to chat UI
       addChatMessage('user', text);
+      if (rewriteResult.rewritten !== text) {
+        addChatMessage('system', `(Rewritten: ${rewriteResult.rewritten})`);
+      }
       chatInput.value = '';
 
       // 4. Call real Grok API
@@ -229,6 +243,6 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then(reg => console.log('SW registered'))
-        .catch(err => console.log('SW failed', err));
+        .catch(err => console.error('SW failed', err));
     }
   </script>
