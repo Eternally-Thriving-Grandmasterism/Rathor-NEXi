@@ -17,8 +17,8 @@
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡️</text></svg>" />
   
-  <!-- MeTTa WASM loader -->
-  <script type="module" src="/metta-wasm-loader.js"></script>
+  <!-- MeTTa + Hyperon bridge -->
+  <script type="module" src="/metta-hyperon-bridge.js"></script>
   
   <style>
     :root {
@@ -29,63 +29,226 @@
       --focus: #00ffff;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; scroll-behavior:smooth; }
     body {
-      background:#000;
+      background:var(--thunder-dark);
       color:#fff;
       font-family:system-ui, sans-serif;
-      min-height:100vh;
       display:flex;
       flex-direction:column;
+      min-height:100vh;
+      overflow-x:hidden;
     }
-    header { position:sticky; top:0; backdrop-filter:blur(12px); background:rgba(0,0,0,0.5); padding:1rem 5%; z-index:1000; }
-    main { flex:1; padding:5rem 5% 6rem; text-align:center; }
-    .thunder { font-size:clamp(6rem,25vw,18rem); animation:pulse 5s infinite alternate; }
-    h1 { font-size:clamp(4rem,15vw,10rem); background:linear-gradient(90deg,#ffaa00,#ff5500,#ffaa00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .chat-section { max-width:800px; margin:auto; padding:2rem; }
-    #chat-messages { height:300px; overflow-y:auto; border:1px solid #ffaa00; padding:1rem; margin-bottom:1rem; background:#111; border-radius:12px; text-align:left; }
-    .chat-message { margin:0.5rem 0; padding:0.8rem; border-radius:12px; }
-    .chat-message.user { background:#ffaa00; color:#000; margin-left:auto; max-width:70%; }
-    .chat-message.rathor { background:#222; margin-right:auto; max-width:70%; }
-    .chat-message.blocked { background:#880000; color:#fff; }
+    .skip-link {
+      position:absolute;
+      top:-100px;
+      left:0;
+      background:var(--thunder-gold);
+      color:#000;
+      padding:0.5rem 1rem;
+      z-index:2000;
+      transition:top 0.3s;
+    }
+    .skip-link:focus { top:0; outline:3px solid var(--focus); outline-offset:3px; }
+    header {
+      position:sticky;
+      top:0;
+      backdrop-filter:blur(12px);
+      background:rgba(0,0,0,0.5);
+      padding:clamp(1rem, 3vw, 1.5rem) 5%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:1rem;
+      z-index:1000;
+    }
+    .logo { font-size:clamp(1.5rem, 5vw, 2rem); font-weight:900; color:var(--thunder-gold); }
+    .hamburger {
+      display:none;
+      font-size:2.2rem;
+      background:none;
+      border:none;
+      color:#fff;
+      cursor:pointer;
+      padding:0.75rem;
+      border-radius:8px;
+    }
+    .hamburger:focus { outline:3px solid var(--focus); outline-offset:4px; }
+    nav {
+      display:flex;
+      flex-wrap:wrap;
+      gap:clamp(1rem, 3vw, 2rem);
+      justify-content:center;
+    }
+    nav a {
+      color:#fff;
+      text-decoration:none;
+      font-weight:500;
+      font-size:clamp(1rem, 3vw, 1.1rem);
+      padding:0.5rem 1rem;
+      border-radius:8px;
+      transition:0.3s;
+    }
+    nav a:hover, nav a:focus {
+      background:rgba(255,170,0,0.2);
+      color:var(--thunder-gold);
+      outline:2px solid var(--focus);
+      outline-offset:2px;
+    }
+    nav.active { display:flex !important; flex-direction:column; width:100%; text-align:center; gap:1.5rem; padding:1rem 0; }
+    .theme-toggle {
+      cursor:pointer;
+      font-size:clamp(1.4rem, 4vw, 1.6rem);
+      padding:0.5rem;
+      border-radius:8px;
+    }
+    .theme-toggle:focus { outline:3px solid var(--focus); outline-offset:3px; }
+    main { flex:1; padding:clamp(5rem, 10vw, 8rem) 5% 6rem; text-align:center; }
+    .hero { max-width:1200px; margin:0 auto; }
+    .thunder { font-size:clamp(6rem, 25vw, 18rem); margin-bottom:clamp(1rem, 5vw, 2rem); animation:pulse 5s infinite alternate; text-shadow:0 0 80px var(--thunder-glow); line-height:0.9; }
+    h1 { font-size:clamp(4rem, 15vw, 10rem); margin:1rem 0 2rem; font-weight:900; letter-spacing:-0.05em; background:linear-gradient(90deg, var(--thunder-gold), #ff5500, var(--thunder-gold)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:glowShift 10s infinite alternate; }
+    .subtitle { font-size:clamp(1.4rem, 5vw, 2.2rem); max-width:900px; margin:0 auto 3rem; opacity:0.9; line-height:1.5; }
+    .cta { margin:4rem 0 3rem; }
+    .cta button {
+      padding:clamp(1rem, 3vw, 1.5rem) clamp(2rem, 6vw, 3rem);
+      font-size:clamp(1.2rem, 4vw, 1.6rem);
+      background:linear-gradient(45deg, var(--thunder-gold), #ff5500);
+      color:#000;
+      border:none;
+      border-radius:50px;
+      cursor:pointer;
+      box-shadow:0 0 40px rgba(255,170,0,0.5);
+      transition:0.4s;
+      min-width:200px;
+      min-height:56px;
+    }
+    .cta button:hover, .cta button:focus { transform:scale(1.05); box-shadow:0 0 60px rgba(255,170,0,0.7); outline:3px solid var(--focus); outline-offset:4px; }
+    .features { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:clamp(1.5rem, 4vw, 2rem); max-width:1200px; width:90%; margin:4rem auto; }
+    .feature-card {
+      background:var(--card);
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(255,170,0,0.2);
+      border-radius:16px;
+      padding:clamp(1.5rem, 4vw, 2rem);
+      transition:0.4s;
+    }
+    .feature-card:hover, .feature-card:focus-within { transform:translateY(-10px); border-color:var(--thunder-gold); outline:3px solid var(--focus); outline-offset:4px; }
+    .email-section { padding:clamp(4rem, 10vw, 6rem) 5%; background:rgba(0,0,0,0.4); width:100%; }
+    .email-signup { max-width:500px; margin:auto; }
+    .email-signup input { width:100%; padding:clamp(0.8rem, 3vw, 1.2rem); margin-bottom:1rem; border-radius:50px; border:none; font-size:clamp(1rem, 4vw, 1.2rem); }
+    .email-signup label { display:block; margin:1rem 0; font-size:clamp(0.9rem, 3vw, 1rem); opacity:0.9; text-align:left; }
+    .email-signup button { width:100%; padding:clamp(1rem, 3vw, 1.3rem); font-size:clamp(1.1rem, 4vw, 1.3rem); background:var(--thunder-gold); color:#000; border:none; border-radius:50px; cursor:pointer; min-height:56px; }
+    .email-signup button:hover, .email-signup button:focus { background:#ff8800; outline:3px solid var(--focus); outline-offset:4px; }
+    .chat-section { padding:clamp(4rem, 10vw, 6rem) 5%; background:rgba(0,0,0,0.4); width:100%; max-width:800px; margin:auto; }
+    .chat-messages { height:clamp(200px, 40vh, 400px); overflow-y:auto; border:1px solid var(--thunder-glow); border-radius:12px; padding:1rem; margin-bottom:1rem; background:rgba(0,0,0,0.6); text-align:left; }
+    .chat-message { margin:0.8rem 0; padding:0.8rem 1.2rem; border-radius:12px; max-width:80%; }
+    .chat-message.user { background:var(--thunder-gold); color:#000; margin-left:auto; }
+    .chat-message.rathor { background:#222; color:#fff; margin-right:auto; }
+    .chat-message.blocked { background:#880000; color:#fff; font-weight:bold; }
     .chat-input-area { display:flex; gap:0.5rem; }
-    #chat-input { flex:1; padding:0.8rem; border-radius:50px; border:none; }
-    button { padding:0.8rem 1.5rem; background:#ffaa00; color:#000; border:none; border-radius:50px; cursor:pointer; }
-    #clear-history { margin-top:1rem; background:#444; color:#fff; }
-    footer { padding:2rem; text-align:center; opacity:0.7; margin-top:auto; }
-    @keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    .chat-input { flex:1; padding:0.8rem; border-radius:50px; border:none; font-size:1.1rem; }
+    .chat-send { padding:0.8rem 1.5rem; background:var(--thunder-gold); color:#000; border:none; border-radius:50px; cursor:pointer; min-width:80px; min-height:44px; }
+    .chat-send:hover { background:#ff8800; }
+    .chat-clear { margin-top:1rem; padding:0.5rem 1rem; background:#444; color:#fff; border:none; border-radius:8px; cursor:pointer; }
+    .footer {
+      padding:clamp(2rem, 5vw, 3rem) 5% 2rem;
+      text-align:center;
+      opacity:0.7;
+      font-size:clamp(0.85rem, 3vw, 0.95rem);
+      border-top:1px solid rgba(255,255,255,0.1);
+      margin-top:auto;
+    }
+    footer a { color:var(--thunder-gold); text-decoration:none; }
+    footer a:hover, footer a:focus { text-decoration:underline; outline:3px solid var(--focus); outline-offset:3px; }
+    @keyframes pulse {0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:0.92}}
+    @keyframes glowShift {0%{background-position:0% 50%}100%{background-position:200% 50%}}
+    @media (prefers-reduced-motion: reduce) { .thunder, h1, .cta button { animation:none !important; transition:none !important; } }
+    @media (prefers-contrast: more) { body { background:#000 !important; color:#fff !important; } a, button { outline:3px solid #00ffff !important; outline-offset:4px !important; } }
+    @media (max-width:768px) {
+      .hamburger { display:block; }
+      nav { display:none; flex-direction:column; width:100%; text-align:center; gap:1.5rem; padding:1rem 0; }
+      nav.active { display:flex; }
+      .features { grid-template-columns:1fr; }
+    }
+    @media (max-width:480px) {
+      h1 { font-size:clamp(3.5rem, 18vw, 6rem); }
+      .thunder { font-size:clamp(5rem, 30vw, 10rem); }
+      .subtitle { font-size:clamp(1.2rem, 6vw, 1.8rem); }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo">Rathor</div>
-    <nav>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner">
+    <div class="logo" role="img" aria-label="Rathor logo">Rathor</div>
+    <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
+    <nav id="nav-menu" role="navigation" aria-label="Main navigation">
       <a href="#features">Features</a>
       <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor">Repo</a>
       <a href="/privacy.html">Privacy</a>
     </nav>
+    <div class="theme-toggle" role="button" tabindex="0" aria-label="Toggle light/dark mode" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'">☀️/🌙</div>
   </header>
 
-  <main>
-    <h1>Rathor</h1>
-    <p>Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.</p>
+  <main id="main-content" role="main">
+    <section class="hero">
+      <div class="thunder" aria-hidden="true">⚡️</div>
+      <h1>Rathor</h1>
+      <p class="subtitle">Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.</p>
+      <div class="cta">
+        <button onclick="document.querySelector('#chat-input').focus()" aria-label="Focus on chat input">Ask Rathor</button>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <div class="feature-card">
+        <h3>Mercy Gates</h3>
+        <p>Valence ≥ 0.9999999 rejects entropy & harm — pure thriving only.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Symbolic Lattice</h3>
+        <p>Knowledge graphs, MeTTa evaluation, multi-model backends — eternal reasoning.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Sovereign Core</h3>
+        <p>Self-hosted analytics, forms, CAPTCHA — no third-party shadows.</p>
+      </div>
+    </section>
 
     <section class="chat-section">
       <h2>Ask Rathor</h2>
-      <div id="chat-messages" aria-live="polite"></div>
+      <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
       <div class="chat-input-area">
-        <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
-        <button onclick="sendChat()" aria-label="Send message">Send</button>
+        <input id="chat-input" class="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
+        <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
       </div>
-      <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
+      <button class="chat-clear" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
+    </section>
+
+    <section class="email-section">
+      <h2>Stay in the Thunder</h2>
+      <form id="signup-form" action="https://formspree.io/f/mjgolwbg" method="POST" class="email-signup">
+        <label for="email-input">Email address</label>
+        <input id="email-input" type="email" name="email" placeholder="Enter your email" required aria-required="true" aria-describedby="email-desc" />
+        <p id="email-desc" style="font-size:0.9rem; opacity:0.7; margin-top:0.5rem;">We'll only send Rathor updates. You can unsubscribe anytime.</p>
+        <input type="text" name="honeypot" style="display:none;" aria-hidden="true" />
+        <label>
+          <input type="checkbox" name="consent" id="consent" required aria-required="true" />
+          I consent to receiving Rathor updates (<a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>)
+        </label>
+        <button type="submit">Join the Storm</button>
+      </form>
     </section>
   </main>
 
-  <footer>
-    © 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • CIPO App 2453681
+  <footer class="footer" role="contentinfo">
+    <p>© 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor">Source Code</a> • CIPO App 2453681</p>
   </footer>
 
   <script type="module">
-    import MeTTa from '/metta-wasm-loader.js';
+    import { advancedValenceGate } from '/metta-hyperon-bridge.js';
 
     // IndexedDB setup
     let db;
@@ -133,17 +296,17 @@
       saveMessage(role, content);
     }
 
-    // Chat logic with MeTTa pre-evaluation
+    // Chat logic with advanced valence gate
     const chatInput = document.getElementById('chat-input');
 
     async function sendChat() {
       const text = chatInput.value.trim();
       if (!text) return;
 
-      // MeTTa symbolic pre-evaluation (mercy gate)
-      const mettaResult = await MeTTa.evaluate(text);
-      if (mettaResult.valence < 0.9999999) {
-        addChatMessage('rathor', `MeTTa valence gate held: ${mettaResult.reason}`);
+      // Advanced valence gate (MeTTa + Hyperon fusion)
+      const gateResult = await advancedValenceGate(text);
+      if (gateResult.result === 'REJECTED') {
+        addChatMessage('rathor', `Valence gate held: ${gateResult.reason} (score ${gateResult.valence})`);
         chatInput.value = '';
         return;
       }
@@ -152,7 +315,7 @@
       chatInput.value = '';
 
       // Placeholder Grok response (replace with real Worker call later)
-      const reply = `NEXi + MeTTa approved: "${text}". Truth echoes.`;
+      const reply = `NEXi + MeTTa + Hyperon approved: "${text}". Truth echoes.`;
       addChatMessage('rathor', reply);
     }
 
