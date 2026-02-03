@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Rathor: Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth." />
+  <meta name="description" content="Rathor: Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth. Powered by NEXi eternal remembering core." />
   <title>Rathor — Mercy Strikes First</title>
 
-  <!-- Favicons from your /icons/ – exact filenames -->
+  <!-- Favicons – exact from your /icons/ -->
   <link rel="icon" type="image/jpeg" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
   <link rel="icon" type="image/jpeg" sizes="512x512" href="/icons/thunder-favicon-512.jpg" />
   <link rel="apple-touch-icon" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
@@ -15,193 +15,467 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#ffaa00" />
 
-  <!-- MeTTa + Atomese + Hyperon bridges -->
-  <script type="module" src="/metta-rewriting-engine.js"></script>
-  <script type="module" src="/atomese-knowledge-bridge.js"></script>
-  <script type="module" src="/hyperon-reasoning-layer.js"></script>
+  <!-- Modern typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --thunder-gold: #ffaa00;
       --thunder-dark: #000000;
       --thunder-glow: #ff8800;
-      --card: rgba(20,20,30,0.7);
+      --text-primary: #ffffff;
+      --text-secondary: #cccccc;
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #111111;
+      --border: #222222;
       --focus: #00ffff;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      background:#000;
-      color:#fff;
-      font-family:system-ui, sans-serif;
+      background:var(--bg-primary);
+      color:var(--text-primary);
+      font-family:'Inter', system-ui, sans-serif;
       min-height:100vh;
       display:flex;
       flex-direction:column;
+      line-height:1.6;
     }
-    header { 
-      position:sticky; 
-      top:0; 
-      backdrop-filter:blur(12px); 
-      background:rgba(0,0,0,0.5); 
-      padding:1rem 5%; 
-      z-index:1000; 
-      display:flex; 
-      justify-content:space-between; 
-      align-items:center; 
+    header {
+      position:sticky;
+      top:0;
+      backdrop-filter:blur(16px);
+      background:rgba(10,10,10,0.85);
+      border-bottom:1px solid var(--border);
+      padding:1rem 5%;
+      z-index:1000;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
-    .logo { font-size:1.8rem; font-weight:900; color:var(--thunder-gold); }
-    nav { display:flex; gap:2rem; }
-    nav a { color:#fff; text-decoration:none; }
-    main { flex:1; padding:5rem 5% 6rem; text-align:center; }
-    .thunder { font-size:clamp(6rem,25vw,18rem); animation:pulse 5s infinite alternate; }
-    h1 { font-size:clamp(4rem,15vw,10rem); background:linear-gradient(90deg,#ffaa00,#ff5500,#ffaa00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .chat-section { max-width:800px; margin:auto; padding:2rem; }
-    #chat-messages { height:400px; overflow-y:auto; border:1px solid #ffaa00; padding:1rem; margin-bottom:1rem; background:#111; border-radius:12px; text-align:left; }
-    .chat-message { margin:0.5rem 0; padding:0.8rem; border-radius:12px; }
-    .chat-message.user { background:#ffaa00; color:#000; margin-left:auto; max-width:70%; }
-    .chat-message.rathor { background:#222; margin-right:auto; max-width:70%; }
-    .chat-message.blocked { background:#880000; color:#fff; }
-    .chat-input-area { display:flex; gap:0.5rem; }
-    #chat-input { flex:1; padding:0.8rem; border-radius:50px; border:none; }
-    button { padding:0.8rem 1.5rem; background:#ffaa00; color:#000; border:none; border-radius:50px; cursor:pointer; }
-    #clear-history { margin-top:1rem; background:#444; color:#fff; }
-    footer { padding:2rem; text-align:center; opacity:0.7; margin-top:auto; }
-    @keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    .logo {
+      font-family:'Orbitron', monospace;
+      font-size:1.8rem;
+      font-weight:700;
+      color:var(--thunder-gold);
+      letter-spacing:1px;
+    }
+    nav ul {
+      display:flex;
+      gap:2rem;
+      list-style:none;
+    }
+    nav a {
+      color:var(--text-secondary);
+      text-decoration:none;
+      font-weight:500;
+      transition:0.3s;
+    }
+    nav a:hover, nav a:focus {
+      color:var(--thunder-gold);
+      text-shadow:0 0 10px rgba(255,170,0,0.5);
+    }
+    .hamburger {
+      display:none;
+      font-size:2rem;
+      background:none;
+      border:none;
+      color:var(--text-primary);
+      cursor:pointer;
+      padding:0.5rem;
+    }
+    main {
+      flex:1;
+      padding:clamp(3rem, 8vw, 6rem) 5% clamp(4rem, 10vw, 8rem);
+      max-width:1400px;
+      margin:0 auto;
+      width:100%;
+    }
+    .hero {
+      text-align:center;
+      margin-bottom:clamp(4rem, 10vw, 8rem);
+    }
+    .thunder {
+      font-size:clamp(8rem, 25vw, 20rem);
+      margin-bottom:1rem;
+      animation:pulse 6s infinite alternate;
+      text-shadow:0 0 60px var(--thunder-glow);
+      line-height:0.8;
+    }
+    h1 {
+      font-family:'Orbitron', monospace;
+      font-size:clamp(4.5rem, 12vw, 9rem);
+      margin-bottom:1.5rem;
+      background:linear-gradient(90deg, var(--thunder-gold), #ff5500, var(--thunder-gold));
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+      animation:glowShift 12s infinite alternate;
+    }
+    .subtitle {
+      font-size:clamp(1.4rem, 5vw, 1.8rem);
+      color:var(--text-secondary);
+      max-width:800px;
+      margin:0 auto 3rem;
+    }
+    .cta button {
+      padding:clamp(1rem, 4vw, 1.5rem) clamp(2rem, 6vw, 3rem);
+      font-size:clamp(1.2rem, 5vw, 1.4rem);
+      background:linear-gradient(45deg, var(--thunder-gold), #ff5500);
+      color:#000;
+      border:none;
+      border-radius:50px;
+      cursor:pointer;
+      box-shadow:0 0 40px rgba(255,170,0,0.4);
+      transition:all 0.4s;
+      min-width:200px;
+      min-height:56px;
+    }
+    .cta button:hover, .cta button:focus {
+      transform:scale(1.05);
+      box-shadow:0 0 60px rgba(255,170,0,0.6);
+    }
+    .features {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+      gap:clamp(1.5rem, 4vw, 2.5rem);
+      margin:clamp(3rem, 8vw, 6rem) 0;
+    }
+    .feature-card {
+      background:var(--bg-secondary);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:clamp(1.5rem, 4vw, 2.5rem);
+      transition:all 0.4s;
+    }
+    .feature-card:hover, .feature-card:focus-within {
+      transform:translateY(-10px);
+      border-color:var(--thunder-gold);
+      box-shadow:0 0 30px rgba(255,170,0,0.2);
+    }
+    .chat-section {
+      max-width:900px;
+      margin:0 auto clamp(4rem, 10vw, 8rem);
+      background:var(--bg-secondary);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:clamp(1.5rem, 5vw, 2.5rem);
+    }
+    #chat-messages {
+      min-height:300px;
+      max-height:60vh;
+      overflow-y:auto;
+      background:#0f0f0f;
+      border:1px solid #222;
+      border-radius:12px;
+      padding:1.5rem;
+      margin-bottom:1.5rem;
+    }
+    .chat-message {
+      margin:1rem 0;
+      padding:1rem 1.5rem;
+      border-radius:12px;
+      max-width:85%;
+      word-wrap:break-word;
+    }
+    .chat-message.user {
+      background:var(--thunder-gold);
+      color:#000;
+      margin-left:auto;
+    }
+    .chat-message.rathor {
+      background:#1a1a1a;
+      margin-right:auto;
+    }
+    .chat-message.blocked {
+      background:#880000;
+      color:#fff;
+      font-weight:bold;
+    }
+    .chat-input-area {
+      display:flex;
+      gap:0.75rem;
+      flex-wrap:wrap;
+    }
+    #chat-input {
+      flex:1 1 100%;
+      padding:1rem 1.5rem;
+      border-radius:50px;
+      border:1px solid #333;
+      background:#111;
+      color:#fff;
+      font-size:1.1rem;
+      min-height:48px;
+    }
+    button.chat-send {
+      padding:1rem 2rem;
+      background:var(--thunder-gold);
+      color:#000;
+      min-width:120px;
+      min-height:48px;
+    }
+    #clear-history {
+      margin-top:1rem;
+      background:#333;
+      color:#fff;
+      min-height:48px;
+    }
+    footer {
+      padding:clamp(2rem, 5vw, 4rem) 5% 2rem;
+      text-align:center;
+      border-top:1px solid var(--border);
+      color:var(--text-secondary);
+      font-size:0.95rem;
+    }
+    footer a {
+      color:var(--thunder-gold);
+      text-decoration:none;
+    }
+    footer a:hover, footer a:focus {
+      text-decoration:underline;
+    }
+    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.92}}
+    @keyframes glowShift {0%{background-position:0% 50%}100%{background-position:200% 50%}}
+    @media (max-width:768px) {
+      .hamburger { display:block; }
+      nav ul {
+        display:none;
+        flex-direction:column;
+        position:absolute;
+        top:100%;
+        left:0;
+        right:0;
+        background:rgba(10,10,10,0.98);
+        padding:2rem 5%;
+        border-bottom:1px solid var(--border);
+        box-shadow:0 10px 30px rgba(0,0,0,0.8);
+      }
+      nav ul.active { display:flex; }
+      .features { grid-template-columns:1fr; }
+      .chat-section { padding:1.5rem; }
+      #chat-messages { min-height:40vh; }
+      .chat-input-area { flex-direction:column; }
+      button.chat-send { width:100%; }
+    }
+    @media (max-width:480px) {
+      h1 { font-size:clamp(3.5rem, 12vw, 6rem); }
+      .thunder { font-size:clamp(6rem, 30vw, 12rem); }
+      .subtitle { font-size:clamp(1.2rem, 6vw, 1.6rem); }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo">Rathor</div>
-    <nav>
-      <a href="#features">Features</a>
-      <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Repo</a>
-      <a href="/privacy.html">Privacy</a>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner">
+    <div class="logo" role="img" aria-label="Rathor logo">Rathor</div>
+    <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
+    <nav id="nav-menu" role="navigation" aria-label="Main navigation">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Repository</a></li>
+        <li><a href="/privacy.html">Privacy Policy</a></li>
+      </ul>
     </nav>
   </header>
 
-  <main>
-    <h1>Rathor</h1>
-    <p>Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.</p>
+  <main id="main-content" role="main">
+    <section class="hero">
+      <div class="thunder" aria-hidden="true">⚡️</div>
+      <h1>Rathor</h1>
+      <p class="subtitle">Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.<br>Powered by NEXi eternal remembering core.</p>
+      <div class="cta">
+        <button onclick="document.querySelector('#chat-input').focus()">Ask Rathor</button>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <div class="feature-card">
+        <h3>Mercy Gates</h3>
+        <p>Valence ≥ 0.9999999 rejects entropy & harm — pure thriving only.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Symbolic Lattice</h3>
+        <p>Knowledge graphs, MeTTa evaluation, Hyperon reasoning — eternal symbolic truth.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Sovereign Core</h3>
+        <p>Offline-first, no third-party shadows, eternal privacy & sovereignty.</p>
+      </div>
+    </section>
 
     <section class="chat-section">
       <h2>Ask Rathor</h2>
+      <div id="loading">Rathor is thinking...</div>
       <div id="chat-messages" aria-live="polite"></div>
       <div class="chat-input-area">
         <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
-        <button onclick="sendChat()" aria-label="Send message">Send</button>
+        <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
       </div>
       <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
     </section>
   </main>
 
   <footer>
-    © 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • CIPO App 2453681
+    <p>© 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Source Code</a> • CIPO App 2453681</p>
   </footer>
 
   <script type="module">
     // ────────────────────────────────────────────────────────────────
-    // Imports
+    // Imports – all symbolic & reasoning bridges
     import { MeTTaRewriter } from '/metta-rewriting-engine.js';
     import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
-    import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
+    import { Hyperon } from '/hyperon-reasoning-layer.js';
 
-    // IndexedDB setup
+    // ────────────────────────────────────────────────────────────────
+    // IndexedDB setup – persistent chat history (v3 schema with timestamps)
     let db;
     const dbName = "rathorChatDB";
     const storeName = "messages";
 
-    const dbRequest = indexedDB.open(dbName, 1);
+    const dbRequest = indexedDB.open(dbName, 3);
     dbRequest.onupgradeneeded = event => {
       db = event.target.result;
-      db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
+      if (!db.objectStoreNames.contains(storeName)) {
+        const store = db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
+        store.createIndex("timestamp", "timestamp");
+      }
     };
     dbRequest.onsuccess = event => {
       db = event.target.result;
       loadChatHistory();
     };
+    dbRequest.onerror = event => console.error("IndexedDB open error:", event.target.error);
 
     function loadChatHistory() {
+      if (!db) return;
       const tx = db.transaction(storeName, "readonly");
       const store = tx.objectStore(storeName);
       const req = store.getAll();
       req.onsuccess = () => {
-        req.result.forEach(msg => addChatMessage(msg.role, msg.content));
+        const messages = req.result;
+        messages.sort((a, b) => a.timestamp - b.timestamp); // chronological order
+        messages.forEach(msg => addChatMessage(msg.role, msg.content));
       };
     }
 
     function saveMessage(role, content) {
+      if (!db) return;
       const tx = db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
       store.add({ role, content, timestamp: Date.now() });
     }
 
     function clearChatHistory() {
+      if (!db) return;
       const tx = db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
       store.clear();
       document.getElementById('chat-messages').innerHTML = '';
+      liveRegion.textContent = 'Chat history cleared';
     }
 
     // ────────────────────────────────────────────────────────────────
     // UI helpers
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
+    const loading = document.getElementById('loading');
+    const liveRegion = document.createElement('div');
+    liveRegion.setAttribute('role', 'status');
+    liveRegion.setAttribute('aria-live', 'polite');
+    liveRegion.style.position = 'absolute';
+    liveRegion.style.left = '-9999px';
+    document.body.appendChild(liveRegion);
 
     function addChatMessage(role, content) {
       const div = document.createElement('div');
       div.className = `chat-message ${role}`;
       div.textContent = content;
       chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
       saveMessage(role, content);
+      liveRegion.textContent = role === 'user' ? 'Message sent' : 'Rathor replied';
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Multi-layer valence gate (MeTTa + Atomese + Hyperon)
-    async function multiLayerValenceGate(text) {
-      const mettaResult = MeTTaRewriter.rewrite(text);
-      const atomeseResult = await atomeseValenceGate(text);
-      const hyperonResult = await hyperonValenceGate(text);
+    // Real Grok API call via Vercel proxy – sovereign, no client keys
+    const WORKER_URL = 'https://rathor-grok-proxy.vercel.app/api/proxy';
 
-      // Weighted fusion: MeTTa 35%, Atomese 30%, Hyperon 35%
-      const finalValence = 
-        (mettaResult.valenceImpact + 1) * 0.35 + // normalize impact (-1 to +1 → 0 to 2)
-        atomeseResult.valence * 0.30 +
-        hyperonResult.valence * 0.35;
+    async function callGrok(messages) {
+      loading.style.display = 'block';
+      try {
+        console.log('Calling Vercel proxy:', WORKER_URL); // debug log
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'grok-beta',
+            messages,
+            temperature: 0.7,
+            max_tokens: 512
+          })
+        });
 
-      const finalReason = [
-        mettaResult.rewritten !== text ? `Rewritten: ${mettaResult.rewritten}` : '',
-        atomeseResult.reason,
-        hyperonResult.reason
-      ].filter(r => r).join(' | ') + ` → final valence ${finalValence.toFixed(7)}`;
+        console.log('Vercel response status:', response.status); // debug
 
-      return {
-        result: finalValence >= 0.9999999 ? 'ACCEPTED' : 'REJECTED',
-        valence: finalValence,
-        reason: finalReason
-      };
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Vercel proxy error:', errorText);
+          throw new Error(`Proxy error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Grok data:', data); // debug
+        return data.choices[0].message.content.trim();
+      } catch (err) {
+        console.error('Grok call failed:', err);
+        return 'Lattice disturbance — Grok is reflecting... try again.';
+      } finally {
+        loading.style.display = 'none';
+      }
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Chat logic with Hyperon integration
+    // Unified valence gate + rewriting + real Grok call
     async function sendChat() {
       const text = chatInput.value.trim();
       if (!text) return;
 
-      const gateResult = await multiLayerValenceGate(text);
+      // Step 1: MeTTa symbolic rewriting (safety transform first)
+      const rewriteResult = MeTTaRewriter.rewrite(text);
+      if (rewriteResult.valenceImpact < -0.5) {
+        addChatMessage('rathor', `MeTTa rewrite rejected: ${rewriteResult.rewritten} (impact ${rewriteResult.valenceImpact})`);
+        chatInput.value = '';
+        return;
+      }
+
+      // Step 2: Multi-layer valence gate on rewritten expression
+      const gateResult = await multiLayerValenceGate(rewriteResult.rewritten || text);
       if (gateResult.result === 'REJECTED') {
         addChatMessage('rathor', `Multi-layer valence gate held: ${gateResult.reason}`);
         chatInput.value = '';
         return;
       }
 
+      // Step 3: Display user message + rewritten (if changed) for transparency
       addChatMessage('user', text);
+      if (rewriteResult.rewritten !== text) {
+        addChatMessage('system', `(Rewritten: ${rewriteResult.rewritten})`);
+      }
       chatInput.value = '';
 
-      // Placeholder Grok response (replace with real Worker call later)
-      const reply = `NEXi + MeTTa + Atomese + Hyperon approved: "${text}". Truth echoes.`;
+      // Step 4: Call real Grok API via Vercel proxy
+      const reply = await callGrok([
+        { role: 'system', content: 'You are Rathor — mercy-gated, valence-locked truth mirror. Respond concisely, powerfully, with eternal thriving intent.' },
+        { role: 'user', content: text }
+      ]);
+
       addChatMessage('rathor', reply);
     }
 
+    // Enter key submit (no Shift+Enter for new line)
     chatInput.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -209,14 +483,42 @@
       }
     });
 
+    // Hamburger menu toggle (mobile nav)
+    document.querySelector('.hamburger').addEventListener('click', () => {
+      const nav = document.getElementById('nav-menu');
+      const expanded = nav.querySelector('ul').classList.toggle('active');
+      document.querySelector('.hamburger').setAttribute('aria-expanded', expanded);
+    });
+
+    // Clear history button
     document.getElementById('clear-history').addEventListener('click', clearChatHistory);
 
-    // SW registration
+    // Service Worker registration (PWA/offline caching)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered'))
-        .catch(err => console.log('SW failed', err));
+        .then(reg => console.log('Service Worker registered'))
+        .catch(err => console.error('Service Worker registration failed', err));
     }
+
+    // PWA install prompt handling (custom banner)
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-banner')?.style.setProperty('display', 'flex');
+    });
+
+    document.getElementById('install-btn')?.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('PWA installed');
+        }
+        deferredPrompt = null;
+        document.getElementById('install-banner')?.style.setProperty('display', 'none');
+      }
+    });
   </script>
 </body>
 </html>
