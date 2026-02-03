@@ -137,7 +137,7 @@
       saveMessage(role, content);
     }
 
-    // Multi-layer valence gate – MeTTa + Atomese + Hyperon (with pattern mining)
+    // Multi-layer valence gate – MeTTa + Atomese + Hyperon (with clustering & patterns)
     async function multiLayerValenceGate(text) {
       const mettaResult = MeTTaRewriter.rewrite(text);
       const atomeseResult = await atomeseValenceGate(text);
@@ -145,7 +145,7 @@
 
       // Weighted fusion: MeTTa 35%, Atomese 30%, Hyperon 35%
       const finalValence = 
-        (mettaResult.valenceImpact + 1) * 0.35 + // normalize impact (-1 to +1 → 0 to 2)
+        (mettaResult.valenceImpact + 1) * 0.35 +
         atomeseResult.valence * 0.30 +
         hyperonResult.valence * 0.35;
 
@@ -153,7 +153,8 @@
         mettaResult.rewritten !== text ? `Rewritten: ${mettaResult.rewritten}` : '',
         atomeseResult.reason,
         hyperonResult.reason,
-        hyperonResult.minedPatternsCount > 0 ? `(${hyperonResult.minedPatternsCount} patterns mined)` : ''
+        hyperonResult.minedPatternsCount > 0 ? `(${hyperonResult.minedPatternsCount} patterns mined)` : '',
+        hyperonResult.clusterCount > 0 ? `(${hyperonResult.clusterCount} similarity clusters)` : ''
       ].filter(r => r).join(' | ') + ` → final valence ${finalValence.toFixed(7)}`;
 
       return {
@@ -163,7 +164,7 @@
       };
     }
 
-    // Chat logic with Hyperon reasoning & pattern mining
+    // Chat logic with Hyperon clustering & pattern mining
     async function sendChat() {
       const text = document.getElementById('chat-input').value.trim();
       if (!text) return;
