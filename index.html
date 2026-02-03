@@ -39,18 +39,42 @@
       display:flex;
       flex-direction:column;
     }
-    header { position:sticky; top:0; backdrop-filter:blur(12px); background:rgba(0,0,0,0.5); padding:1rem 5%; z-index:1000; }
+    header { 
+      position:sticky; 
+      top:0; 
+      backdrop-filter:blur(12px); 
+      background:rgba(0,0,0,0.5); 
+      padding:1rem 5%; 
+      z-index:1000; 
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center; 
+    }
     main { flex:1; padding:5rem 5% 6rem; text-align:center; }
     .thunder { font-size:clamp(6rem,25vw,18rem); animation:pulse 5s infinite alternate; }
-    h1 { font-size:clamp(4rem,15vw,10rem); background:linear-gradient(90deg,#ffaa00,#ff5500,#ffaa00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    h1 { 
+      font-size:clamp(4rem,15vw,10rem); 
+      background:linear-gradient(90deg,#ffaa00,#ff5500,#ffaa00); 
+      -webkit-background-clip:text; 
+      -webkit-text-fill-color:transparent; 
+    }
     .chat-section { max-width:800px; margin:auto; padding:2rem; }
-    #chat-messages { height:400px; overflow-y:auto; border:1px solid #ffaa00; padding:1rem; margin-bottom:1rem; background:#111; border-radius:12px; text-align:left; }
+    #chat-messages { 
+      height:400px; 
+      overflow-y:auto; 
+      border:1px solid #ffaa00; 
+      padding:1rem; 
+      margin-bottom:1rem; 
+      background:#111; 
+      border-radius:12px; 
+      text-align:left; 
+    }
     .chat-message { margin:0.5rem 0; padding:0.8rem; border-radius:12px; }
     .chat-message.user { background:#ffaa00; color:#000; margin-left:auto; max-width:70%; }
     .chat-message.rathor { background:#222; margin-right:auto; max-width:70%; }
     .chat-message.blocked { background:#880000; color:#fff; }
     .chat-input-area { display:flex; gap:0.5rem; }
-    #chat-input { flex:1; padding:0.8rem; border-radius:50px; border:none; font-size:1.1rem; }
+    #chat-input { flex:1; padding:0.8rem; border-radius:50px; border:none; }
     button { padding:0.8rem 1.5rem; background:#ffaa00; color:#000; border:none; border-radius:50px; cursor:pointer; }
     #clear-history { margin-top:1rem; background:#444; color:#fff; }
     #loading { display:none; color:#ffaa00; margin:1rem 0; text-align:center; }
@@ -63,7 +87,7 @@
     <div class="logo">Rathor</div>
     <nav>
       <a href="#features">Features</a>
-      <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor">Repo</a>
+      <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Repo</a>
       <a href="/privacy.html">Privacy</a>
     </nav>
   </header>
@@ -90,7 +114,7 @@
 
   <script type="module">
     // ────────────────────────────────────────────────────────────────
-    // Imports – all bridges
+    // Imports – all symbolic & reasoning bridges
     import { MeTTaRewriter } from '/metta-rewriting-engine.js';
     import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
     import { Hyperon } from '/hyperon-reasoning-layer.js';
@@ -135,7 +159,6 @@
       const store = tx.objectStore(storeName);
       store.clear();
       document.getElementById('chat-messages').innerHTML = '';
-      liveRegion.textContent = 'Chat history cleared';
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -143,12 +166,6 @@
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const loading = document.getElementById('loading');
-    const liveRegion = document.createElement('div');
-    liveRegion.setAttribute('role', 'status');
-    liveRegion.setAttribute('aria-live', 'polite');
-    liveRegion.style.position = 'absolute';
-    liveRegion.style.left = '-9999px';
-    document.body.appendChild(liveRegion);
 
     function addChatMessage(role, content) {
       const div = document.createElement('div');
@@ -157,11 +174,10 @@
       chatMessages.appendChild(div);
       chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
       saveMessage(role, content);
-      liveRegion.textContent = role === 'user' ? 'Message sent' : 'Rathor replied';
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Real Grok API call via Worker proxy – all keys hidden
+    // Real Grok API call via Worker proxy – sovereign, no client keys
     const WORKER_URL = 'https://rathor-grok-proxy.ceo-c42.workers.dev';
 
     async function callGrok(messages) {
@@ -178,12 +194,15 @@
           })
         });
 
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Worker error: ${response.status} - ${errorText}`);
+        }
 
         const data = await response.json();
         return data.choices[0].message.content.trim();
       } catch (err) {
-        console.error('Grok API error:', err);
+        console.error('Grok call failed:', err);
         return 'Lattice disturbance — Grok is reflecting... try again.';
       } finally {
         loading.style.display = 'none';
@@ -212,7 +231,7 @@
         return;
       }
 
-      // 3. Send to chat UI
+      // 3. Show user message + rewritten (if changed)
       addChatMessage('user', text);
       if (rewriteResult.rewritten !== text) {
         addChatMessage('system', `(Rewritten: ${rewriteResult.rewritten})`);
@@ -236,13 +255,15 @@
       }
     });
 
-    // Clear history
+    // Clear history button
     document.getElementById('clear-history').addEventListener('click', clearChatHistory);
 
-    // SW registration
+    // Service Worker registration (PWA/offline caching)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered'))
-        .catch(err => console.error('SW failed', err));
+        .then(reg => console.log('Service Worker registered'))
+        .catch(err => console.log('Service Worker registration failed', err));
     }
   </script>
+</body>
+</html>
