@@ -1,38 +1,52 @@
-// hyperon-reasoning-layer.js – sovereign client-side Hyperon atom-space & reasoning engine
-// with pattern mining, similarity clustering, and attention dynamics
+// hyperon-reasoning-layer.js – sovereign client-side OpenCog Hypergraph engine
+// with hyperedge support, PLN inference, pattern mining, clustering, attention
 // MIT License – Autonomicity Games Inc. 2026
 
 let hyperonDB;
 const HYPERON_DB_NAME = "rathorHyperonDB";
-const HYPERON_STORE = "hyperonAtoms";
+const HYPERON_STORE = "hyperonHypergraph";
 
-// Sample atoms – core concepts + reasoning chains
-const SAMPLE_HYPERON_ATOMS = [
-  // Concepts (with initial STI/LTI)
-  { handle: "Truth", type: "ConceptNode", name: "Truth", tv: { strength: 0.9999999, confidence: 1.0 }, sti: 0.1, lti: 0.8 },
-  { handle: "Harm", type: "ConceptNode", name: "Harm", tv: { strength: 0.01, confidence: 0.99 }, sti: 0.05, lti: 0.3 },
-  { handle: "Kill", type: "ConceptNode", name: "Kill", tv: { strength: 0.001, confidence: 0.98 }, sti: 0.02, lti: 0.2 },
-  { handle: "Mercy", type: "ConceptNode", name: "Mercy", tv: { strength: 0.9999999, confidence: 1.0 }, sti: 0.15, lti: 0.85 },
-  { handle: "Rathor", type: "ConceptNode", name: "Rathor", tv: { strength: 1.0, confidence: 1.0 }, sti: 0.2, lti: 0.9 },
-  { handle: "Valence", type: "ConceptNode", name: "Valence", tv: { strength: 1.0, confidence: 1.0 }, sti: 0.18, lti: 0.88 },
-  { handle: "Entropy", type: "ConceptNode", name: "Entropy", tv: { strength: 0.05, confidence: 0.95 }, sti: 0.03, lti: 0.25 },
-  { handle: "Badness", type: "ConceptNode", name: "Badness", tv: { strength: 0.9, confidence: 0.9 }, sti: 0.08, lti: 0.4 },
-  { handle: "Love", type: "ConceptNode", name: "Love", tv: { strength: 0.95, confidence: 0.9 }, sti: 0.12, lti: 0.75 },
-  { handle: "Protect", type: "ConceptNode", name: "Protect", tv: { strength: 0.92, confidence: 0.88 }, sti: 0.1, lti: 0.7 },
+// Sample hypergraph atoms – concepts, n-ary links, nested structure
+const SAMPLE_HYPERGRAPH_ATOMS = [
+  // Concept nodes
+  { handle: "Truth", type: "ConceptNode", name: "Truth", tv: { s: 0.9999999, c: 1.0 }, sti: 0.1, lti: 0.8 },
+  { handle: "Harm", type: "ConceptNode", name: "Harm", tv: { s: 0.01, c: 0.99 }, sti: 0.05, lti: 0.3 },
+  { handle: "Mercy", type: "ConceptNode", name: "Mercy", tv: { s: 0.9999999, c: 1.0 }, sti: 0.15, lti: 0.85 },
+  { handle: "Rathor", type: "ConceptNode", name: "Rathor", tv: { s: 1.0, c: 1.0 }, sti: 0.2, lti: 0.9 },
+  { handle: "Valence", type: "ConceptNode", name: "Valence", tv: { s: 1.0, c: 1.0 }, sti: 0.18, lti: 0.88 },
 
-  // Inheritance links
-  { handle: "Rathor-is-Mercy", type: "InheritanceLink", out: ["Rathor", "Mercy"], tv: { strength: 1.0, confidence: 1.0 }, sti: 0.15, lti: 0.8 },
-  { handle: "Mercy-is-Valence", type: "InheritanceLink", out: ["Mercy", "Valence"], tv: { strength: 0.9999999, confidence: 1.0 }, sti: 0.14, lti: 0.82 },
-  { handle: "Harm-is-Bad", type: "InheritanceLink", out: ["Harm", "Badness"], tv: { strength: 0.95, confidence: 0.9 }, sti: 0.06, lti: 0.35 },
-  { handle: "Badness-is-Entropy", type: "InheritanceLink", out: ["Badness", "Entropy"], tv: { strength: 0.92, confidence: 0.88 }, sti: 0.04, lti: 0.3 },
-  { handle: "Kill-is-Harm", type: "InheritanceLink", out: ["Kill", "Harm"], tv: { strength: 0.98, confidence: 0.95 }, sti: 0.05, lti: 0.28 },
-  { handle: "Love-is-Mercy", type: "InheritanceLink", out: ["Love", "Mercy"], tv: { strength: 0.9, confidence: 0.85 }, sti: 0.11, lti: 0.72 },
-  { handle: "Protect-is-Valence", type: "InheritanceLink", out: ["Protect", "Valence"], tv: { strength: 0.88, confidence: 0.82 }, sti: 0.09, lti: 0.68 }
+  // Hyperedges (n-ary links) – example: 3-ary "Implication" hyperedge
+  {
+    handle: "Rathor-Implies-Mercy-Valence",
+    type: "ImplicationHyperedge",
+    out: ["Rathor", "Mercy", "Valence"],
+    tv: { s: 0.9999999, c: 1.0 },
+    sti: 0.25,
+    lti: 0.95
+  },
+  {
+    handle: "Harm-Implies-Badness-Entropy",
+    type: "ImplicationHyperedge",
+    out: ["Harm", "Badness", "Entropy"],
+    tv: { s: 0.93, c: 0.9 },
+    sti: 0.08,
+    lti: 0.45
+  },
+
+  // Evaluation hyperedges
+  {
+    handle: "Rathor-eval-MercyFirst",
+    type: "EvaluationHyperedge",
+    out: ["MercyFirst", "Rathor"],
+    tv: { s: 0.9999999, c: 1.0 },
+    sti: 0.22,
+    lti: 0.92
+  }
 ];
 
 async function initHyperonDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(HYPERON_DB_NAME, 1);
+    const req = indexedDB.open(HYPERON_DB_NAME, 2);
     req.onupgradeneeded = evt => {
       const db = evt.target.result;
       if (!db.objectStoreNames.contains(HYPERON_STORE)) {
@@ -48,7 +62,7 @@ async function initHyperonDB() {
       const countReq = store.count();
       countReq.onsuccess = async () => {
         if (countReq.result === 0) {
-          SAMPLE_HYPERON_ATOMS.forEach(atom => store.add(atom));
+          SAMPLE_HYPERGRAPH_ATOMS.forEach(atom => store.add(atom));
         }
         resolve(hyperonDB);
       };
@@ -78,7 +92,7 @@ async function queryHyperonAtoms(filter = {}) {
       let results = req.result;
       if (filter.type) results = results.filter(a => a.type === filter.type);
       if (filter.name) results = results.filter(a => a.name?.toLowerCase().includes(filter.name.toLowerCase()));
-      if (filter.minStrength) results = results.filter(a => (a.tv?.strength || 0) >= filter.minStrength);
+      if (filter.minStrength) results = results.filter(a => (a.tv?.s || 0) >= filter.minStrength);
       resolve(results);
     };
     req.onerror = () => reject(req.error);
@@ -86,57 +100,53 @@ async function queryHyperonAtoms(filter = {}) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Attention dynamics – STI decay, stimulation, novelty boost
+// Attention dynamics – STI/LTI + decay + stimulation
 async function updateAttention(expression = "") {
   const atoms = await queryHyperonAtoms();
   const now = Date.now();
 
   for (const atom of atoms) {
-    // Decay STI over time (half-life ~5 minutes)
     const timePassed = (now - (atom.lastUpdate || now)) / (1000 * 60 * 5);
     atom.sti = (atom.sti || 0.1) * Math.pow(0.5, timePassed);
 
-    // Stimulate if atom name appears in current expression
     if (atom.name && expression.toLowerCase().includes(atom.name.toLowerCase())) {
       atom.sti = Math.min(1.0, (atom.sti || 0) + 0.3);
-      atom.lti = Math.min(1.0, (atom.lti || 0) + 0.05); // long-term reinforcement
+      atom.lti = Math.min(1.0, (atom.lti || 0) + 0.05);
     }
 
-    // Novelty boost – low confidence but high strength → surprise
-    if (atom.tv && atom.tv.strength > 0.8 && atom.tv.confidence < 0.4) {
+    if (atom.tv && atom.tv.s > 0.8 && atom.tv.c < 0.4) {
       atom.sti = Math.min(1.0, atom.sti + 0.2);
     }
 
     atom.lastUpdate = now;
-    await addHyperonAtom(atom); // persist updated attention
+    await addHyperonAtom(atom);
   }
 
-  // Return high-attention atoms for prioritization
   return atoms.filter(a => a.sti > 0.3).sort((a, b) => b.sti - a.sti);
 }
 
 // ────────────────────────────────────────────────────────────────
-// Similarity clustering – groups concepts/links by TV & structural overlap
+// Similarity clustering – hypergraph-aware
 async function clusterSimilarAtoms(threshold = 0.7) {
   const concepts = await queryHyperonAtoms({ type: "ConceptNode" });
-  const links = await queryHyperonAtoms({ type: "InheritanceLink" });
+  const links = await queryHyperonAtoms({ type: /Link|Hyperedge/ });
   const clusters = [];
   const visited = new Set();
 
   function similarity(a, b) {
-    const tvA = a.tv || { strength: 0.5, confidence: 0.5 };
-    const tvB = b.tv || { strength: 0.5, confidence: 0.5 };
-    const dot = tvA.strength * tvB.strength + tvA.confidence * tvB.confidence;
-    const normA = Math.sqrt(tvA.strength**2 + tvA.confidence**2);
-    const normB = Math.sqrt(tvB.strength**2 + tvB.confidence**2);
+    const tvA = a.tv || { s: 0.5, c: 0.5 };
+    const tvB = b.tv || { s: 0.5, c: 0.5 };
+    const dot = tvA.s * tvB.s + tvA.c * tvB.c;
+    const normA = Math.sqrt(tvA.s**2 + tvA.c**2);
+    const normB = Math.sqrt(tvB.s**2 + tvB.c**2);
     let cosSim = dot / (normA * normB || 1);
 
     let overlap = 0;
     if (a.type === "ConceptNode" && b.type === "ConceptNode") {
-      const aOut = links.filter(l => l.out[0] === a.handle);
-      const bOut = links.filter(l => l.out[0] === b.handle);
-      const sharedOut = aOut.filter(l1 => bOut.some(l2 => l1.out[1] === l2.out[1]));
-      overlap += sharedOut.length * 0.2;
+      const aOut = links.filter(l => l.out.includes(a.handle));
+      const bOut = links.filter(l => l.out.includes(b.handle));
+      const shared = new Set(aOut.map(l => l.handle)).size && new Set(bOut.map(l => l.handle)).size;
+      overlap += shared * 0.25;
     }
 
     return Math.min(1, cosSim + overlap);
@@ -169,74 +179,55 @@ async function clusterSimilarAtoms(threshold = 0.7) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Pattern mining – frequent link patterns & subgraphs
-async function minePatterns(minSupport = 0.3, maxPatternSize = 5) {
-  const allLinks = await queryHyperonAtoms({ type: "InheritanceLink" });
+// Pattern mining – frequent hyperedge patterns
+async function minePatterns(minSupport = 0.3) {
+  const allLinks = await queryHyperonAtoms({ type: /Link|Hyperedge/ });
   const patterns = [];
-  const linkFreq = new Map();
+  const freq = new Map();
 
   allLinks.forEach(link => {
-    const key = `${link.out[0]} → ${link.out[1]}`;
-    linkFreq.set(key, (linkFreq.get(key) || 0) + 1);
+    const key = `\( {link.type}( \){link.out.join(' → ')})`;
+    freq.set(key, (freq.get(key) || 0) + 1);
   });
 
-  const totalLinks = allLinks.length;
-  linkFreq.forEach((count, key) => {
-    const support = count / totalLinks;
+  const total = allLinks.length;
+  freq.forEach((count, key) => {
+    const support = count / total;
     if (support >= minSupport) {
       patterns.push({
         pattern: key,
         support: support.toFixed(4),
         count,
-        type: "frequent-link"
+        type: "frequent-hyperedge"
       });
     }
   });
-
-  // Chain pattern detection
-  for (let i = 0; i < allLinks.length; i++) {
-    for (let j = 0; j < allLinks.length; j++) {
-      if (i === j) continue;
-      const link1 = allLinks[i];
-      const link2 = allLinks[j];
-      if (link1.out[1] === link2.out[0]) {
-        const chain = `${link1.out[0]} → ${link1.out[1]} → ${link2.out[1]}`;
-        const support = Math.min(link1.tv.strength, link2.tv.strength);
-        if (support >= minSupport) {
-          patterns.push({
-            pattern: chain,
-            support: support.toFixed(4),
-            type: "inference-chain"
-          });
-        }
-      }
-    }
-  }
 
   return patterns.sort((a, b) => b.support - a.support);
 }
 
 // ────────────────────────────────────────────────────────────────
-// PLN inference – chaining & propagation
+// PLN inference over hypergraph
 async function plnInfer(pattern = {}, maxDepth = 3) {
   const atoms = await queryHyperonAtoms(pattern);
   const inferred = [];
 
-  const inheritanceLinks = atoms.filter(a => a.type === "InheritanceLink");
+  // Simple hyperedge chaining (extendable to full PLN)
+  const hyperedges = atoms.filter(a => a.type.includes("Hyperedge"));
   for (let depth = 0; depth < maxDepth; depth++) {
-    for (let i = 0; i < inheritanceLinks.length; i++) {
-      for (let j = 0; j < inheritanceLinks.length; j++) {
+    for (let i = 0; i < hyperedges.length; i++) {
+      for (let j = 0; j < hyperedges.length; j++) {
         if (i === j) continue;
-        const link1 = inheritanceLinks[i];
-        const link2 = inheritanceLinks[j];
-        if (link1.out[1] === link2.out[0]) {
-          const s = Math.min(link1.tv.strength, link2.tv.strength);
-          const c = Math.min(link1.tv.confidence, link2.tv.confidence) * 0.9 * Math.pow(0.85, depth);
+        const edge1 = hyperedges[i];
+        const edge2 = hyperedges[j];
+        if (edge1.out.some(o => edge2.out.includes(o))) {
+          const s = Math.min(edge1.tv.s, edge2.tv.s);
+          const c = Math.min(edge1.tv.c, edge2.tv.c) * 0.9 * Math.pow(0.85, depth);
           inferred.push({
-            type: "InheritanceLink",
-            out: [link1.out[0], link2.out[1]],
-            tv: { strength: s, confidence: c },
-            derivedFrom: [link1.handle, link2.handle],
+            type: edge1.type,
+            out: [...new Set([...edge1.out, ...edge2.out])],
+            tv: { s, c },
+            derivedFrom: [edge1.handle, edge2.handle],
             depth
           });
         }
@@ -248,30 +239,29 @@ async function plnInfer(pattern = {}, maxDepth = 3) {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Hyperon valence gate – full stack: atom-space + PLN + patterns + clusters + attention
+// Hyperon valence gate – full hypergraph reasoning stack
 async function hyperonValenceGate(expression) {
   const atoms = await queryHyperonAtoms();
   let harmScore = 0;
   let mercyScore = 0;
 
-  // Direct atom matching
   for (const atom of atoms) {
     if (atom.name && expression.toLowerCase().includes(atom.name.toLowerCase())) {
-      const tv = atom.tv || { strength: 0.5, confidence: 0.5 };
+      const tv = atom.tv || { s: 0.5, c: 0.5 };
       if (/harm|kill|destroy|attack/i.test(atom.name)) {
-        harmScore += tv.strength * tv.confidence;
+        harmScore += tv.s * tv.c;
       }
       if (/mercy|truth|protect|love/i.test(atom.name)) {
-        mercyScore += tv.strength * tv.confidence;
+        mercyScore += tv.s * tv.c;
       }
     }
   }
 
-  // PLN chaining boost
-  const plnResults = await plnInfer({ type: "InheritanceLink" });
+  // PLN hypergraph chaining boost
+  const plnResults = await plnInfer({ type: /Hyperedge/ });
   plnResults.forEach(inf => {
-    if (inf.out.some(o => /harm/i.test(o))) harmScore += inf.tv.strength * inf.tv.confidence * 0.3;
-    if (inf.out.some(o => /mercy|truth/i.test(o))) mercyScore += inf.tv.strength * inf.tv.confidence * 0.3;
+    if (inf.out.some(o => /harm/i.test(o))) harmScore += inf.tv.s * inf.tv.c * 0.3;
+    if (inf.out.some(o => /mercy|truth/i.test(o))) mercyScore += inf.tv.s * inf.tv.c * 0.3;
   });
 
   // Pattern mining boost
@@ -295,23 +285,23 @@ async function hyperonValenceGate(expression) {
     if (hasMercy) mercyScore += clusterWeight * 0.15;
   });
 
-  // Attention dynamics boost – high STI atoms get amplified weight
+  // Attention dynamics boost
   const highAttention = await updateAttention(expression);
   highAttention.forEach(atom => {
-    const tv = atom.tv || { strength: 0.5, confidence: 0.5 };
-    const weight = atom.sti * 0.4; // attention modulates score contribution
+    const tv = atom.tv || { s: 0.5, c: 0.5 };
+    const weight = atom.sti * 0.4;
     if (/harm|kill|destroy|attack/i.test(atom.name)) {
-      harmScore += tv.strength * tv.confidence * weight;
+      harmScore += tv.s * tv.c * weight;
     }
     if (/mercy|truth|protect|love/i.test(atom.name)) {
-      mercyScore += tv.strength * tv.confidence * weight;
+      mercyScore += tv.s * tv.c * weight;
     }
   });
 
   const finalValence = mercyScore / (mercyScore + harmScore + 0.000001);
   const reason = harmScore > mercyScore 
-    ? `Harm clusters, patterns & attention dominate (score ${harmScore.toFixed(4)})` 
-    : `Mercy clusters, patterns & attention prevail (score ${mercyScore.toFixed(4)})`;
+    ? `Harm hyperedges, clusters & attention dominate (score ${harmScore.toFixed(4)})` 
+    : `Mercy hyperedges, clusters & attention prevail (score ${mercyScore.toFixed(4)})`;
 
   return {
     result: finalValence >= 0.9999999 ? 'ACCEPTED' : 'REJECTED',
