@@ -17,9 +17,10 @@
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡️</text></svg>" />
   
-  <!-- MeTTa + Atomese bridges -->
+  <!-- MeTTa + Atomese + Hyperon bridges -->
   <script type="module" src="/metta-hyperon-bridge.js"></script>
   <script type="module" src="/atomese-knowledge-bridge.js"></script>
+  <script type="module" src="/hyperon-atomspace-bridge.js"></script>
   
   <style>
     :root {
@@ -251,6 +252,7 @@
   <script type="module">
     import { advancedValenceGate } from '/metta-hyperon-bridge.js';
     import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
+    import { Hyperon } from '/hyperon-atomspace-bridge.js';
 
     // IndexedDB setup
     let db;
@@ -298,13 +300,23 @@
       saveMessage(role, content);
     }
 
-    // Multi-layer valence gate (MeTTa + Atomese)
+    // Multi-layer valence gate (MeTTa + Atomese + Hyperon)
     async function multiLayerValenceGate(text) {
       const mettaResult = await advancedValenceGate(text);
       const atomeseResult = await atomeseValenceGate(text);
+      const hyperonResult = await Hyperon.hyperonValenceGate(text);
 
-      const finalValence = Math.min(mettaResult.valence, atomeseResult.valence);
-      const finalReason = `${mettaResult.reason} | ${atomeseResult.reason} → final valence ${finalValence.toFixed(7)}`;
+      // Weighted fusion: MeTTa 40%, Atomese 30%, Hyperon 30%
+      const finalValence = 
+        (mettaResult.valence * 0.4) +
+        (atomeseResult.valence * 0.3) +
+        (hyperonResult.valence * 0.3);
+
+      const finalReason = [
+        mettaResult.reason,
+        atomeseResult.reason,
+        hyperonResult.reason
+      ].filter(r => r).join(' | ') + ` → final valence ${finalValence.toFixed(7)}`;
 
       return {
         result: finalValence >= 0.9999999 ? 'ACCEPTED' : 'REJECTED',
@@ -323,7 +335,7 @@
       // Multi-layer valence gate
       const gateResult = await multiLayerValenceGate(text);
       if (gateResult.result === 'REJECTED') {
-        addChatMessage('rathor', `Valence gate held: ${gateResult.reason}`);
+        addChatMessage('rathor', `Multi-layer valence gate held: ${gateResult.reason}`);
         chatInput.value = '';
         return;
       }
@@ -332,7 +344,7 @@
       chatInput.value = '';
 
       // Placeholder Grok response (replace with real Worker call later)
-      const reply = `NEXi + MeTTa + Atomese approved: "${text}". Truth echoes.`;
+      const reply = `NEXi + MeTTa + Atomese + Hyperon approved: "${text}". Truth echoes.`;
       addChatMessage('rathor', reply);
     }
 
