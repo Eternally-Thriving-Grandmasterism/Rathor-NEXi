@@ -211,4 +211,130 @@ class PPOAgent {
 }
 
 // Export for Ruskode integration
+export { PPOAgent };    }
+    return value;
+  }
+}
+
+class PPOAgent {
+  constructor(stateDim = 6, actionDim = 2) {
+    this.actor = new PPOActor(stateDim, actionDim);
+    this.critic = new PPOCritic(stateDim);
+    this.targetCritic = this.critic.copy(); // for GAE
+    this.replayBuffer = [];
+    this.bufferSize = 5000;
+    this.batchSize = 64;
+    this.gamma = 0.99;
+    this.lam = 0.95; // GAE lambda
+    this.clipEpsilon = 0.2;
+    this.valueLossCoef = 0.5;
+    this.entropyCoef = 0.01;
+    this.learningRate = 0.0003;
+    this.mercyThreshold = 0.9999999;
+  }
+
+  getAction(state) {
+    const { mu, std } = this.actor.forward(state);
+    const action = this.actor.sampleAction(mu, std);
+    return { action, mu, std };
+  }
+
+  // Deepened mercy-shaped reward
+  computeReward(state, action, nextState) {
+    let reward = 0;
+
+    const altError = Math.abs(nextState.targetAltitude - nextState.altitude);
+    const velError = Math.abs(nextState.targetVelocity - nextState.velocity);
+    if (altError < 50 && velError < 10) reward += 35.0;
+
+    const altPotential = -altError / 1000;
+    const velPotential = -velError / 100;
+    reward += (altPotential - state.altPotential || 0) * 12;
+    reward += (velPotential - state.velPotential || 0) * 8;
+
+    reward += (nextState.energy - state.energy) * 0.12;
+    reward += (nextState.integrity - state.integrity) * 25;
+
+    const fleetValence = nextState.integrity * nextState.energy / 100;
+    if (fleetValence >= this.mercyThreshold) {
+      reward += 12.0 + Math.pow(fleetValence - this.mercyThreshold + 0.001, 2) * 200;
+    } else {
+      reward -= Math.pow(1 - fleetValence, 3) * 35;
+    }
+
+    const tdError = reward + this.gamma * this.targetCritic.forward(nextState) - this.critic.forward(state);
+    reward += tdError * 0.25;
+
+    if (nextState.sti > 0.7) reward += 3.0;
+
+    return reward;
+  }
+
+  storeTransition(state, action, reward, nextState, done) {
+    this.replayBuffer.push({ state, action, reward, nextState, done });
+    if (this.replayBuffer.length > this.bufferSize) {
+      this.replayBuffer.shift();
+    }
+  }
+
+  train() {
+    if (this.replayBuffer.length < this.batchSize) return;
+
+    // Compute GAE advantages
+    const advantages = [];
+    let gae = 0;
+    for (let i = this.replayBuffer.length - 1; i >= 0; i--) {
+      const exp = this.replayBuffer[i];
+      const delta = exp.reward + (i < this.replayBuffer.length - 1 && !exp.done ? this.gamma * this.targetCritic.forward(exp.nextState) : 0) - this.critic.forward(exp.state);
+      gae = delta + this.gamma * this.lam * gae;
+      advantages.unshift(gae);
+    }
+
+    // PPO update
+    for (let i = 0; i < this.replayBuffer.length; i++) {
+      const exp = this.replayBuffer[i];
+      const advantage = advantages[i];
+
+      // Actor loss (clipped surrogate)
+      const oldLogits = this.actor.forward(exp.state);
+      const oldProb = this.softmax(oldLogits)[exp.action];
+      const newLogits = this.actor.forward(exp.state);
+      const newProb = this.softmax(newLogits)[exp.action];
+      const ratio = newProb / oldProb;
+      const clipped = Math.min(ratio, Math.max(1 - this.clipEpsilon, ratio));
+      const actorLoss = -Math.min(ratio * advantage, clipped * advantage) - this.entropyCoef * this.entropy(newLogits);
+
+      // Critic loss (MSE)
+      const value = this.critic.forward(exp.state);
+      const valueTarget = exp.reward + (i < this.replayBuffer.length - 1 && !exp.done ? this.gamma * this.targetCritic.forward(exp.nextState) : 0);
+      const criticLoss = Math.pow(value - valueTarget, 2) * this.valueLossCoef;
+
+      // Simplified update (real impl would use proper optimizer)
+      this.actor.update(this.actor, this.learningRate * actorLoss);
+      this.critic.update(this.targetCritic, this.learningRate * criticLoss);
+    }
+
+    // Periodic target update
+    this.stepCount++;
+    if (this.stepCount % 100 === 0) {
+      this.targetCritic = this.critic.copy();
+    }
+
+    // Decay exploration
+    this.epsilon = Math.max(this.minEpsilon, this.epsilon * this.epsilonDecay);
+  }
+
+  softmax(logits) {
+    const exp = logits.map(Math.exp);
+    const sum = exp.reduce((a, b) => a + b, 0);
+    return exp.map(e => e / sum);
+  }
+
+  entropy(logits) {
+    const probs = this.softmax(logits);
+    return -probs.reduce((sum, p) => sum + p * Math.log(p + 1e-10), 0);
+  }
+}
+
+// Export for Ruskode integration
 export { PPOAgent };
