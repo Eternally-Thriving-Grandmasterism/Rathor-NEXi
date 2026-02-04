@@ -16,18 +16,19 @@
   <link rel="icon" type="image/jpeg" sizes="512x512" href="/icons/thunder-favicon-512.jpg" />
   <link rel="apple-touch-icon" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
 
-  <!-- PWA manifest – MercyPrint-ready -->
+  <!-- PWA manifest -->
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#ffaa00" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <!-- All local bridges – offline capable -->
+  <!-- All local bridges -->
   <script type="module" src="/metta-rewriting-engine.js"></script>
   <script type="module" src="/atomese-knowledge-bridge.js"></script>
   <script type="module" src="/hyperon-reasoning-layer.js"></script>
   <script type="module" src="/grok-shard-engine.js"></script>
+  <script type="module" src="/neat-neuroevolution-engine.js"></script>
   <script type="module" src="/ruskode-firmware.js"></script>
 
   <style>
@@ -354,7 +355,7 @@
 
   <script type="module">
     // ────────────────────────────────────────────────────────────────
-    // Imports – all local, offline
+    // Imports
     import { MeTTaRewriter } from '/metta-rewriting-engine.js';
     import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
     import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
@@ -439,11 +440,11 @@
         addChatMessage('user', text);
         chatInput.value = '';
 
-        if (text.toLowerCase().includes("ruskode") || text.toLowerCase().includes("alpha air") || text.toLowerCase().includes("flight")) {
-          const ruskode = new RuskodeCore();
+        if (text.toLowerCase().includes("ruskode") || text.toLowerCase().includes("alpha air") || text.toLowerCase().includes("flight") || text.toLowerCase().includes("fleet")) {
+          const ruskode = new RuskodeCore(5);
           await ruskode.heal();
-          const flight = await ruskode.evolveFlightPath(500, 200);
-          addChatMessage('rathor', `Ruskode firmware live. Flight path evolved: fitness ${flight.fitness}, attention ${flight.sti}. AlphaProMega Air — zero crash, infinite range.`);
+          const flight = await ruskode.evolveFleetFlightPath();
+          addChatMessage('rathor', `Ruskode firmware live. Fleet flight path evolved: fitness ${flight.fitness}, attention ${flight.sti}. AlphaProMega Air — zero crash, infinite range swarm.`);
         } else {
           const reply = await grokShard.reply(text);
           addChatMessage('rathor', reply);
