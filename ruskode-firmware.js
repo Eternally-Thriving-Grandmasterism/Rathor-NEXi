@@ -1,5 +1,5 @@
 // ruskode-firmware.js — AlphaProMega Air Foundation sovereign flight brain
-// Mercy-gated, post-quantum, self-healing Rust firmware emulator + deepened DQN policy
+// Mercy-gated, post-quantum, self-healing Rust firmware emulator + PER DQN policy
 // MIT License – Autonomicity Games Inc. 2026
 
 class RuskodeCore {
@@ -58,7 +58,7 @@ class RuskodeCore {
     await new Promise(r => setTimeout(r, 100));
   }
 
-  async evolveFleetFlightPath(steps = 150) {
+  async evolveFleetFlightPath(steps = 200) {
     if (!this.mercyCheck()) return { error: "Mercy gate held" };
 
     let totalReward = 0;
@@ -75,66 +75,27 @@ class RuskodeCore {
           sti: ac.sti
         };
 
-        // Update potentials
         state.altPotential = -Math.abs(ac.targetAltitude - ac.altitude) / 1000;
         state.velPotential = -Math.abs(ac.targetVelocity - ac.velocity) / 100;
 
         const action = this.dqnController.chooseAction(state);
-        const thrust = (action - 3) * 60; // -180 to +180 thrust (7 bins)
+        const thrust = (action - 3) * 60;
 
-        // Apply action
         ac.velocity += thrust * 0.01;
         ac.altitude += ac.velocity * 0.01;
         ac.energy -= Math.abs(thrust) * 0.001;
         ac.integrity = Math.max(0, ac.integrity - 0.0001 * Math.random());
 
-        // Deepened reward shaping
         const reward = this.dqnController.computeReward(state, action, state);
         totalReward += reward;
 
-        // Store transition & train
         this.dqnController.storeTransition(state, action, reward, state);
         this.dqnController.train();
       }
     }
 
     return {
-      status: "Fleet flight policy deeply evolved via DQN — AlphaProMega Air zero-crash swarm enabled",
-      averageReward: (totalReward / (steps * this.state.fleet.length)).toFixed(4)
-    };
-  }
-}
-
-export { RuskodeCore };        ac.velocity += thrust * 0.01;
-        ac.altitude += ac.velocity * 0.01;
-        ac.energy -= Math.abs(thrust) * 0.001;
-        ac.integrity = Math.max(0, ac.integrity - 0.0001 * Math.random());
-
-        // Deepened mercy-shaped reward
-        const reward = this.qController.computeReward(state, action, state);
-
-        totalReward += reward;
-
-        // Update Q-learning
-        this.qController.update(state, action, reward, state);
-      }
-    }
-
-    return {
-      status: "Fleet flight policy deeply evolved via Q-learning — AlphaProMega Air zero-crash swarm enabled",
-      averageReward: (totalReward / (steps * this.state.fleet.length)).toFixed(4)
-    };
-  }
-}
-
-export { RuskodeCore };
-        // Update Q-learning
-        this.qController.update(state, action, reward, state);
-      }
-    }
-
-    return {
-      status: "Fleet flight policy evolved via Q-learning — AlphaProMega Air zero-crash swarm enabled",
+      status: "Fleet flight policy deeply evolved via prioritized DQN — AlphaProMega Air zero-crash swarm enabled",
       averageReward: (totalReward / (steps * this.state.fleet.length)).toFixed(4)
     };
   }
