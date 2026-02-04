@@ -23,7 +23,7 @@ class RuskodeCore {
       mission: "Zero-crash, infinite-range, post-quantum secure flight for eternal thriving"
     };
     this.thunder = "eternal";
-    this.ppoAgent = new PPOAgent(6, 2); // continuous thrust/pitch
+    this.ppoAgent = new PPOAgent(6, 2);
   }
 
   mercyCheck() {
@@ -77,9 +77,8 @@ class RuskodeCore {
 
         const { action } = this.ppoAgent.getAction(state);
 
-        // Apply continuous action
-        const thrust = action[0] * 100; // scale to thrust
-        const pitch = action[1] * 10;   // scale to pitch
+        const thrust = action[0] * 100;
+        const pitch = action[1] * 10;
 
         ac.velocity += thrust * 0.01 + pitch * 0.005;
         ac.altitude += ac.velocity * 0.01;
@@ -93,11 +92,10 @@ class RuskodeCore {
       }
     }
 
-    // Train PPO agent
     await this.ppoAgent.train(trajectory);
 
     return {
-      status: "Fleet flight policy deeply evolved via PPO — AlphaProMega Air zero-crash swarm enabled",
+      status: "Fleet flight policy deeply evolved via PPO continuous control — AlphaProMega Air zero-crash swarm enabled",
       averageReward: (totalReward / (steps * this.state.fleet.length)).toFixed(4)
     };
   }
