@@ -1,5 +1,5 @@
 /**
- * Rathor-NEXi Service Worker – Workbox v10 Optimized Caching
+ * Rathor-NEXi Service Worker – Workbox v7 Optimized Caching
  * Refined precaching, runtime strategies, quota management, hardened background sync
  * MIT License – Autonomicity Games Inc. 2026
  */
@@ -7,7 +7,7 @@
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js');
 
 if (workbox) {
-  console.log('Workbox v10 loaded');
+  console.log('Workbox v7 loaded');
 
   workbox.setConfig({ debug: false }); // true for dev tuning
 
@@ -16,16 +16,16 @@ if (workbox) {
   // ────────────────────────────────────────────────────────────────
   // Precaching – core app shell with revision hashing
   const precacheManifest = [
-    { url: '/', revision: 'v1-home' },
-    { url: '/index.html', revision: 'v1-index' },
-    { url: '/privacy.html', revision: 'v1-privacy' },
-    { url: '/thanks.html', revision: 'v1-thanks' },
-    { url: '/manifest.json', revision: 'v1-manifest' },
-    { url: '/icons/thunder-favicon-192.jpg', revision: 'v1-192' },
-    { url: '/icons/thunder-favicon-512.jpg', revision: 'v1-512' },
-    { url: '/metta-rewriting-engine.js', revision: 'v1-metta' },
-    { url: '/atomese-knowledge-bridge.js', revision: 'v1-atomese' },
-    { url: '/hyperon-reasoning-layer.js', revision: 'v1-hyperon' }
+    { url: '/', revision: 'v11-home' },
+    { url: '/index.html', revision: 'v11-index' },
+    { url: '/privacy.html', revision: 'v11-privacy' },
+    { url: '/manifest.json', revision: 'v11-manifest' },
+    { url: '/icons/thunder-favicon-192.jpg', revision: 'v11-192' },
+    { url: '/icons/thunder-favicon-512.jpg', revision: 'v11-512' },
+    { url: '/metta-rewriting-engine.js', revision: 'v11-metta' },
+    { url: '/atomese-knowledge-bridge.js', revision: 'v11-atomese' },
+    { url: '/hyperon-reasoning-layer.js', revision: 'v11-hyperon' },
+    { url: '/grok-shard-engine.js', revision: 'v11-grokshard' }
   ];
 
   precaching.precacheAndRoute(precacheManifest);
@@ -45,7 +45,7 @@ if (workbox) {
         new expiration.ExpirationPlugin({
           maxEntries: 60,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-          purgeOnQuotaError: true // auto-clean on storage pressure
+          purgeOnQuotaError: true
         })
       ]
     })
@@ -69,23 +69,54 @@ if (workbox) {
     })
   );
 
-  // 3. API / Worker calls (Grok proxy) – NetworkFirst + cache fallback
-  routing.registerRoute(
-    ({ url }) => url.href.includes('rathor-grok-proxy.ceo-c42.workers.dev'),
-    new strategies.NetworkFirst({
-      cacheName: 'api-responses',
-      networkTimeoutSeconds: 10,
-      plugins: [
-        new cacheableResponse.CacheableResponsePlugin({
-          statuses: [0, 200]
-        }),
-        new expiration.ExpirationPlugin({
-          maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-          purgeOnQuotaError: true
+  // ────────────────────────────────────────────────────────────────
+  // Background Sync – retry failed POSTs (future-proof for sync ops)
+  const bgSyncPlugin = new backgroundSync.BackgroundSyncPlugin('rathor-sync-queue', {
+    maxRetentionTime: 24 * 60, // Retry for max 24 hours
+    onSync: async ({ queue }) => {
+      console.log('Background sync triggered for queue:', queue.name);
+    }
+  });
+
+  // ────────────────────────────────────────────────────────────────
+  // Offline navigation fallback – minimal shell when index.html missing
+  self.addEventListener('fetch', event => {
+    if (event.request.mode === 'navigate') {
+      event.respondWith(
+        fetch(event.request).catch(() => {
+          return new Response(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Rathor – Offline</title>
+              <style>
+                body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#000; color:#ffaa00; font-family:sans-serif; text-align:center; }
+                h1 { font-size:3rem; }
+                p { font-size:1.3rem; max-width:600px; }
+              </style>
+            </head>
+            <body>
+              <div>
+                <h1>Offline Mode</h1>
+                <p>Rathor is reflecting in the storm.<br>Reconnect to the lattice for full power.</p>
+              </div>
+            </body>
+            </html>
+          `, { headers: { 'Content-Type': 'text/html' } });
         })
-      ]
-    })
+      );
+    }
+  });
+
+} else {
+  console.error('Workbox failed to load – fallback to basic SW');
+}
+
+// ────────────────────────────────────────────────────────────────
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', () => self.clients.claim());    })
   );
 
   // ────────────────────────────────────────────────────────────────
