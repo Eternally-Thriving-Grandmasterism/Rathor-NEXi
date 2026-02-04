@@ -1,5 +1,5 @@
 // ruskode-firmware.js — AlphaProMega Air Foundation sovereign flight brain
-// Mercy-gated, post-quantum, self-healing Rust firmware emulator + PER DQN policy
+// Mercy-gated, post-quantum, self-healing Rust firmware emulator + PPO continuous policy
 // MIT License – Autonomicity Games Inc. 2026
 
 class RuskodeCore {
@@ -23,7 +23,7 @@ class RuskodeCore {
       mission: "Zero-crash, infinite-range, post-quantum secure flight for eternal thriving"
     };
     this.thunder = "eternal";
-    this.dqnController = new DQNController();
+    this.ppoAgent = new PPOAgent(6, 2); // continuous thrust/pitch
   }
 
   mercyCheck() {
@@ -62,40 +62,42 @@ class RuskodeCore {
     if (!this.mercyCheck()) return { error: "Mercy gate held" };
 
     let totalReward = 0;
+    const trajectory = [];
 
     for (let step = 0; step < steps; step++) {
       for (const ac of this.state.fleet) {
-        const state = {
-          altitude: ac.altitude,
-          velocity: ac.velocity,
-          energy: ac.energy,
-          integrity: ac.integrity,
-          targetAltitude: ac.targetAltitude,
-          targetVelocity: ac.targetVelocity,
-          sti: ac.sti
-        };
+        const state = [
+          ac.altitude / 1000,
+          ac.velocity / 100,
+          ac.energy / 100,
+          ac.integrity,
+          (ac.targetAltitude - ac.altitude) / 1000,
+          (ac.targetVelocity - ac.velocity) / 100
+        ];
 
-        state.altPotential = -Math.abs(ac.targetAltitude - ac.altitude) / 1000;
-        state.velPotential = -Math.abs(ac.targetVelocity - ac.velocity) / 100;
+        const { action } = this.ppoAgent.getAction(state);
 
-        const action = this.dqnController.chooseAction(state);
-        const thrust = (action - 3) * 60;
+        // Apply continuous action
+        const thrust = action[0] * 100; // scale to thrust
+        const pitch = action[1] * 10;   // scale to pitch
 
-        ac.velocity += thrust * 0.01;
+        ac.velocity += thrust * 0.01 + pitch * 0.005;
         ac.altitude += ac.velocity * 0.01;
-        ac.energy -= Math.abs(thrust) * 0.001;
+        ac.energy -= Math.abs(thrust) * 0.001 + Math.abs(pitch) * 0.0005;
         ac.integrity = Math.max(0, ac.integrity - 0.0001 * Math.random());
 
-        const reward = this.dqnController.computeReward(state, action, state);
+        const reward = this.ppoAgent.computeReward(state, action, state);
         totalReward += reward;
 
-        this.dqnController.storeTransition(state, action, reward, state);
-        this.dqnController.train();
+        trajectory.push({ state, action, reward, nextState: state });
       }
     }
 
+    // Train PPO agent
+    await this.ppoAgent.train(trajectory);
+
     return {
-      status: "Fleet flight policy deeply evolved via prioritized DQN — AlphaProMega Air zero-crash swarm enabled",
+      status: "Fleet flight policy deeply evolved via PPO — AlphaProMega Air zero-crash swarm enabled",
       averageReward: (totalReward / (steps * this.state.fleet.length)).toFixed(4)
     };
   }
