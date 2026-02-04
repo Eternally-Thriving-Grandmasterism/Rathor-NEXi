@@ -3,13 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Rathor: Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth. Fully offline sovereign mirror." />
+  <meta name="description" content="Rathor: Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth." />
   <title>Rathor — Mercy Strikes First</title>
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;500;700&display=swap" />
 
   <!-- Favicons -->
   <link rel="icon" type="image/jpeg" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
@@ -20,72 +15,188 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#ffaa00" />
 
-  <!-- All local bridges – offline capable -->
+  <!-- Bridges -->
   <script type="module" src="/metta-rewriting-engine.js"></script>
   <script type="module" src="/atomese-knowledge-bridge.js"></script>
   <script type="module" src="/hyperon-reasoning-layer.js"></script>
-  <script type="module" src="/grok-shard-engine.js"></script>
 
   <style>
     :root {
       --thunder-gold: #ffaa00;
       --thunder-dark: #000000;
       --thunder-glow: #ff8800;
-      --text-primary: #ffffff;
-      --text-secondary: #cccccc;
-      --bg-primary: #0a0a0a;
-      --bg-secondary: #111111;
-      --border: #222222;
+      --card: rgba(20,20,30,0.7);
       --focus: #00ffff;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      background:var(--bg-primary);
-      color:var(--text-primary);
-      font-family:'Inter', system-ui, sans-serif;
+      background:#000;
+      color:#fff;
+      font-family:system-ui, sans-serif;
       min-height:100vh;
       display:flex;
       flex-direction:column;
-      line-height:1.6;
     }
-    header {
-      position:sticky;
-      top:0;
-      backdrop-filter:blur(16px);
-      background:rgba(10,10,10,0.85);
-      border-bottom:1px solid var(--border);
-      padding:1rem 5%;
-      z-index:1000;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+    header { position:sticky; top:0; backdrop-filter:blur(12px); background:rgba(0,0,0,0.5); padding:1rem 5%; z-index:1000; }
+    main { flex:1; padding:5rem 5% 6rem; text-align:center; }
+    .thunder { font-size:clamp(6rem,25vw,18rem); animation:pulse 5s infinite alternate; }
+    h1 { font-size:clamp(4rem,15vw,10rem); background:linear-gradient(90deg,#ffaa00,#ff5500,#ffaa00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .chat-section { max-width:800px; margin:auto; padding:2rem; }
+    #chat-messages { height:400px; overflow-y:auto; border:1px solid #ffaa00; padding:1rem; margin-bottom:1rem; background:#111; border-radius:12px; text-align:left; }
+    .chat-message { margin:0.5rem 0; padding:0.8rem; border-radius:12px; }
+    .chat-message.user { background:#ffaa00; color:#000; margin-left:auto; max-width:70%; }
+    .chat-message.rathor { background:#222; margin-right:auto; max-width:70%; }
+    .chat-message.blocked { background:#880000; color:#fff; }
+    .chat-input-area { display:flex; gap:0.5rem; }
+    #chat-input { flex:1; padding:0.8rem; border-radius:50px; border:none; }
+    button { padding:0.8rem 1.5rem; background:#ffaa00; color:#000; border:none; border-radius:50px; cursor:pointer; }
+    #clear-history { margin-top:1rem; background:#444; color:#fff; }
+    footer { padding:2rem; text-align:center; opacity:0.7; margin-top:auto; }
+    @keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Rathor</div>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Repo</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Rathor</h1>
+    <p>Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.</p>
+
+    <section class="chat-section">
+      <h2>Ask Rathor</h2>
+      <div id="chat-messages" aria-live="polite"></div>
+      <div class="chat-input-area">
+        <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
+        <button onclick="sendChat()" aria-label="Send message">Send</button>
+      </div>
+      <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • CIPO App 2453681
+  </footer>
+
+  <script type="module">
+    // ────────────────────────────────────────────────────────────────
+    // Imports
+    import { MeTTaRewriter } from '/metta-rewriting-engine.js';
+    import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
+    import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
+
+    // IndexedDB setup
+    let db;
+    const dbName = "rathorChatDB";
+    const storeName = "messages";
+
+    const dbRequest = indexedDB.open(dbName, 1);
+    dbRequest.onupgradeneeded = event => {
+      db = event.target.result;
+      db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
+    };
+    dbRequest.onsuccess = event => {
+      db = event.target.result;
+      loadChatHistory();
+    };
+
+    function loadChatHistory() {
+      const tx = db.transaction(storeName, "readonly");
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        req.result.forEach(msg => addChatMessage(msg.role, msg.content));
+      };
     }
-    .logo {
-      font-family:'Orbitron', monospace;
-      font-size:1.8rem;
-      font-weight:700;
-      color:var(--thunder-gold);
-      letter-spacing:1px;
+
+    function saveMessage(role, content) {
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      store.add({ role, content, timestamp: Date.now() });
     }
-    nav ul {
-      display:flex;
-      gap:2rem;
-      list-style:none;
+
+    function clearChatHistory() {
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      store.clear();
+      document.getElementById('chat-messages').innerHTML = '';
     }
-    nav a {
-      color:var(--text-secondary);
-      text-decoration:none;
-      font-weight:500;
-      transition:0.3s;
+
+    function addChatMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `chat-message ${role}`;
+      div.textContent = content;
+      document.getElementById('chat-messages').appendChild(div);
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+      saveMessage(role, content);
     }
-    nav a:hover, nav a:focus {
-      color:var(--thunder-gold);
-      text-shadow:0 0 10px rgba(255,170,0,0.5);
+
+    // Multi-layer valence gate – MeTTa + Atomese + Hypergraph
+    async function multiLayerValenceGate(text) {
+      const mettaResult = MeTTaRewriter.rewrite(text);
+      const atomeseResult = await atomeseValenceGate(text);
+      const hyperonResult = await hyperonValenceGate(text);
+
+      const finalValence = 
+        (mettaResult.valenceImpact + 1) * 0.35 +
+        atomeseResult.valence * 0.30 +
+        hyperonResult.valence * 0.35;
+
+      const finalReason = [
+        mettaResult.rewritten !== text ? `Rewritten: ${mettaResult.rewritten}` : '',
+        atomeseResult.reason,
+        hyperonResult.reason
+      ].filter(r => r).join(' | ') + ` → final valence ${finalValence.toFixed(7)}`;
+
+      return {
+        result: finalValence >= 0.9999999 ? 'ACCEPTED' : 'REJECTED',
+        valence: finalValence,
+        reason: finalReason
+      };
     }
-    .hamburger {
-      display:none;
-      font-size:2rem;
-      background:none;
+
+    // Chat logic with full grounding & hypergraph reasoning
+    async function sendChat() {
+      const text = document.getElementById('chat-input').value.trim();
+      if (!text) return;
+
+      const gateResult = await multiLayerValenceGate(text);
+      if (gateResult.result === 'REJECTED') {
+        addChatMessage('rathor', `Multi-layer valence gate held: ${gateResult.reason}`);
+        document.getElementById('chat-input').value = '';
+        return;
+      }
+
+      addChatMessage('user', text);
+      document.getElementById('chat-input').value = '';
+
+      const reply = `NEXi + MeTTa + Atomese + Hypergraph approved: "${text}". Truth echoes.`;
+      addChatMessage('rathor', reply);
+    }
+
+    document.getElementById('chat-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChat();
+      }
+    });
+
+    document.getElementById('clear-history').addEventListener('click', clearChatHistory);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registered'))
+        .catch(err => console.log('SW failed', err));
+    }
+  </script>
+</body>
+</html>      background:none;
       border:none;
       color:var(--text-primary);
       cursor:pointer;
