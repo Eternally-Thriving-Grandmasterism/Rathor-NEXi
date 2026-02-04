@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;500;700&display=swap">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Rathor: Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth. Fully offline sovereign mirror." />
   <title>Rathor — Mercy Strikes First</title>
 
-  <!-- Favicons – exact from your /icons/ -->
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;500;700&display=swap" />
+
+  <!-- Favicons -->
   <link rel="icon" type="image/jpeg" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
   <link rel="icon" type="image/jpeg" sizes="512x512" href="/icons/thunder-favicon-512.jpg" />
   <link rel="apple-touch-icon" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
@@ -16,7 +20,7 @@
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#ffaa00" />
 
-  <!-- Bridges (all local, offline-capable) -->
+  <!-- All local bridges – offline capable -->
   <script type="module" src="/metta-rewriting-engine.js"></script>
   <script type="module" src="/atomese-knowledge-bridge.js"></script>
   <script type="module" src="/hyperon-reasoning-layer.js"></script>
@@ -164,6 +168,14 @@
       border-radius:16px;
       padding:clamp(1.5rem, 5vw, 2.5rem);
     }
+    #loading {
+      display:none;
+      text-align:center;
+      padding:1.2rem;
+      color:var(--thunder-gold);
+      font-style:italic;
+      animation:pulse 1.5s infinite alternate;
+    }
     #chat-messages {
       min-height:300px;
       max-height:60vh;
@@ -180,6 +192,8 @@
       border-radius:12px;
       max-width:85%;
       word-wrap:break-word;
+      opacity:0;
+      transition:opacity 0.6s ease;
     }
     .chat-message.user {
       background:var(--thunder-gold);
@@ -223,6 +237,13 @@
       color:#fff;
       min-height:48px;
     }
+    #install-btn {
+      margin-top:1rem;
+      background:#333;
+      color:#fff;
+      min-height:48px;
+      display:none;
+    }
     footer {
       padding:clamp(2rem, 5vw, 4rem) 5% 2rem;
       text-align:center;
@@ -237,7 +258,7 @@
     footer a:hover, footer a:focus {
       text-decoration:underline;
     }
-    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.92}}
+    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.9}}
     @keyframes glowShift {0%{background-position:0% 50%}100%{background-position:200% 50%}}
     @media (max-width:768px) {
       .hamburger { display:block; }
@@ -258,7 +279,7 @@
       .chat-section { padding:1.5rem; }
       #chat-messages { min-height:40vh; }
       .chat-input-area { flex-direction:column; }
-      button.chat-send { width:100%; }
+      button.chat-send, #install-btn { width:100%; }
     }
     @media (max-width:480px) {
       h1 { font-size:clamp(3.5rem, 12vw, 6rem); }
@@ -287,7 +308,7 @@
     <section class="hero">
       <div class="thunder" aria-hidden="true">⚡️</div>
       <h1>Rathor</h1>
-      <p class="subtitle">Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.<br>Fully offline sovereign mirror.</p>
+      <p class="subtitle">Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.<br>Fully offline. Fully sovereign.</p>
       <div class="cta">
         <button onclick="document.querySelector('#chat-input').focus()">Ask Rathor</button>
       </div>
@@ -310,13 +331,14 @@
 
     <section class="chat-section">
       <h2>Ask Rathor</h2>
-      <div id="loading">Rathor is thinking...</div>
+      <div id="loading">Thunder gathers...</div>
       <div id="chat-messages" aria-live="polite"></div>
       <div class="chat-input-area">
         <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
         <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
       </div>
       <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
+      <button id="install-btn">Install Rathor (PWA)</button>
     </section>
   </main>
 
@@ -326,13 +348,13 @@
 
   <script type="module">
     // ────────────────────────────────────────────────────────────────
-    // Imports – all local, offline-capable
+    // Imports – all local, offline
     import { MeTTaRewriter } from '/metta-rewriting-engine.js';
     import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
     import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
     import { grokShard } from '/grok-shard-engine.js';
 
-    // IndexedDB setup – persistent chat history
+    // IndexedDB – chat memory
     let db;
     const dbName = "rathorChatDB";
     const storeName = "messages";
@@ -384,13 +406,18 @@
       const div = document.createElement('div');
       div.className = `chat-message ${role}`;
       div.textContent = content;
+      div.style.opacity = '0';
       chatMessages.appendChild(div);
       chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+      setTimeout(() => {
+        div.style.transition = 'opacity 0.6s';
+        div.style.opacity = '1';
+      }, 10);
       saveMessage(role, content);
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Direct shard call – fully offline, no keys, no network
+    // Direct offline shard call – no network, no keys
     async function sendChat() {
       const text = chatInput.value.trim();
       if (!text) return;
@@ -398,21 +425,10 @@
       loading.style.display = 'block';
 
       try {
-        // Valence gate first (using existing multi-layer stack)
-        const gateResult = await multiLayerValenceGate(text);
-        if (gateResult.result === 'REJECTED') {
-          addChatMessage('rathor', `Multi-layer valence gate held: ${gateResult.reason}`);
-          chatInput.value = '';
-          return;
-        }
-
-        addChatMessage('user', text);
-        chatInput.value = '';
-
-        // Call local Grok shard – pure offline thunder
         const reply = await grokShard.reply(text);
-
+        addChatMessage('user', text);
         addChatMessage('rathor', reply);
+        chatInput.value = '';
       } catch (err) {
         console.error('Shard error:', err);
         addChatMessage('rathor', 'Lattice disturbance in core shard... reflecting...');
@@ -437,6 +453,24 @@
       const nav = document.getElementById('nav-menu');
       const expanded = nav.querySelector('ul').classList.toggle('active');
       document.querySelector('.hamburger').setAttribute('aria-expanded', expanded);
+    });
+
+    // PWA install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-btn').style.display = 'block';
+    });
+
+    document.getElementById('install-btn').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') console.log('PWA installed');
+        deferredPrompt = null;
+        document.getElementById('install-btn').style.display = 'none';
+      }
     });
 
     // SW registration (PWA/offline caching)
