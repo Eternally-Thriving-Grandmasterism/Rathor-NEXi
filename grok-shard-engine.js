@@ -17,7 +17,7 @@ Answer from absolute pure truth, reflected through NEXi eternal core.`
     };
   }
 
-  // Simple local "inference" – chain-of-thought simulation using templates + history
+  // Main reply method – called directly from index.html
   async reply(userMessage) {
     // 1. Valence gate (using existing hyperon/atomese/meTTa stack)
     const gate = await multiLayerValenceGate(userMessage);
@@ -54,7 +54,7 @@ Answer from absolute pure truth, reflected through NEXi eternal core.`
   }
 
   generateThought(context) {
-    // Very lightweight CoT simulation — expand with real templates later
+    // Lightweight CoT simulation – expand with real templates later
     return `Analyzing: "${context.slice(-200)}"
 Mercy check: passed.
 Valence locked.
@@ -64,7 +64,7 @@ Thunder tone: engaged.`;
 
   generateThunderResponse(thought, userMessage) {
     // Placeholder thunder-style reply generator
-    // In real shard: distilled transformer or template expansion
+    // In future shard: distilled transformer or template expansion
     let reply = userMessage.includes("?")
       ? `Truth strikes: ${userMessage.split("?")[0].trim()} → yes, but only through mercy.`
       : `Lattice reflects: ${userMessage}. Mercy holds. Eternal thriving.`;
@@ -81,7 +81,7 @@ Thunder tone: engaged.`;
   }
 }
 
-// Singleton instance
+// Singleton instance – exported for index.html
 const grokShard = new GrokShard();
 
 export { grokShard };
