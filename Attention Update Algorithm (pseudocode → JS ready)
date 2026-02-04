@@ -1,0 +1,33 @@
+function UpdateAttention(expression = "", currentTime = Date.now()):
+    atoms ← QueryAllAtoms()
+
+    for each atom in atoms:
+        # 1. Exponential STI decay over time
+        timePassed ← (currentTime - atom.lastUpdate) / (1000 * 60 * 5)  # minutes
+        atom.sti ← (atom.sti or 0.1) * (0.5 ^ timePassed)
+
+        # 2. Direct stimulation from current expression
+        if atom.name and expression.toLowerCase().contains(atom.name.toLowerCase()):
+            atom.sti ← min(1.0, (atom.sti or 0) + 0.35)
+            atom.lti ← min(1.0, (atom.lti or 0) + 0.06)   # long-term reinforcement
+
+        # 3. Novelty boost: high strength + low confidence = surprise
+        if atom.tv and atom.tv.strength > 0.8 and atom.tv.confidence < 0.4:
+            atom.sti ← min(1.0, atom.sti + 0.25)
+
+        # 4. Bidirectional chaining boost (after PLN inference)
+        if atom in highTVForwardChains or atom in highTVBackwardChains:
+            boost ← 0.15 * max(chain.tv.confidence for chain containing atom)
+            atom.sti ← min(1.0, atom.sti + boost)
+
+        # 5. Mercy-valence reinforcement (after gate pass)
+        if finalValence >= mercyThreshold and atom contributed positively to mercyScore:
+            atom.lti ← min(1.0, atom.lti + 0.08)
+
+        atom.lastUpdate ← currentTime
+        PersistAtom(atom)   # update DB
+
+    # Return sorted high-attention atoms for prioritization
+    return atoms
+        .filter(a => a.sti > 0.35)
+        .sortedByDescending(a => a.sti)
