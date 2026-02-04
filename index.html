@@ -137,6 +137,119 @@
       saveMessage(role, content);
     }
 
+    // Multi-layer valence gate – MeTTa + Atomese + Hypergraph with pattern mining
+    async function multiLayerValenceGate(text) {
+      const mettaResult = MeTTaRewriter.rewrite(text);
+      const atomeseResult = await atomeseValenceGate(text);
+      const hyperonResult = await hyperonValenceGate(text);
+
+      const finalValence = 
+        (mettaResult.valenceImpact + 1) * 0.35 +
+        atomeseResult.valence * 0.30 +
+        hyperonResult.valence * 0.35;
+
+      const finalReason = [
+        mettaResult.rewritten !== text ? `Rewritten: ${mettaResult.rewritten}` : '',
+        atomeseResult.reason,
+        hyperonResult.reason,
+        hyperonResult.patternsFound > 0 ? `(${hyperonResult.patternsFound} patterns mined)` : '',
+        hyperonResult.clustersFound > 0 ? `(${hyperonResult.clustersFound} similarity clusters)` : ''
+      ].filter(r => r).join(' | ') + ` → final valence ${finalValence.toFixed(7)}`;
+
+      return {
+        result: finalValence >= 0.9999999 ? 'ACCEPTED' : 'REJECTED',
+        valence: finalValence,
+        reason: finalReason
+      };
+    }
+
+    // Chat logic with full grounding & hypergraph reasoning
+    async function sendChat() {
+      const text = document.getElementById('chat-input').value.trim();
+      if (!text) return;
+
+      const gateResult = await multiLayerValenceGate(text);
+      if (gateResult.result === 'REJECTED') {
+        addChatMessage('rathor', `Multi-layer valence gate held: ${gateResult.reason}`);
+        document.getElementById('chat-input').value = '';
+        return;
+      }
+
+      addChatMessage('user', text);
+      document.getElementById('chat-input').value = '';
+
+      const reply = `NEXi + MeTTa + Atomese + Hypergraph approved: "${text}". Truth echoes.`;
+      addChatMessage('rathor', reply);
+    }
+
+    document.getElementById('chat-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChat();
+      }
+    });
+
+    document.getElementById('clear-history').addEventListener('click', clearChatHistory);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registered'))
+        .catch(err => console.log('SW failed', err));
+    }
+  </script>
+</body>
+</html>    // ────────────────────────────────────────────────────────────────
+    // Imports
+    import { MeTTaRewriter } from '/metta-rewriting-engine.js';
+    import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
+    import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
+
+    // IndexedDB setup
+    let db;
+    const dbName = "rathorChatDB";
+    const storeName = "messages";
+
+    const dbRequest = indexedDB.open(dbName, 1);
+    dbRequest.onupgradeneeded = event => {
+      db = event.target.result;
+      db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
+    };
+    dbRequest.onsuccess = event => {
+      db = event.target.result;
+      loadChatHistory();
+    };
+
+    function loadChatHistory() {
+      const tx = db.transaction(storeName, "readonly");
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        req.result.forEach(msg => addChatMessage(msg.role, msg.content));
+      };
+    }
+
+    function saveMessage(role, content) {
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      store.add({ role, content, timestamp: Date.now() });
+    }
+
+    function clearChatHistory() {
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      store.clear();
+      document.getElementById('chat-messages').innerHTML = '';
+    }
+
+    function addChatMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `chat-message ${role}`;
+      div.textContent = content;
+      document.getElementById('chat-messages').appendChild(div);
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+      saveMessage(role, content);
+    }
+
     // Multi-layer valence gate – MeTTa first, then Atomese + Hypergraph
     async function multiLayerValenceGate(text) {
       // Stage 1: MeTTa rewriting (first mercy gate)
