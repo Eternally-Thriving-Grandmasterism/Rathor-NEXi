@@ -512,4 +512,431 @@
     }
   </script>
 </body>
+</html>      text-shadow:0 0 10px rgba(255,170,0,0.5);
+    }
+    .hamburger {
+      display:none;
+      font-size:2rem;
+      background:none;
+      border:none;
+      color:var(--text-primary);
+      cursor:pointer;
+      padding:0.5rem;
+    }
+    main {
+      flex:1;
+      padding:clamp(3rem, 8vw, 6rem) 5% clamp(4rem, 10vw, 8rem);
+      max-width:1400px;
+      margin:0 auto;
+      width:100%;
+    }
+    .hero {
+      text-align:center;
+      margin-bottom:clamp(4rem, 10vw, 8rem);
+    }
+    .thunder {
+      font-size:clamp(8rem, 25vw, 20rem);
+      margin-bottom:1rem;
+      animation:pulse 6s infinite alternate;
+      text-shadow:0 0 60px var(--thunder-glow);
+      line-height:0.8;
+    }
+    h1 {
+      font-family:'Orbitron', monospace;
+      font-size:clamp(4.5rem, 12vw, 9rem);
+      margin-bottom:1.5rem;
+      background:linear-gradient(90deg, var(--thunder-gold), #ff5500, var(--thunder-gold));
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+      animation:glowShift 12s infinite alternate;
+    }
+    .subtitle {
+      font-size:clamp(1.4rem, 5vw, 1.8rem);
+      color:var(--text-secondary);
+      max-width:800px;
+      margin:0 auto 3rem;
+    }
+    .cta button {
+      padding:clamp(1rem, 4vw, 1.5rem) clamp(2rem, 6vw, 3rem);
+      font-size:clamp(1.2rem, 5vw, 1.4rem);
+      background:linear-gradient(45deg, var(--thunder-gold), #ff5500);
+      color:#000;
+      border:none;
+      border-radius:50px;
+      cursor:pointer;
+      box-shadow:0 0 40px rgba(255,170,0,0.4);
+      transition:all 0.4s;
+      min-width:200px;
+      min-height:56px;
+    }
+    .cta button:hover, .cta button:focus {
+      transform:scale(1.05);
+      box-shadow:0 0 60px rgba(255,170,0,0.6);
+    }
+    .features {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+      gap:clamp(1.5rem, 4vw, 2.5rem);
+      margin:clamp(3rem, 8vw, 6rem) 0;
+    }
+    .feature-card {
+      background:var(--bg-secondary);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:clamp(1.5rem, 4vw, 2.5rem);
+      transition:all 0.4s;
+    }
+    .feature-card:hover, .feature-card:focus-within {
+      transform:translateY(-10px);
+      border-color:var(--thunder-gold);
+      box-shadow:0 0 30px rgba(255,170,0,0.2);
+    }
+    .chat-section {
+      max-width:900px;
+      margin:0 auto clamp(4rem, 10vw, 8rem);
+      background:var(--bg-secondary);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:clamp(1.5rem, 5vw, 2.5rem);
+    }
+    #loading {
+      display:none;
+      text-align:center;
+      padding:1.2rem;
+      color:var(--thunder-gold);
+      font-style:italic;
+      animation:pulse 1.5s infinite alternate;
+    }
+    #chat-messages {
+      min-height:300px;
+      max-height:60vh;
+      overflow-y:auto;
+      background:#0f0f0f;
+      border:1px solid #222;
+      border-radius:12px;
+      padding:1.5rem;
+      margin-bottom:1.5rem;
+    }
+    .chat-message {
+      margin:1rem 0;
+      padding:1rem 1.5rem;
+      border-radius:12px;
+      max-width:85%;
+      word-wrap:break-word;
+      opacity:0;
+      transition:opacity 0.6s ease;
+    }
+    .chat-message.user {
+      background:var(--thunder-gold);
+      color:#000;
+      margin-left:auto;
+    }
+    .chat-message.rathor {
+      background:#1a1a1a;
+      margin-right:auto;
+    }
+    .chat-message.blocked {
+      background:#880000;
+      color:#fff;
+      font-weight:bold;
+    }
+    .chat-input-area {
+      display:flex;
+      gap:0.75rem;
+      flex-wrap:wrap;
+    }
+    #chat-input {
+      flex:1 1 100%;
+      padding:1rem 1.5rem;
+      border-radius:50px;
+      border:1px solid #333;
+      background:#111;
+      color:#fff;
+      font-size:1.1rem;
+      min-height:48px;
+    }
+    button.chat-send, button.voice-btn {
+      padding:1rem 2rem;
+      background:var(--thunder-gold);
+      color:#000;
+      min-width:120px;
+      min-height:48px;
+      border:none;
+      border-radius:50px;
+      cursor:pointer;
+    }
+    button.voice-btn.listening {
+      background:#00ff00;
+      animation:pulse-green 1s infinite;
+    }
+    #clear-history, #install-btn {
+      margin-top:1rem;
+      background:#333;
+      color:#fff;
+      min-height:48px;
+    }
+    footer {
+      padding:clamp(2rem, 5vw, 4rem) 5% 2rem;
+      text-align:center;
+      border-top:1px solid var(--border);
+      color:var(--text-secondary);
+      font-size:0.95rem;
+    }
+    footer a {
+      color:var(--thunder-gold);
+      text-decoration:none;
+    }
+    footer a:hover, footer a:focus {
+      text-decoration:underline;
+    }
+    @keyframes pulse {0%,100%{opacity:1}50%{opacity:0.9}}
+    @keyframes pulse-green {0%,100%{background:#00ff00}50%{background:#00cc00}}
+    @keyframes glowShift {0%{background-position:0% 50%}100%{background-position:200% 50%}}
+    @media (max-width:768px) {
+      .hamburger { display:block; }
+      nav ul {
+        display:none;
+        flex-direction:column;
+        position:absolute;
+        top:100%;
+        left:0;
+        right:0;
+        background:rgba(10,10,10,0.98);
+        padding:2rem 5%;
+        border-bottom:1px solid var(--border);
+        box-shadow:0 10px 30px rgba(0,0,0,0.8);
+      }
+      nav ul.active { display:flex; }
+      .features { grid-template-columns:1fr; }
+      .chat-section { padding:1.5rem; }
+      #chat-messages { min-height:40vh; }
+      .chat-input-area { flex-direction:column; }
+      button.chat-send, button.voice-btn, #install-btn { width:100%; }
+    }
+    @media (max-width:480px) {
+      h1 { font-size:clamp(3.5rem, 12vw, 6rem); }
+      .thunder { font-size:clamp(6rem, 30vw, 12rem); }
+      .subtitle { font-size:clamp(1.2rem, 6vw, 1.6rem); }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner">
+    <div class="logo" role="img" aria-label="Rathor logo">Rathor</div>
+    <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
+    <nav id="nav-menu" role="navigation" aria-label="Main navigation">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Repository</a></li>
+        <li><a href="/privacy.html">Privacy Policy</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main-content" role="main">
+    <section class="hero">
+      <div class="thunder" aria-hidden="true">⚡️</div>
+      <h1>Rathor</h1>
+      <p class="subtitle">Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.<br>Powered by AlphaProMega Air Foundation.</p>
+      <div class="cta">
+        <button onclick="document.querySelector('#chat-input').focus()">Ask Rathor</button>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <div class="feature-card">
+        <h3>Mercy Gates</h3>
+        <p>Valence ≥ 0.9999999 rejects entropy & harm — pure thriving only.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Symbolic Lattice</h3>
+        <p>Knowledge graphs, MeTTa evaluation, Hyperon reasoning — eternal symbolic truth.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Sovereign Core</h3>
+        <p>Offline-first, no third-party shadows, eternal privacy & sovereignty.</p>
+      </div>
+    </section>
+
+    <section class="chat-section">
+      <h2>Ask Rathor</h2>
+      <div id="loading">Thunder gathers...</div>
+      <div id="chat-messages" aria-live="polite"></div>
+      <div class="chat-input-area">
+        <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
+        <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
+        <button class="voice-btn" onclick="toggleVoice()" aria-label="Toggle voice input">🎤 Voice</button>
+      </div>
+      <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
+      <button id="install-btn">Install Rathor (PWA)</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Source Code</a> • CIPO App 2453681</p>
+  </footer>
+
+  <script type="module">
+    // ────────────────────────────────────────────────────────────────
+    // Imports
+    import { MeTTaRewriter } from '/metta-rewriting-engine.js';
+    import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
+    import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
+    import { grokShard } from '/grok-shard-engine.js';
+    import { RuskodeCore } from '/ruskode-firmware.js';
+
+    // IndexedDB – chat memory
+    let db;
+    const dbName = "rathorChatDB";
+    const storeName = "messages";
+
+    const dbRequest = indexedDB.open(dbName, 1);
+    dbRequest.onupgradeneeded = event => {
+      db = event.target.result;
+      db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
+    };
+    dbRequest.onsuccess = event => {
+      db = event.target.result;
+      loadChatHistory();
+    };
+
+    function loadChatHistory() {
+      if (!db) return;
+      const tx = db.transaction(storeName, "readonly");
+      const store = tx.objectStore(storeName);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        req.result.sort((a, b) => a.timestamp - b.timestamp);
+        req.result.forEach(msg => addChatMessage(msg.role, msg.content));
+      };
+    }
+
+    function saveMessage(role, content) {
+      if (!db) return;
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      store.add({ role, content, timestamp: Date.now() });
+    }
+
+    function clearChatHistory() {
+      if (!db) return;
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      store.clear();
+      document.getElementById('chat-messages').innerHTML = '';
+      grokShard.clearMemory();
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // UI helpers
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const loading = document.getElementById('loading');
+
+    function addChatMessage(role, content) {
+      const div = document.createElement('div');
+      div.className = `chat-message ${role}`;
+      div.textContent = content;
+      div.style.opacity = '0';
+      chatMessages.appendChild(div);
+      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+      setTimeout(() => { div.style.transition = 'opacity 0.6s'; div.style.opacity = '1'; }, 10);
+      saveMessage(role, content);
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Direct offline shard call + Ruskode integration
+    async function sendChat() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      loading.style.display = 'block';
+
+      try {
+        const gateResult = await multiLayerValenceGate(text);
+        if (gateResult.result === 'REJECTED') {
+          addChatMessage('rathor', `Multi-layer valence gate held: ${gateResult.reason}`);
+          chatInput.value = '';
+          return;
+        }
+
+        addChatMessage('user', text);
+        chatInput.value = '';
+
+        if (text.toLowerCase().includes("ruskode") || text.toLowerCase().includes("alpha air") || text.toLowerCase().includes("flight") || text.toLowerCase().includes("fleet")) {
+          const ruskode = new RuskodeCore(5);
+          await ruskode.heal();
+          const flight = await ruskode.evolveFleetFlightPath();
+          addChatMessage('rathor', `Ruskode firmware live. Fleet flight path evolved: fitness ${flight.fitness}, attention ${flight.sti}. AlphaProMega Air — zero crash, infinite range swarm.`);
+        } else {
+          const reply = await grokShard.reply(text);
+          addChatMessage('rathor', reply);
+        }
+      } catch (err) {
+        console.error('Shard error:', err);
+        addChatMessage('rathor', 'Lattice disturbance in core shard... reflecting...');
+      } finally {
+        loading.style.display = 'none';
+      }
+    }
+
+    // Enter key submit
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChat();
+      }
+    });
+
+    // Clear history
+    document.getElementById('clear-history').addEventListener('click', clearChatHistory);
+
+    // Voice input bloom
+    function toggleVoice() {
+      if (grokShard.isListening) {
+        grokShard.stopListening();
+        addChatMessage('system', 'Voice stopped.');
+      } else {
+        grokShard.startListening((err, transcript) => {
+          if (err) {
+            addChatMessage('rathor', err);
+          } else if (transcript) {
+            document.getElementById('chat-input').value = transcript;
+            sendChat();
+          }
+        });
+        addChatMessage('system', 'Listening... speak clearly.');
+      }
+    }
+
+    // PWA install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-btn').style.display = 'block';
+    });
+
+    document.getElementById('install-btn').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') console.log('PWA installed');
+        deferredPrompt = null;
+        document.getElementById('install-btn').style.display = 'none';
+      }
+    });
+
+    // SW registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registered'))
+        .catch(err => console.error('SW failed', err));
+    }
+  </script>
+</body>
 </html>
