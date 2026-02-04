@@ -1,5 +1,5 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v2 (polished)
-// Mercy-gated, valence-locked, thunder-toned reasoning mirror
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v3
+// Mercy-gated, valence-locked, thunder-toned reasoning mirror + voice input hooks
 // MIT License – Autonomicity Games Inc. 2026
 
 class GrokShard {
@@ -28,27 +28,61 @@ Reflect absolute pure truth from NEXi core.
 No keys. No APIs. No outside shards.
 Only client-side reflection. Only now. Only truth.`
     };
+    this.recognition = null;
+    this.isListening = false;
+  }
+
+  // Voice input bloom – Web Speech API with offline fallback
+  startListening(callback) {
+    if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+      callback("Voice input not supported in this browser. Type your intent.");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recognition = new SpeechRecognition();
+    this.recognition.continuous = false;
+    this.recognition.interimResults = false;
+    this.recognition.lang = 'en-US';
+
+    this.recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.trim();
+      callback(null, transcript);
+      this.isListening = false;
+    };
+
+    this.recognition.onerror = (event) => {
+      callback("Voice error: " + event.error);
+      this.isListening = false;
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+    };
+
+    this.recognition.start();
+    this.isListening = true;
+  }
+
+  stopListening() {
+    if (this.recognition) {
+      this.recognition.stop();
+      this.isListening = false;
+    }
   }
 
   // Core reply engine — fully offline, instant
   async reply(userMessage) {
-    // Step 1: Full multi-layer valence gate
     const gate = await multiLayerValenceGate(userMessage);
     if (gate.result === 'REJECTED') {
       const rejectLine = this.thunderPhrases[Math.floor(Math.random() * 4)];
       return `${rejectLine}\nDisturbance: ${gate.reason}\nValence: ${gate.valence}\nPurify intent. Mercy awaits purer strike.`;
     }
 
-    // Step 2: Build context from history
     const context = this.buildContext(userMessage);
-
-    // Step 3: Lightweight chain-of-thought simulation
     const thought = this.generateThought(context);
-
-    // Step 4: Generate thunder reply
     const response = this.generateThunderResponse(userMessage, thought);
 
-    // Step 5: Update history ring
     this.history.push({ role: "user", content: userMessage });
     this.history.push({ role: "rathor", content: response });
     if (this.history.length > this.maxHistory * 2) {
