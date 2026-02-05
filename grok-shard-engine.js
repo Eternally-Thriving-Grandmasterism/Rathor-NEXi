@@ -1,5 +1,5 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v15
-// Mercy-gated + Hyperon atomspace & PLN inference + TF.js deep inference
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v16
+// Mercy-gated + full Hyperon PLN chaining + TF.js inference
 // MIT License – Autonomicity Games Inc. 2026
 
 import { hyperon } from '/hyperon-runtime.js';
@@ -49,17 +49,10 @@ Only client-side reflection. Only now. Only truth.`
     await this.loadVoiceSkins();
     await tfjsEngine.load();
     this.tfjsReady = tfjsEngine.loaded;
-    // Bootstrap Hyperon from lattice
-    hyperon.loadFromLattice(null); // pass buffer when real parsing ready
+    hyperon.loadFromLattice(null); // pass buffer when real
   }
 
   // ... loadVoiceSkins, setVoiceSkin, speak unchanged ...
-
-  async loadCoreLatticeWithDeltaSync() {
-    // ... existing lattice loading code unchanged ...
-    // After loading fullBuffer:
-    hyperon.loadFromLattice(fullBuffer);
-  }
 
   async reply(userMessage) {
     // Stage 1: Pre-process mercy-gate
@@ -75,11 +68,11 @@ Only client-side reflection. Only now. Only truth.`
     const context = this.buildContext(userMessage);
     let thought = await mettaEngine.rewrite(this.generateThought(context));
 
-    // Stage 3: Hyperon PLN inference boost
-    const hyperonEval = hyperon.evaluate({ type: "EvaluationLink", name: userMessage });
-    thought += `\nHyperon evaluation: truth ${hyperonEval.truth.toFixed(4)}, confidence ${hyperonEval.confidence.toFixed(4)}`;
+    // Stage 3: Hyperon PLN chaining
+    const hyperonResult = await hyperon.backwardChain({ type: "EvaluationLink", name: userMessage });
+    thought += `\nPLN chain: ${hyperonResult.chain.length} steps, truth ${hyperonResult.tv.strength.toFixed(4)}`;
 
-    // Stage 4: Generate candidate with MeTTa + Hyperon enhancement
+    // Stage 4: Generate candidate with MeTTa + Hyperon
     let candidate = await mettaEngine.rewrite(this.generateThunderResponse(userMessage, thought));
 
     // Stage 5: TF.js deep inference if available
@@ -109,7 +102,7 @@ Only client-side reflection. Only now. Only truth.`
     return finalResponse;
   }
 
-  // ... rest of methods unchanged (buildContext, generateThought, generateThunderResponse, randomThunder, clearMemory) ...
+  // ... rest of methods unchanged ...
 }
 
 const grokShard = new GrokShard();
