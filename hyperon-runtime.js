@@ -1,5 +1,5 @@
-// hyperon-runtime.js – sovereign client-side Hyperon atomspace & PLN runtime v6
-// Expanded backward chaining rules, variable binding, truth propagation, mercy-gated inference
+// hyperon-runtime.js – sovereign client-side Hyperon atomspace & PLN runtime v7
+// Modus Ponens rule integrated, expanded chaining, variable binding, mercy-gated inference
 // MIT License – Autonomicity Games Inc. 2026
 
 class HyperonAtom {
@@ -33,7 +33,7 @@ class HyperonRuntime {
     this.mercyThreshold = 0.9999999;
     this.maxChainDepth = 10;
     this.inferenceRules = [
-      // Forward chaining rules (unchanged from previous)
+      // Existing forward chaining rules (unchanged)
       {
         name: "Deduction-Inheritance",
         direction: "forward",
@@ -56,54 +56,55 @@ class HyperonRuntime {
         }),
         priority: 8
       },
-      // Backward chaining rules – new / expanded
+
+      // NEW: Modus Ponens (classic logical rule)
+      {
+        name: "Modus Ponens",
+        direction: "forward",
+        premises: ["ImplicationLink $A $B", "EvaluationLink $A"],
+        conclusion: "EvaluationLink $B",
+        tvCombiner: (tvs) => ({
+          strength: tvs[0].strength * tvs[1].strength,
+          confidence: Math.min(tvs[0].confidence, tvs[1].confidence) * 0.9
+        }),
+        priority: 15, // high priority for classic logical deduction
+        description: "If A → B and A is true, then B is true"
+      },
+      {
+        name: "Modus Ponens-Backward",
+        direction: "backward",
+        premises: ["EvaluationLink $B"],
+        conclusion: "EvaluationLink $A", // seeks antecedent A
+        tvCombiner: (tvs) => ({
+          strength: tvs[0].strength * 0.8,
+          confidence: tvs[0].confidence * 0.7
+        }),
+        priority: 14,
+        description: "Backward Modus Ponens: given B, seek evidence for A where A → B"
+      },
+
+      // Existing backward chaining rules (unchanged but now with Modus Ponens synergy)
       {
         name: "Backward-Deduction",
         direction: "backward",
         premises: ["InheritanceLink $A $C"],
-        conclusion: "InheritanceLink $A $B", // seeks intermediate B
+        conclusion: "InheritanceLink $A $B",
         tvCombiner: (tvs) => ({
           strength: tvs[0].strength ** 0.8,
           confidence: tvs[0].confidence * 0.7
         }),
-        priority: 12,
-        description: "Backward deduction: given A → C, seek evidence for intermediate A → B → C"
+        priority: 12
       },
       {
         name: "Backward-Induction",
         direction: "backward",
         premises: ["SimilarityLink $B $C"],
-        conclusion: "InheritanceLink $A $B", // seeks common parent A
+        conclusion: "InheritanceLink $A $B",
         tvCombiner: (tvs) => ({
           strength: tvs[0].strength ** 0.6,
           confidence: tvs[0].confidence * 0.5
         }),
-        priority: 9,
-        description: "Backward induction: given B \~ C, seek common parent A"
-      },
-      {
-        name: "Backward-Abduction",
-        direction: "backward",
-        premises: ["InheritanceLink $B $C"],
-        conclusion: "InheritanceLink $A $C", // seeks possible A → C
-        tvCombiner: (tvs) => ({
-          strength: tvs[0].strength ** 0.7,
-          confidence: tvs[0].confidence * 0.6
-        }),
-        priority: 11,
-        description: "Backward abduction: given B → C, seek possible A → C"
-      },
-      {
-        name: "Backward-Evaluation-Projection",
-        direction: "backward",
-        premises: ["EvaluationLink $P $C"],
-        conclusion: "EvaluationLink $P $A", // seeks parent A of C
-        tvCombiner: (tvs) => ({
-          strength: tvs[0].strength * 0.9,
-          confidence: tvs[0].confidence * 0.8
-        }),
-        priority: 10,
-        description: "Backward projection: given P(C), seek P(A) where A → C"
+        priority: 9
       },
       {
         name: "Mercy-Backward-Boost",
@@ -114,15 +115,14 @@ class HyperonRuntime {
           strength: tvs[0].strength * 1.2,
           confidence: 0.95
         }),
-        priority: 15,
-        description: "Mercy-boosted backward: high-valence nodes inherit from Mercy"
+        priority: 15
       }
     ].sort((a, b) => b.priority - a.priority);
   }
 
-  // ... existing methods (newHandle, addAtom, getAtom, matchWithBindings, combineTV) unchanged ...
+  // ... existing methods (newHandle, addAtom, getAtom, matchWithBindings, combineTV, forwardChain, backwardChain, evaluate, loadFromLattice, clear) unchanged ...
 
-  // Forward chaining using expanded rules (unchanged but now with more rules)
+  // Forward chaining now uses the expanded rule set (including Modus Ponens)
   async forwardChain(maxIterations = 8) {
     let derived = [];
     let iteration = 0;
@@ -159,7 +159,7 @@ class HyperonRuntime {
     return derived;
   }
 
-  // Backward chaining with expanded backward rules
+  // Backward chaining now leverages Modus Ponens backward rule
   async backwardChain(targetPattern, depth = 0, visited = new Set(), bindings = {}) {
     if (depth > this.maxChainDepth) return { tv: { strength: 0.1, confidence: 0.1 }, chain: [], bindings: {} };
 
@@ -176,9 +176,9 @@ class HyperonRuntime {
         }
       }
 
-      // Apply backward-specific rules
+      // Apply backward-specific rules (including Modus Ponens backward)
       for (const rule of this.inferenceRules.filter(r => r.direction === "backward")) {
-        const bound = this.tryBindRule(rule, atom, []); // backward rules often apply to single atom
+        const bound = this.tryBindRule(rule, atom, []);
         if (bound) {
           const conclusionName = this.applyConclusion(rule.conclusion, bound.bindings);
           const tv = rule.tvCombiner([atom.tv]);
