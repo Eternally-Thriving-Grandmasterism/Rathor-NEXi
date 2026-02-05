@@ -1,91 +1,23 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Rathor: Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth. Powered by AlphaProMega Air Foundation." />
-  <title>Rathor — Mercy Strikes First</title>
+<!-- ... existing head with manifest, sw register ... -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="module">
+  import { promptWebLLMModelDownload, hasWebGPU } from './webllm-mercy-integration.js';
+  import './rathor-chat-ui-streaming.js'; // streaming UI logic
+  // Other imports: fuzzyMercy, hyperon, etc.
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;500;700&display=swap" />
+  if (hasWebGPU()) {
+    // Prompt on load if capable
+    promptWebLLMModelDownload();
+  }
+</script>
 
-  <!-- Favicons -->
-  <link rel="icon" type="image/jpeg" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
-  <link rel="icon" type="image/jpeg" sizes="512x512" href="/icons/thunder-favicon-512.jpg" />
-  <link rel="apple-touch-icon" sizes="192x192" href="/icons/thunder-favicon-192.jpg" />
-
-  <!-- PWA manifest -->
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#ffaa00" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <!-- All local bridges -->
-  <script type="module" src="/metta-rewriting-engine.js"></script>
-  <script type="module" src="/atomese-knowledge-bridge.js"></script>
-  <script type="module" src="/hyperon-runtime.js"></script>
-  <script type="module" src="/grok-shard-engine.js"></script>
-  <script type="module" src="/ruskode-firmware.js"></script>
-  <script type="module" src="/dqn-flight-engine.js"></script>
-  <script type="module" src="/td3-robust-flight.js"></script>
-  <script type="module" src="/ppo-continuous-flight.js"></script>
-
-  <style>
-    :root {
-      --thunder-gold: #ffaa00;
-      --thunder-dark: #000000;
-      --thunder-glow: rgba(255, 136, 0, 0.95);
-      --text-primary: #ffffff;
-      --text-secondary: #bbbbbb;
-      --bg-primary: #000000;
-      --bg-gradient: radial-gradient(circle at 20% 30%, #0f0f1f, #000000 85%);
-      --neumorph-light: #111111;
-      --neumorph-dark: #000000;
-      --shadow-out-primary: 16px 16px 32px rgba(0,0,0,0.95), -10px -10px 24px rgba(255,255,255,0.008);
-      --shadow-in-primary: inset 12px 12px 24px rgba(0,0,0,1), inset -12px -12px 24px rgba(255,255,255,0.012);
-      --shadow-pressed: inset 24px 24px 48px rgba(0,0,0,1), inset -24px -24px 48px rgba(255,255,255,0.008);
-      --glass-bg: rgba(255, 255, 255, 0.035);
-      --glass-border: rgba(255, 255, 255, 0.09);
-      --blur: blur(48px);
-      --border-radius: 36px;
-      --focus: #00ffff;
-      --progress-bg: rgba(20, 20, 20, 0.92);
-      --progress-fill: linear-gradient(90deg, #ffaa00, #ff5500);
-      --transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-      --ripple-color: rgba(255,170,0,0.55);
-      --valence-green: #00ffaa;
-      --valence-red: #ff5555;
-      --waveform-bar: #ffaa00;
-      --waveform-glow: rgba(255,170,0,0.6);
-      --waveform-bg: rgba(30,30,30,0.6);
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      background: var(--bg-gradient);
-      color: var(--text-primary);
-      font-family: 'Inter', system-ui, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      line-height: 1.6;
-      overflow-x: hidden;
-      position: relative;
-    }
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at 15% 25%, rgba(255,170,0,0.18) 0%, transparent 85%);
-      pointer-events: none;
-      z-index: -2;
-      animation: divineBreath 30s infinite ease-in-out;
-    }
-    @keyframes divineBreath {
-      0%,100% { opacity: 0.75; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.1); }
+<body>
+  <div id="chat-container"></div>
+  <form id="chat-form">
+    <input id="user-input" type="text" placeholder="Ask Rathor anything... mercy first" autocomplete="off">
+    <button id="send-button" type="submit">Send ⚡️</button>
+  </form>
+</body>      50% { opacity: 1; transform: scale(1.1); }
     }
     body::after {
       content: '';
