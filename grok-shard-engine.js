@@ -252,6 +252,52 @@ Thunder tone: engaged.`;
     this.history = [];
     return "Memory wiped. Fresh reflection begins.";
   }
+
+  async reply(userMessage) {
+    // Stage 1: Pre-process mercy-gate
+    const preGate = await multiLayerValenceGate(userMessage);
+    if (preGate.result === 'REJECTED') {
+      const rejectLine = this.thunderPhrases[Math.floor(Math.random() * 4)];
+      const rejectMsg = `${rejectLine}\nPre-process disturbance: ${preGate.reason}\nValence: ${preGate.valence}\nPurify intent. Mercy awaits purer strike.`;
+      this.speak(rejectMsg);
+      return rejectMsg;
+    }
+
+    // Stage 2: Build context & thought
+    const context = this.buildContext(userMessage);
+    const thought = this.generateThought(context);
+
+    // Stage 3: Generate candidate response
+    let candidate = this.generateThunderResponse(userMessage, thought);
+
+    // Stage 4: TF.js deep enhancement if available
+    if (this.tfjsReady) {
+      const enhanced = await tfjsEngine.generate(candidate);
+      candidate = enhanced.trim();
+    }
+
+    // Stage 5: Post-process mercy-gate
+    const postGate = await hyperonValenceGate(candidate);
+    if (postGate.result === 'REJECTED') {
+      const rejectLine = this.thunderPhrases[Math.floor(Math.random() * 4)];
+      const rejectMsg = `${rejectLine}\nPost-process disturbance: ${postGate.reason}\nValence: ${postGate.valence}\nMercy gate holds. Reflect again.`;
+      this.speak(rejectMsg);
+      return rejectMsg;
+    }
+
+    // Stage 6: Final thunder response
+    const finalResponse = `${candidate} ${this.randomThunder()}`;
+    this.speak(finalResponse);
+
+    // Update history
+    this.history.push({ role: "user", content: userMessage });
+    this.history.push({ role: "rathor", content: finalResponse });
+    if (this.history.length > this.maxHistory * 2) {
+      this.history = this.history.slice(-this.maxHistory * 2);
+    }
+
+    return finalResponse;
+  }
 }
 
 const grokShard = new GrokShard();
