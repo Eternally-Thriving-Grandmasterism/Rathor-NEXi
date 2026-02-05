@@ -1,15 +1,21 @@
-# Paste this EXACT raw content into the GitHub file editor (no extra lines/spaces)
-# It is binary data represented as text for copy-paste – GitHub will save it as real bytes
+# Copy-paste this EXACT block as raw text into GitHub file editor
+# It is binary represented with \x escapes for copy-paste safety
 
-MERC_LAT1\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00
-# magic (8) | version 1.0.0 (4) | part 1 (4) | total 3 (4) | data length 1 MB placeholder (8)
+MERC_LAT1\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00
+# magic(8) | version 1.0.0(4) | part 1(4) | total 3(4) | reserved(4) | data len 1MB placeholder(8)
 
-# Valence matrix – 256 × float32 = 1024 bytes of 0.9999999 (\~1.0f)
-\x9a\x99\x99\x3f\x9a\x99\x99\x3f\x9a\x99\x99\x3f\x9a\x99\x99\x3f ... (repeat 256 times)
+\x0c\x00\x00\x00 # rule count 12
+\x00\x04\x00\x00 # valence count 1024 (0x400)
 
-# MeTTa rules – length-prefixed strings
+# MeTTa rules – u32 len + UTF-8 bytes
 \x05\x00\x00\x00truth\x05\x00\x00\x00mercy\x0c\x00\x00\x00InheritanceLink
 \x07\x00\x00\x00eternal\x05\x00\x00\x00thrive\x07\x00\x00\x00forever
+\x07\x00\x00\x00reflect\x05\x00\x00\x00truth\x06\x00\x00\x00mirror
+\x06\x00\x00\x00thunder\x04\x00\x00\x00seal\x07\x00\x00\x00eternal
+# ... (more rules would follow)
+
+# Valence matrix prefix – float32 LE 0.9999999 (\~3f99999a)
+\x9a\x99\x99\x3f\x9a\x99\x99\x3f\x9a\x99\x99\x3f ... (repeat 256 times = 1024 bytes)
 
 # End marker + zero checksum
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
