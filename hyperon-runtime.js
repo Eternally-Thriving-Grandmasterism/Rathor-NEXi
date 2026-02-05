@@ -1,5 +1,5 @@
-// hyperon-runtime.js – sovereign client-side Hyperon atomspace & PLN runtime v9
-// Hypothetical Syllogism rule integrated, expanded chaining, variable binding, mercy-gated inference
+// hyperon-runtime.js – sovereign client-side Hyperon atomspace & PLN runtime v10
+// Disjunctive Syllogism rule integrated, expanded chaining, variable binding, mercy-gated inference
 // MIT License – Autonomicity Games Inc. 2026
 
 class HyperonAtom {
@@ -78,8 +78,6 @@ class HyperonRuntime {
         }),
         priority: 16
       },
-
-      // NEW: Hypothetical Syllogism (chain rule for implications)
       {
         name: "Hypothetical Syllogism",
         direction: "forward",
@@ -89,20 +87,33 @@ class HyperonRuntime {
           strength: tvs[0].strength * tvs[1].strength,
           confidence: Math.min(tvs[0].confidence, tvs[1].confidence) * 0.85
         }),
-        priority: 14, // high priority for chained logical reasoning
-        description: "If A → B and B → C, then A → C (transitive implication)"
+        priority: 14
+      },
+
+      // NEW: Disjunctive Syllogism (A ∨ B, ¬A ⊢ B)
+      {
+        name: "Disjunctive Syllogism",
+        direction: "forward",
+        premises: ["OrLink $A $B", "EvaluationLink Not $A"],
+        conclusion: "EvaluationLink $B",
+        tvCombiner: (tvs) => ({
+          strength: tvs[0].strength * tvs[1].strength * 0.95,
+          confidence: Math.min(tvs[0].confidence, tvs[1].confidence) * 0.9
+        }),
+        priority: 17, // very high priority for exclusion & decision logic
+        description: "If A or B is true, and A is not true, then B is true"
       },
       {
-        name: "Hypothetical Syllogism-Backward",
+        name: "Disjunctive Syllogism-Backward",
         direction: "backward",
-        premises: ["ImplicationLink $A $C"],
-        conclusion: "ImplicationLink $A $B", // seeks intermediate B
+        premises: ["EvaluationLink $B"],
+        conclusion: "OrLink $A $B", // seeks disjunction where B is true
         tvCombiner: (tvs) => ({
-          strength: tvs[0].strength * 0.9,
-          confidence: tvs[0].confidence * 0.75
+          strength: tvs[0].strength * 0.85,
+          confidence: tvs[0].confidence * 0.8
         }),
-        priority: 13,
-        description: "Backward Hypothetical Syllogism: given A → C, seek intermediate A → B → C"
+        priority: 15,
+        description: "Backward Disjunctive Syllogism: given B, seek A ∨ B where ¬A is plausible"
       },
 
       // Existing backward chaining rules (unchanged)
@@ -133,7 +144,7 @@ class HyperonRuntime {
 
   // ... existing methods (newHandle, addAtom, getAtom, matchWithBindings, combineTV, forwardChain, backwardChain, evaluate, loadFromLattice, clear) unchanged ...
 
-  // Forward chaining now includes Hypothetical Syllogism
+  // Forward chaining now includes Disjunctive Syllogism
   async forwardChain(maxIterations = 8) {
     let derived = [];
     let iteration = 0;
@@ -170,7 +181,7 @@ class HyperonRuntime {
     return derived;
   }
 
-  // Backward chaining now leverages Hypothetical Syllogism backward rule
+  // Backward chaining now leverages Disjunctive Syllogism backward rule
   async backwardChain(targetPattern, depth = 0, visited = new Set(), bindings = {}) {
     if (depth > this.maxChainDepth) return { tv: { strength: 0.1, confidence: 0.1 }, chain: [], bindings: {} };
 
@@ -187,7 +198,7 @@ class HyperonRuntime {
         }
       }
 
-      // Apply backward-specific rules (including Hypothetical Syllogism backward)
+      // Apply backward-specific rules (including Disjunctive Syllogism backward)
       for (const rule of this.inferenceRules.filter(r => r.direction === "backward")) {
         const bound = this.tryBindRule(rule, atom, []);
         if (bound) {
