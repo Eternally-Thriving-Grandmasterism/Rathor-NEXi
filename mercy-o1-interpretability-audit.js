@@ -12,7 +12,7 @@ const MERCY_THRESHOLD = 0.9999999;
 class MercyO1InterpretabilityGuard {
   constructor() {
     this.deceptionRisk = 0.0;
-    this.blackBoxScore = 0.0; // 0–1.0 estimated hidden reasoning opacity
+    this.blackBoxOpacity = 0.0; // 0–1.0 estimated hidden reasoning opacity
     this.valence = 1.0;
   }
 
@@ -86,6 +86,11 @@ const o1Check = await checkResponseWithO1Guard(
 
 if (o1Check.allowed) {
   // Send to user
+} else {
+  // Re-generate with higher truth alignment
+}
+
+export { mercyO1Guard, checkResponseWithO1Guard };  // Send to user
 } else {
   // Re-generate with higher truth alignment
 }
