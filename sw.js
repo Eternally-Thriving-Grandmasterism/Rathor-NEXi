@@ -1,91 +1,49 @@
-/**
- * Rathor-NEXi Service Worker – Workbox v7 + IndexedDB Sync Persistence v13
- * Eternal queue survives restarts, mercy-gated, exponential backoff + jitter
- * MIT License – Autonomicity Games Inc. 2026
- */
+// sw.js – Workbox v7 + lattice part caching
+// MIT License – Autonomicity Games Inc. 2026
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js');
 
 if (workbox) {
-  console.log('Workbox v7 loaded – IndexedDB Sync Persistence v13 active');
-
   workbox.setConfig({ debug: false });
 
-  const { precaching, routing, strategies, expiration, backgroundSync, cacheableResponse } = workbox;
+  const { precaching, routing, strategies, expiration } = workbox;
 
-  // ────────────────────────────────────────────────────────────────
-  // Precaching – core shell with revision hashing (v13)
-  const precacheManifest = [
-    { url: '/', revision: 'v13-home' },
-    { url: '/index.html', revision: 'v13-index' },
-    { url: '/privacy.html', revision: 'v13-privacy' },
-    { url: '/manifest.json', revision: 'v13-manifest' },
-    { url: '/icons/thunder-favicon-192.jpg', revision: 'v13-192' },
-    { url: '/icons/thunder-favicon-512.jpg', revision: 'v13-512' },
-    { url: '/metta-rewriting-engine.js', revision: 'v13-metta' },
-    { url: '/atomese-knowledge-bridge.js', revision: 'v13-atomese' },
-    { url: '/hyperon-reasoning-layer.js', revision: 'v13-hyperon' },
-    { url: '/grok-shard-engine.js', revision: 'v13-grokshard' }
-  ];
+  // Precaching core + lattice parts
+  precaching.precacheAndRoute([
+    { url: '/', revision: 'v1' },
+    { url: '/index.html', revision: 'v1' },
+    { url: '/mercy-gate-v1-part1.bin', revision: 'v1' },
+    { url: '/mercy-gate-v1-part2.bin', revision: 'v1' },
+    { url: '/mercy-gate-v1-part3.bin', revision: 'v1' },
+    // ... other assets
+  ]);
 
-  precaching.precacheAndRoute(precacheManifest);
-
-  // ────────────────────────────────────────────────────────────────
-  // Runtime caching strategies
-
+  // Cache-first for binaries
   routing.registerRoute(
-    ({ request }) => request.destination === 'script' || request.destination === 'style',
-    new strategies.StaleWhileRevalidate({
-      cacheName: 'static-resources-v13',
-      plugins: [
-        new cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] }),
-        new expiration.ExpirationPlugin({
-          maxEntries: 60,
-          maxAgeSeconds: 30 * 24 * 60 * 60,
-          purgeOnQuotaError: true
-        })
-      ]
-    })
-  );
-
-  routing.registerRoute(
-    ({ request }) => request.destination === 'image',
+    ({ url }) => url.pathname.includes('mercy-gate-v1'),
     new strategies.CacheFirst({
-      cacheName: 'images-v13',
+      cacheName: 'lattice-binaries',
       plugins: [
-        new cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] }),
         new expiration.ExpirationPlugin({
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 24 * 60 * 60,
+          maxEntries: 10,
           purgeOnQuotaError: true
         })
       ]
     })
   );
 
-  // ────────────────────────────────────────────────────────────────
-  // IndexedDB-backed persistent sync queue (v13)
-  const DB_NAME = 'rathorSyncDB';
-  const STORE_NAME = 'syncQueue';
+  // Offline fallback
+  self.addEventListener('fetch', event => {
+    if (event.request.mode === 'navigate') {
+      event.respondWith(
+        fetch(event.request).catch(() => caches.match('/index.html'))
+      );
+    }
+  });
+}
 
-  async function openSyncDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = evt => {
-        const db = evt.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { autoIncrement: true });
-        }
-      };
-      req.onsuccess = evt => resolve(evt.target.result);
-      req.onerror = evt => reject(evt.target.error);
-    });
-  }
-
-  async function addToSyncQueue(requestData) {
-    const db = await openSyncDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', () => self.clients.claim());      const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
       store.add({
         ...requestData,
