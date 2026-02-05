@@ -1,23 +1,23 @@
 {
   "version": "v1.0.0",
   "timestamp": "2026-02-05T22:35:00Z",
-  "totalSize": 312000000,
+  "totalSize": 3145728,
   "parts": [
     {
       "name": "mercy-gate-v1-part1.bin",
-      "size": 104000000,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 1048576,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "name": "mercy-gate-v1-part2.bin",
-      "size": 104000000,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 1048576,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     },
     {
       "name": "mercy-gate-v1-part3.bin",
-      "size": 104000000,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "size": 1048576,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     }
   ],
-  "description": "Synthetic Mercy-Gate v1 lattice – MeTTa rules, valence matrix, Hyperon atoms (placeholder)"
+  "description": "Synthetic Mercy-Gate v1 lattice – binary header + MeTTa rules + valence matrix + Hyperon stub"
 }
