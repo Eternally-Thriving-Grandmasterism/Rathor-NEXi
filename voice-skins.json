@@ -1,0 +1,26 @@
+{
+  "default": {
+    "name": "Rathor Thunder",
+    "pitch": 0.9,
+    "rate": 1.0,
+    "volume": 1.0,
+    "lang": "en-GB",
+    "voiceFilter": "deep-resonant"
+  },
+  "bond": {
+    "name": "Bond – Pierce Brosnan",
+    "pitch": 0.85,
+    "rate": 0.95,
+    "volume": 0.95,
+    "lang": "en-GB",
+    "voiceFilter": "suave-velvet"
+  },
+  "sheppard": {
+    "name": "Sheppard – John Sheppard",
+    "pitch": 1.05,
+    "rate": 1.1,
+    "volume": 1.0,
+    "lang": "en-US",
+    "voiceFilter": "sarcastic-drawl"
+  }
+}
