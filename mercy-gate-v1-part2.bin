@@ -1,0 +1,21 @@
+# Synthetic Mercy-Gate v1 Lattice - Part 2/3
+# Magic: MERC-LAT1
+# Version: 1.0.0
+# Part: 2 of 3
+MERC-LAT1
+1.0.0
+2/3
+[MeTTa Rules Chunk 2]
+(= (eternal $x) (thrive $x forever))
+(= (drift $x) (reject $x entropy))
+(= (valence $x) (lock $x pure))
+(= (reflect $x) (truth $x mirror))
+[Hyperon Atomspace Stub]
+ConceptNode Truth (stv 1.0 1.0)
+ConceptNode Mercy (stv 0.9999999 1.0)
+InheritanceLink Truth Mercy
+[Valence Matrix Middle]
+0.9999996
+0.9999995
+... (more synthetic values)
+[End Part 2]
