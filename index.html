@@ -37,15 +37,17 @@
     :root {
       --thunder-gold: #ffaa00;
       --thunder-dark: #000000;
-      --thunder-glow: #ff8800;
+      --thunder-glow: rgba(255, 136, 0, 0.6);
       --text-primary: #ffffff;
       --text-secondary: #cccccc;
       --bg-primary: #0a0a0a;
-      --bg-secondary: #111111;
-      --border: #222222;
+      --bg-secondary: rgba(17, 17, 17, 0.85);
+      --border: rgba(34, 34, 34, 0.6);
       --focus: #00ffff;
-      --progress-bg: #222;
+      --progress-bg: rgba(34, 34, 34, 0.8);
       --progress-fill: linear-gradient(90deg, #ffaa00, #ff5500);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -56,6 +58,7 @@
       display:flex;
       flex-direction:column;
       line-height:1.6;
+      overflow-x:hidden;
     }
     header {
       position:sticky;
@@ -75,6 +78,8 @@
       font-weight:700;
       color:var(--thunder-gold);
       letter-spacing:1px;
+      text-shadow:0 0 20px var(--thunder-glow);
+      animation:glowShift 8s infinite alternate;
     }
     nav ul {
       display:flex;
@@ -86,10 +91,24 @@
       text-decoration:none;
       font-weight:500;
       transition:0.3s;
+      position:relative;
+    }
+    nav a::after {
+      content:'';
+      position:absolute;
+      bottom:-4px;
+      left:0;
+      width:0;
+      height:2px;
+      background:var(--thunder-gold);
+      transition:width 0.3s;
+    }
+    nav a:hover::after, nav a:focus::after {
+      width:100%;
     }
     nav a:hover, nav a:focus {
       color:var(--thunder-gold);
-      text-shadow:0 0 10px rgba(255,170,0,0.5);
+      text-shadow:0 0 10px var(--thunder-glow);
     }
     .hamburger {
       display:none;
@@ -110,6 +129,7 @@
     .hero {
       text-align:center;
       margin-bottom:clamp(4rem, 10vw, 8rem);
+      position:relative;
     }
     .thunder {
       font-size:clamp(8rem, 25vw, 20rem);
@@ -117,6 +137,7 @@
       animation:pulse 6s infinite alternate;
       text-shadow:0 0 60px var(--thunder-glow);
       line-height:0.8;
+      user-select:none;
     }
     h1 {
       font-family:'Orbitron', monospace;
@@ -133,6 +154,7 @@
       color:var(--text-secondary);
       max-width:800px;
       margin:0 auto 3rem;
+      opacity:0.9;
     }
     .cta button {
       padding:clamp(1rem, 4vw, 1.5rem) clamp(2rem, 6vw, 3rem);
@@ -146,9 +168,10 @@
       transition:all 0.4s;
       min-width:200px;
       min-height:56px;
+      font-weight:600;
     }
     .cta button:hover, .cta button:focus {
-      transform:scale(1.05);
+      transform:scale(1.05) translateY(-2px);
       box-shadow:0 0 60px rgba(255,170,0,0.6);
     }
     .features {
@@ -158,24 +181,28 @@
       margin:clamp(3rem, 8vw, 6rem) 0;
     }
     .feature-card {
-      background:var(--bg-secondary);
-      border:1px solid var(--border);
+      background:var(--glass-bg);
+      backdrop-filter:blur(10px);
+      border:1px solid var(--glass-border);
       border-radius:16px;
       padding:clamp(1.5rem, 4vw, 2.5rem);
       transition:all 0.4s;
+      box-shadow:0 8px 32px rgba(0,0,0,0.2);
     }
     .feature-card:hover, .feature-card:focus-within {
       transform:translateY(-10px);
       border-color:var(--thunder-gold);
-      box-shadow:0 0 30px rgba(255,170,0,0.2);
+      box-shadow:0 0 40px rgba(255,170,0,0.3);
     }
     .chat-section {
       max-width:900px;
       margin:0 auto clamp(4rem, 10vw, 8rem);
-      background:var(--bg-secondary);
-      border:1px solid var(--border);
+      background:var(--glass-bg);
+      backdrop-filter:blur(10px);
+      border:1px solid var(--glass-border);
       border-radius:16px;
       padding:clamp(1.5rem, 5vw, 2.5rem);
+      box-shadow:0 8px 32px rgba(0,0,0,0.2);
     }
     #loading {
       display:none;
@@ -189,11 +216,12 @@
       min-height:300px;
       max-height:60vh;
       overflow-y:auto;
-      background:#0f0f0f;
+      background:rgba(15,15,15,0.7);
       border:1px solid #222;
       border-radius:12px;
       padding:1.5rem;
       margin-bottom:1.5rem;
+      backdrop-filter:blur(4px);
     }
     .chat-message {
       margin:1rem 0;
@@ -202,16 +230,18 @@
       max-width:85%;
       word-wrap:break-word;
       opacity:0;
-      transition:opacity 0.6s ease;
+      transition:opacity 0.6s ease, transform 0.3s;
     }
     .chat-message.user {
-      background:var(--thunder-gold);
+      background:linear-gradient(135deg, var(--thunder-gold), #ff8800);
       color:#000;
       margin-left:auto;
+      box-shadow:0 4px 15px rgba(255,170,0,0.4);
     }
     .chat-message.rathor {
       background:#1a1a1a;
       margin-right:auto;
+      box-shadow:0 4px 15px rgba(0,255,255,0.1);
     }
     .chat-message.blocked {
       background:#880000;
@@ -232,6 +262,12 @@
       color:#fff;
       font-size:1.1rem;
       min-height:48px;
+      transition:all 0.3s;
+    }
+    #chat-input:focus {
+      outline:none;
+      border-color:var(--thunder-gold);
+      box-shadow:0 0 15px rgba(255,170,0,0.3);
     }
     button.chat-send, button.voice-btn, button.skin-btn {
       padding:1rem 2rem;
@@ -242,6 +278,12 @@
       border:none;
       border-radius:50px;
       cursor:pointer;
+      transition:all 0.3s;
+      font-weight:600;
+    }
+    button.chat-send:hover, button.voice-btn:hover, button.skin-btn:hover {
+      transform:scale(1.05);
+      box-shadow:0 0 20px rgba(255,170,0,0.5);
     }
     button.voice-btn.listening {
       background:#00ff00;
@@ -256,51 +298,6 @@
       background:#333;
       color:#fff;
       min-height:48px;
-    }
-    #lattice-progress-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: var(--thunder-gold);
-      font-family: 'Orbitron', monospace;
-      transition: opacity 0.8s;
-    }
-    #lattice-progress-container.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-    #lattice-progress-bar {
-      width: 80%;
-      max-width: 600px;
-      height: 24px;
-      background: var(--progress-bg);
-      border: 2px solid var(--thunder-gold);
-      border-radius: 12px;
-      overflow: hidden;
-      margin: 1rem 0;
-    }
-    #lattice-progress-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--progress-fill);
-      transition: width 0.4s ease;
-    }
-    #lattice-progress-text {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 10px var(--thunder-glow);
-    }
-    #lattice-progress-status {
-      font-size: 1.2rem;
-      opacity: 0.8;
     }
     footer {
       padding:clamp(2rem, 5vw, 4rem) 5% 2rem;
