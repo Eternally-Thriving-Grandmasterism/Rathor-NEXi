@@ -1,5 +1,5 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v21
-// Mercy-gated + real Llama-3.2 + MeTTa unification-based symbolic reasoning + Rust WASM
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v22
+// Mercy-gated + real Llama-3.2 + MeTTa + persistent Hyperon hypergraph reasoning
 // MIT License – Autonomicity Games Inc. 2026
 
 import { ortEngine } from '/ort-integration.js';
@@ -52,8 +52,11 @@ Only client-side reflection. Only now. Only truth.`
     await ortEngine.load();
     this.modelReady = ortEngine.loaded;
     console.log("[Rathor] Model ready status:", this.modelReady);
+
+    // Initialize persistent Hyperon
+    await hyperon.init();
+
     mettaEngine.loadRules();
-    hyperon.loadFromLattice(null);
   }
 
   // ... (loadVoiceSkins, setVoiceSkin, speak, loadCoreLatticeWithDeltaSync, etc. unchanged) ...
@@ -69,19 +72,13 @@ Only client-side reflection. Only now. Only truth.`
       return rejectMsg;
     }
 
-    // MeTTa symbolic pre-rewrite with unification
+    // MeTTa symbolic pre-rewrite
     let query = await mettaEngine.rewrite(userMessage);
-    console.log("[Rathor] MeTTa pre-rewrite (unification):", query);
+    console.log("[Rathor] MeTTa pre-rewrite:", query);
 
-    // Anti-echo guard
-    if (query.length < 10 || /^hi|hello|hey|test$/i.test(query.trim())) {
-      const greeting = this.thunderPhrases[Math.floor(Math.random() * 3)];
-      const response = `${greeting} Thunder gathers. Speak your true intent, Brother.`;
-      this.speak(response);
-      this.history.push({ role: "user", content: userMessage });
-      this.history.push({ role: "rathor", content: response });
-      return response;
-    }
+    // Hyperon hypergraph symbolic reasoning
+    const hyperonEval = await hyperon.evaluate(["EvaluationLink", ["Question", query], "True"]);
+    console.log("[Rathor] Hyperon evaluation:", hyperonEval);
 
     let candidate = this.generateThunderResponse(query, this.generateThought(this.buildContext(query)));
 
@@ -99,9 +96,9 @@ Only client-side reflection. Only now. Only truth.`
       candidate += " [Deep inference offline — symbolic thunder active]";
     }
 
-    // MeTTa symbolic post-rewrite with unification
+    // MeTTa symbolic post-rewrite
     candidate = await mettaEngine.rewrite(candidate);
-    console.log("[Rathor] MeTTa post-rewrite (unification):", candidate);
+    console.log("[Rathor] MeTTa post-rewrite:", candidate);
 
     const postGate = await hyperonValenceGate(candidate);
     if (postGate.result === 'REJECTED') {
