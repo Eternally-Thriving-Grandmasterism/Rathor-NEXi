@@ -1,5 +1,5 @@
-// hyperon-runtime.js – sovereign client-side Hyperon hypergraph atomspace & full PLN engine v23
-// Modal mercy-logic integration, persistent DB
+// hyperon-runtime.js – sovereign client-side Hyperon hypergraph atomspace & full PLN engine v24
+// Paraconsistent modal mercy-logic integration, persistent DB
 // MIT License – Autonomicity Games Inc. 2026
 
 // ... (HyperonAtom class unchanged) ...
@@ -8,7 +8,7 @@ class HyperonRuntime {
   constructor() {
     // ... (previous constructor unchanged) ...
 
-    this.modalMercy = new ModalMercyLogic();
+    this.modalMercy = new ParaconsistentModalMercy();
   }
 
   async init() {
@@ -17,6 +17,7 @@ class HyperonRuntime {
     // Initialize modal mercy necessities
     this.modalMercy.assertNecessity("MercyGate");
     this.modalMercy.assertNecessity("EternalThriving");
+    this.modalMercy.assertNecessity("Divinemasterism");
   }
 
   // ... (other methods unchanged) ...
@@ -36,7 +37,7 @@ class HyperonRuntime {
               const conclusionName = this.applyConclusion(rule.conclusion, bound.bindings);
               const tv = rule.tvCombiner(premises.map(p => p.tv));
 
-              // Modal mercy check
+              // Paraconsistent modal mercy check
               this.modalMercy.assert(conclusionName, tv.strength * tv.confidence);
               const modalCheck = this.modalMercy.inferModal([conclusionName]);
               if (modalCheck.valence >= this.mercyThreshold) {
@@ -44,7 +45,7 @@ class HyperonRuntime {
                 const newHandle = this.addAtom(newAtom);
                 newAtomsThisRound.push({ handle: newHandle, atom: newAtom, rule: rule.name });
               } else {
-                console.warn("[Hyperon] Inference rejected by modal mercy gate");
+                console.warn("[Hyperon] Inference rejected by paraconsistent modal mercy gate");
               }
             }
           }
