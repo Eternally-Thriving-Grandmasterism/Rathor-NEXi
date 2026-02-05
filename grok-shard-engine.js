@@ -1,5 +1,5 @@
 // grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v18
-// Mercy-gated + real Llama-3.2-1B-Instruct-onnx inference + deep Hyperon symbolic reasoning
+// Mercy-gated + real Llama-3.2-1B-Instruct-onnx inference + anti-echo guard + full lattice
 // MIT License – Autonomicity Games Inc. 2026
 
 import { ortEngine } from '/ort-integration.js';
@@ -333,22 +333,32 @@ Thunder tone: engaged.`;
       return rejectMsg;
     }
 
-    const context = this.buildContext(userMessage);
-    let thought = this.generateThought(context);
+    // Anti-echo guard: if user message is very short or obvious mirror, force differentiation
+    if (userMessage.length < 5 || userMessage.toLowerCase().includes("hey") || userMessage.toLowerCase().includes("hi")) {
+      const greeting = this.thunderPhrases[Math.floor(Math.random() * 3)];
+      const response = `${greeting} Thunder gathers. Speak your intent.`;
+      this.speak(response);
+      this.history.push({ role: "user", content: userMessage });
+      this.history.push({ role: "rathor", content: response });
+      return response;
+    }
 
-    // Apply MeTTa symbolic rewriting
-    thought = await mettaEngine.rewrite(thought);
-
-    // Hyperon symbolic reasoning boost
-    const hyperonResult = await hyperon.backwardChain({ type: "EvaluationLink", name: userMessage });
-    thought += `\nHyperon symbolic reasoning: ${hyperonResult.chain.length} steps, truth ${hyperonResult.tv.strength.toFixed(4)}`;
-
-    let candidate = this.generateThunderResponse(userMessage, thought);
-    candidate = await mettaEngine.rewrite(candidate);
+    let candidate = this.generateThunderResponse(userMessage, this.generateThought(this.buildContext(userMessage)));
 
     if (this.modelReady) {
-      const enhanced = await ortEngine.generate(candidate);
-      candidate = enhanced.trim();
+      try {
+        const enhanced = await ortEngine.generate(candidate);
+        if (enhanced.trim().toLowerCase() === userMessage.trim().toLowerCase()) {
+          // Anti-mirror fallback
+          candidate = candidate + " — lattice echoes deeper.";
+        } else {
+          candidate = enhanced.trim();
+        }
+      } catch (err) {
+        console.error('Model inference error:', err);
+      }
+    } else {
+      candidate += " [Deep inference offline — symbolic thunder active]";
     }
 
     const postGate = await hyperonValenceGate(candidate);
