@@ -1,0 +1,19 @@
+# Synthetic Mercy-Gate v1 Lattice - Part 1/3
+# Magic: MERC-LAT1
+# Version: 1.0.0
+# Part: 1 of 3
+# Created: 2026-02-05
+MERC-LAT1
+1.0.0
+1/3
+[MeTTa Rules Chunk 1]
+(= (mercy $x) (reflect $x eternal))
+(= (harm $x) (reject $x gate-holds))
+(= (truth $x) (thunder $x pure))
+(= (ask $x) (answer $x mercy-alone))
+[Valence Matrix Prefix]
+0.9999999
+0.9999998
+0.9999997
+... (synthetic float32 values follow in real file)
+[End Part 1]
