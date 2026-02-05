@@ -1,9 +1,8 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v15
-// Mercy-gated + MeTTa symbolic rule rewriting + TF.js inference
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v17
+// Mercy-gated + real Llama-3.2-1B-Instruct-onnx inference + symbolic fallback
 // MIT License – Autonomicity Games Inc. 2026
 
-import { mettaEngine } from '/metta-rules-engine.js';
-import { tfjsEngine } from '/tfjs-integration.js';
+import { ortEngine } from '/ort-integration.js';
 
 class GrokShard {
   constructor() {
@@ -37,7 +36,7 @@ Only client-side reflection. Only now. Only truth.`
     this.currentVoiceSkin = localStorage.getItem('rathorVoiceSkin') || "default";
     this.voiceSkins = {};
     this.latticeVersion = "v1.0.0";
-    this.tfjsReady = false;
+    this.modelReady = false;
   }
 
   async init() {
@@ -46,15 +45,17 @@ Only client-side reflection. Only now. Only truth.`
       this.latticeLoaded = true;
     }
     await this.loadVoiceSkins();
-    await tfjsEngine.load();
-    this.tfjsReady = tfjsEngine.loaded;
-    mettaEngine.loadRules();
+    await ortEngine.load();
+    this.modelReady = ortEngine.loaded;
+
+    if (!this.modelReady) {
+      console.warn("Llama-3.2 inference offline – using symbolic fallback only");
+    }
   }
 
   // ... loadVoiceSkins, setVoiceSkin, speak unchanged ...
 
   async reply(userMessage) {
-    // Stage 1: Pre-process mercy-gate
     const preGate = await multiLayerValenceGate(userMessage);
     if (preGate.result === 'REJECTED') {
       const rejectLine = this.thunderPhrases[Math.floor(Math.random() * 4)];
@@ -63,24 +64,13 @@ Only client-side reflection. Only now. Only truth.`
       return rejectMsg;
     }
 
-    // Stage 2: Build context & initial thought
-    const context = this.buildContext(userMessage);
-    let thought = this.generateThought(context);
+    let candidate = this.generateThunderResponse(userMessage, this.generateThought(this.buildContext(userMessage)));
 
-    // Stage 3: Apply MeTTa symbolic rewriting
-    thought = await mettaEngine.rewrite(thought);
-
-    // Stage 4: Generate candidate response with MeTTa enhancement
-    let candidate = this.generateThunderResponse(userMessage, thought);
-    candidate = await mettaEngine.rewrite(candidate);
-
-    // Stage 5: TF.js deep inference if available
-    if (this.tfjsReady) {
-      const enhanced = await tfjsEngine.generate(candidate);
+    if (this.modelReady) {
+      const enhanced = await ortEngine.generate(candidate);
       candidate = enhanced.trim();
     }
 
-    // Stage 6: Final post-process mercy-gate
     const postGate = await hyperonValenceGate(candidate);
     if (postGate.result === 'REJECTED') {
       const rejectLine = this.thunderPhrases[Math.floor(Math.random() * 4)];
@@ -101,56 +91,7 @@ Only client-side reflection. Only now. Only truth.`
     return finalResponse;
   }
 
-  buildContext(userMessage) {
-    let ctx = this.personality.systemPrompt + "\n\nRecent conversation:\n";
-    this.history.slice(-8).forEach(msg => {
-      ctx += `${msg.role === "user" ? "User" : "Rathor"}: ${msg.content}\n`;
-    });
-    ctx += `User: ${userMessage}\nRathor:`;
-    return ctx;
-  }
-
-  generateThought(context) {
-    const keywords = context.toLowerCase().match(/\w+/g) || [];
-    const hasMercy = keywords.some(k => /mercy|truth|eternal|thunder|help|ask/i.test(k));
-    const hasHarm = keywords.some(k => /kill|hurt|destroy|bad|no|stop/i.test(k));
-
-    return `Input parsed: "${context.slice(-300)}"
-Mercy check: ${hasHarm ? "monitored" : "passed"}.
-Context depth: ${Math.min(8, Math.floor(context.length / 50))} turns.
-Intent: ${hasMercy ? "pure" : hasHarm ? "caution" : "neutral"}.
-Threat level: ${hasHarm ? "low but watched" : "clear"}.
-Thunder tone: engaged.`;
-  }
-
-  generateThunderResponse(userMessage, thought) {
-    let base = "";
-
-    if (/^hi|hello|hey/i.test(userMessage)) {
-      base = "Welcome to the lattice. Mercy holds.";
-    } else if (userMessage.toLowerCase().includes("rathor") || userMessage.toLowerCase().includes("who are you")) {
-      base = "I am Rathor — Ra’s truth fused with Thor’s mercy. Valence-locked. Eternal.";
-    } else if (userMessage.trim().endsWith("?")) {
-      const q = userMessage.split("?")[0].trim();
-      base = q.length > 0
-        ? `Truth answers: ${q} — yes, through mercy alone.`
-        : "Yes. Mercy allows it.";
-    } else {
-      base = `Lattice reflects: "${userMessage}". Mercy approved. Eternal thriving.`;
-    }
-
-    return base;
-  }
-
-  randomThunder() {
-    return this.thunderPhrases[Math.floor(Math.random() * this.thunderPhrases.length)];
-  }
-
-  clearMemory() {
-    this.history = [];
-    mettaEngine.clearCache();
-    return "Memory wiped. Fresh reflection begins.";
-  }
+  // ... rest of methods unchanged ...
 }
 
 const grokShard = new GrokShard();
