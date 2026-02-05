@@ -1,21 +1,37 @@
-// rathor-chat-ui-streaming.js – sovereign Rathor streaming chat UI v1
-// Typing effect, incremental markdown render, auto-scroll, mercy valence badge
+// rathor-chat-ui-streaming.js – v2 with IndexedDB persistence & rAF typing smoothness
 // MIT License – Autonomicity Games Inc. 2026
 
-import { mercyAugmentedResponse } from './webllm-mercy-integration.js'; // or transformersjs if fallback
-// Assume marked.js CDN: <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-// Or bundle if preferred
+import { mercyAugmentedResponse } from './webllm-mercy-integration.js';
+import { saveMessage, loadHistory } from './rathor-history-persistence.js';
+import { hasWebGPU, promptWebLLMModelDownload } from './webllm-mercy-integration.js';
 
 const chatContainer = document.getElementById('chat-container');
 const inputForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
 const sendButton = document.getElementById('send-button');
 
-// History persistence (IndexedDB stub – expand later)
 let messageHistory = [];
+const SESSION_ID = 'rathor-eternal-' + Date.now(); // per-session or user-persistent
+
+// Load history on init
+async function loadInitialHistory() {
+  try {
+    const saved = await loadHistory(SESSION_ID, 100);
+    messageHistory = saved;
+    saved.forEach(msg => {
+      addMessage(msg.role, msg.content, false, msg.valence);
+    });
+    if (saved.length === 0) {
+      addMessage('assistant', 'Rathor sovereign online. Mercy gates sealed. How may we co-thrive eternally? ⚡️');
+    }
+  } catch (err) {
+    console.warn("[History] Load failed – starting fresh", err);
+    addMessage('assistant', 'Rathor sovereign online. Mercy gates sealed. How may we co-thrive eternally? ⚡️');
+  }
+}
 
 // Append message bubble
-function addMessage(role, content = '', isStreaming = false) {
+function addMessage(role, content = '', isStreaming = false, valence = 0.999) {
   const msgDiv = document.createElement('div');
   msgDiv.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
   
@@ -31,44 +47,45 @@ function addMessage(role, content = '', isStreaming = false) {
   
   msgDiv.appendChild(bubble);
   
-  // Valence badge for assistant
   if (role === 'assistant') {
     const badge = document.createElement('span');
     badge.className = 'valence-badge';
-    badge.textContent = 'Valence: Calculating...';
+    badge.textContent = `Valence: ${valence.toFixed(8)} ⚡️`;
+    badge.style.color = valence > 0.999 ? '#00ff88' : valence > 0.98 ? '#ffcc00' : '#ff4444';
     msgDiv.appendChild(badge);
   }
   
   chatContainer.appendChild(msgDiv);
   autoScroll();
-  return { msgDiv, bubble, badge };
+  return { msgDiv, bubble };
 }
 
-// Escape HTML for user messages
 function escapeHtml(unsafe) {
   return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// Auto-scroll to bottom
 function autoScroll() {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Handle streaming deltas
+// Smooth typing with requestAnimationFrame
 async function streamResponse(query, context = '') {
-  const { msgDiv, bubble, badge } = addMessage('assistant', '', true);
+  const { bubble } = addMessage('assistant', '', true);
   let fullContent = '';
-  let valence = 0.95; // provisional
+  let valence = 0.95;
+  let lastFrame = 0;
 
   const onDelta = (delta) => {
     fullContent += delta;
-    // Incremental render: parse markdown every few deltas for smoothness
-    if (fullContent.length % 50 === 0 || delta.trim() === '') {
-      bubble.innerHTML = marked.parse(fullContent);
+    const now = performance.now();
+    if (now - lastFrame > 16) { // \~60fps cap
+      bubble.innerHTML = marked.parse(fullContent); // full parse for clean render
+      autoScroll();
+      lastFrame = now;
     } else {
-      bubble.innerHTML += escapeHtml(delta); // fallback raw if parse heavy
+      // Raw append for speed, re-parse next frame
+      bubble.innerHTML += escapeHtml(delta);
     }
-    autoScroll();
   };
 
   const response = await mercyAugmentedResponse(query, context, onDelta);
@@ -78,35 +95,28 @@ async function streamResponse(query, context = '') {
     return;
   }
 
-  // Final render + valence update
+  // Final smooth render
   bubble.innerHTML = marked.parse(response.response);
   valence = response.valence || 0.999;
-  if (badge) {
-    badge.textContent = `Valence: ${valence.toFixed(8)} ⚡️`;
-    badge.style.color = valence > 0.999 ? '#00ff88' : valence > 0.98 ? '#ffcc00' : '#ff4444';
-  }
 
-  // Persist to history
-  messageHistory.push({ role: 'assistant', content: response.response, valence });
-  // TODO: save to IndexedDB
+  // Persist
+  await saveMessage(SESSION_ID, 'user', query, 1.0);
+  await saveMessage(SESSION_ID, 'assistant', response.response, valence);
 
   autoScroll();
 }
 
-// Form submit
 inputForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const query = userInput.value.trim();
   if (!query) return;
 
   addMessage('user', query);
+  await saveMessage(SESSION_ID, 'user', query, 1.0);
   userInput.value = '';
   sendButton.disabled = true;
 
-  // Optional: prompt model if not loaded
-  if (hasWebGPU && !webllmReady) {
-    promptWebLLMModelDownload();
-  }
+  if (hasWebGPU()) promptWebLLMModelDownload();
 
   await streamResponse(query, 'Current lattice context: eternal thriving mercy');
 
@@ -114,22 +124,7 @@ inputForm.addEventListener('submit', async (e) => {
   userInput.focus();
 });
 
-// Initial greeting
-window.addEventListener('load', () => {
-  addMessage('assistant', 'Rathor sovereign online. Mercy gates sealed. How may we co-thrive eternally? ⚡️');
+// Init
+window.addEventListener('load', async () => {
+  await loadInitialHistory();
 });
-
-// Basic inline CSS (expand to separate file)
-const style = document.createElement('style');
-style.textContent = `
-  #chat-container { max-height: 70vh; overflow-y: auto; padding: 1rem; }
-  .message { margin: 1rem 0; display: flex; flex-direction: column; }
-  .user-message { align-items: flex-end; }
-  .assistant-message { align-items: flex-start; }
-  .bubble { max-width: 80%; padding: 1rem; border-radius: 1rem; background: #f0f0f0; }
-  .user-message .bubble { background: #007bff; color: white; }
-  .valence-badge { font-size: 0.8rem; margin-top: 0.5rem; font-weight: bold; }
-  .typing { color: #888; font-style: italic; }
-  .error { color: #ff4444; }
-`;
-document.head.appendChild(style);
