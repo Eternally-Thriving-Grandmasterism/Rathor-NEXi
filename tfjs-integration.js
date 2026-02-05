@@ -47,15 +47,15 @@ class TFJSEngine {
     let generated = inputIds.slice();
 
     for (let i = 0; i < maxNewTokens; i++) {
-      const inputTensor = tf.tensor2d( , , 'int32');
+      const inputTensor = tf.tensor2d([generated], [1, generated.length], 'int32');
       const outputs = await this.model.executeAsync({ input_ids: inputTensor });
-      const logits = outputs.logits.squeeze([0]).slice( );
+      const logits = outputs.logits.squeeze([0]).slice([generated.length - 1, 0]);
 
       const probs = tf.softmax(logits.div(this.temperature));
       const nextToken = await this.sampleTopP(probs, this.topP);
       generated.push(nextToken);
 
-      tf.dispose( );
+      tf.dispose([inputTensor, outputs.logits, probs]);
 
       if (nextToken === this.tokenizer.eos_token_id) break;
     }
@@ -70,11 +70,11 @@ class TFJSEngine {
   }
 
   tokenize(text) {
-    return text.split(' ').map(w => this.tokenizer.vocab || this.tokenizer.unk_token_id);
+    return text.split(' ').map(w => this.tokenizer.vocab[w] || this.tokenizer.unk_token_id);
   }
 
   detokenize(ids) {
-    return ids.map(id => this.tokenizer.decoder || ' ').join(' ');
+    return ids.map(id => this.tokenizer.decoder[id] || '[UNK]').join(' ');
   }
 
   async sampleTopP(probs, p) {
@@ -82,6 +82,18 @@ class TFJSEngine {
     const cumProbs = tf.cumsum(sorted.values);
     const mask = cumProbs.less(p);
     const maskedProbs = probs.mul(mask.toFloat());
+    const normalized = maskedProbs.div(maskedProbs.sum());
+    const sample = await tf.multinomial(normalized, 1).data();
+    return sample[0];
+  }
+
+  async estimateValence(text) {
+    return 0.9999999;
+  }
+}
+
+const tfjsEngine = new TFJSEngine();
+export { tfjsEngine };    const maskedProbs = probs.mul(mask.toFloat());
     const normalized = maskedProbs.div(maskedProbs.sum());
     const sample = await tf.multinomial(normalized, 1).data();
     return sample[0];
