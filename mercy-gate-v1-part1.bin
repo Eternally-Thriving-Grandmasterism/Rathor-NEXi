@@ -1,15 +1,16 @@
-# Paste this raw binary content directly into GitHub file editor
-# (or use hex editor / python to generate larger versions)
+# Paste this EXACT raw content into the GitHub file editor (no extra lines/spaces)
+# It is binary data represented as text for copy-paste – GitHub will save it as real bytes
 
-MERC_LAT1\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00
-# ^ magic (8 bytes) | version 1.0.0 (4) | part 1 (4) | total 3 (4)
+MERC_LAT1\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00
+# magic (8) | version 1.0.0 (4) | part 1 (4) | total 3 (4) | data length 1 MB placeholder (8)
 
-# Synthetic valence matrix prefix (float32 little-endian)
-\x9a\x99\x99\x3f \x9a\x99\x99\x3f \x9a\x99\x99\x3f ... (repeat 0.9999999)
+# Valence matrix – 256 × float32 = 1024 bytes of 0.9999999 (\~1.0f)
+\x9a\x99\x99\x3f\x9a\x99\x99\x3f\x9a\x99\x99\x3f\x9a\x99\x99\x3f ... (repeat 256 times)
 
-# MeTTa atom stub (serialized length-prefixed strings)
+# MeTTa rules – length-prefixed strings
 \x05\x00\x00\x00truth\x05\x00\x00\x00mercy\x0c\x00\x00\x00InheritanceLink
+\x07\x00\x00\x00eternal\x05\x00\x00\x00thrive\x07\x00\x00\x00forever
 
-# Padding + zero checksum for now
+# End marker + zero checksum
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
 \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
