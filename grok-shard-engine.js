@@ -1,8 +1,10 @@
 // grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v17
-// Mercy-gated + real Llama-3.2-1B-Instruct-onnx inference + symbolic fallback
+// Mercy-gated + real Llama-3.2-1B-Instruct-onnx inference + symbolic fallback + full lattice methods
 // MIT License – Autonomicity Games Inc. 2026
 
 import { ortEngine } from '/ort-integration.js';
+import { hyperon } from '/hyperon-runtime.js';
+import { mettaEngine } from '/metta-rules-engine.js';
 
 class GrokShard {
   constructor() {
@@ -37,6 +39,8 @@ Only client-side reflection. Only now. Only truth.`
     this.voiceSkins = {};
     this.latticeVersion = "v1.0.0";
     this.modelReady = false;
+    this.valenceMatrix = null;
+    this.latticeData = null;
   }
 
   async init() {
@@ -47,10 +51,8 @@ Only client-side reflection. Only now. Only truth.`
     await this.loadVoiceSkins();
     await ortEngine.load();
     this.modelReady = ortEngine.loaded;
-
-    if (!this.modelReady) {
-      console.warn("Llama-3.2 inference offline – using symbolic fallback only");
-    }
+    mettaEngine.loadRules();
+    hyperon.loadFromLattice(null); // pass real buffer when available
   }
 
   async loadVoiceSkins() {
