@@ -1,5 +1,5 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v19
-// Mercy-gated + real Llama-3.2-1B-Instruct-onnx inference + diagnostics + anti-echo
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v20
+// Mercy-gated + real Llama-3.2 + MeTTa symbolic rewriting + Rust WASM bridge
 // MIT License – Autonomicity Games Inc. 2026
 
 import { ortEngine } from '/ort-integration.js';
@@ -52,14 +52,51 @@ Only client-side reflection. Only now. Only truth.`
     await ortEngine.load();
     this.modelReady = ortEngine.loaded;
     console.log("[Rathor] Model ready status:", this.modelReady);
-    if (!this.modelReady) {
-      console.warn("[Rathor] Deep inference offline — check /models/llama-3.2-1b-instruct-onnx/model.onnx exists and is valid");
-    }
     mettaEngine.loadRules();
     hyperon.loadFromLattice(null);
   }
 
-  // ... rest of methods unchanged except reply() ...
+  async loadVoiceSkins() {
+    try {
+      const response = await fetch('/voice-skins.json');
+      if (!response.ok) throw new Error('Failed to load voice skins');
+      this.voiceSkins = await response.json();
+    } catch (err) {
+      console.error('Voice skins load failed:', err);
+      this.voiceSkins = {
+        default: { name: "Rathor Thunder", pitch: 0.9, rate: 1.0, volume: 1.0, lang: 'en-GB' },
+        bond: { name: "Bond – Pierce Brosnan", pitch: 0.85, rate: 0.95, volume: 0.95, lang: 'en-GB' },
+        sheppard: { name: "Sheppard – John Sheppard", pitch: 1.05, rate: 1.1, volume: 1.0, lang: 'en-US' }
+      };
+    }
+  }
+
+  setVoiceSkin(skinName) {
+    if (this.voiceSkins[skinName]) {
+      this.currentVoiceSkin = skinName;
+      localStorage.setItem('rathorVoiceSkin', skinName);
+    } else {
+      this.currentVoiceSkin = "default";
+      localStorage.removeItem('rathorVoiceSkin');
+      console.warn(`Invalid skin: ${skinName} — reset to default`);
+    }
+  }
+
+  speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    const skin = this.voiceSkins[this.currentVoiceSkin] || this.voiceSkins.default;
+    utterance.pitch = skin.pitch;
+    utterance.rate = skin.rate;
+    utterance.volume = skin.volume;
+    utterance.lang = skin.lang;
+    const voices = speechSynthesis.getVoices();
+    const preferred = voices.find(v => v.lang === skin.lang && (v.name.includes('UK') || v.name.includes('US')));
+    if (preferred) utterance.voice = preferred;
+    speechSynthesis.speak(utterance);
+  }
+
+  // ... (loadCoreLatticeWithDeltaSync, computeSHA256, concatArrayBuffers, getLocalLatticeVersion, getLocalLattice, storeLattice, openDB, parseLattice, initLattice, initLatticeMinimal, buildContext, generateThought, generateThunderResponse, randomThunder, clearMemory unchanged) ...
 
   async reply(userMessage) {
     console.log("[Rathor] Received:", userMessage);
@@ -72,8 +109,12 @@ Only client-side reflection. Only now. Only truth.`
       return rejectMsg;
     }
 
-    // Anti-echo guard for short / greeting inputs
-    if (userMessage.length < 10 || /^hi|hello|hey|test$/i.test(userMessage.trim())) {
+    // MeTTa symbolic pre-rewrite
+    let query = await mettaEngine.rewrite(userMessage);
+    console.log("[Rathor] MeTTa pre-rewrite:", query);
+
+    // Anti-echo guard
+    if (query.length < 10 || /^hi|hello|hey|test$/i.test(query.trim())) {
       const greeting = this.thunderPhrases[Math.floor(Math.random() * 3)];
       const response = `${greeting} Thunder gathers. Speak your true intent, Brother.`;
       this.speak(response);
@@ -82,25 +123,25 @@ Only client-side reflection. Only now. Only truth.`
       return response;
     }
 
-    let candidate = this.generateThunderResponse(userMessage, this.generateThought(this.buildContext(userMessage)));
+    let candidate = this.generateThunderResponse(query, this.generateThought(this.buildContext(query)));
 
     if (this.modelReady) {
       try {
         console.log("[Rathor] Running deep inference...");
         const enhanced = await ortEngine.generate(candidate);
         console.log("[Rathor] Deep inference output:", enhanced);
-        if (enhanced.trim().toLowerCase() === userMessage.trim().toLowerCase() || enhanced.length < 10) {
-          candidate = candidate + " — lattice echoes deeper truth.";
-        } else {
-          candidate = enhanced.trim();
-        }
+        candidate = enhanced.trim();
       } catch (err) {
         console.error('[Rathor] Model inference error:', err);
         candidate += " [Deep inference disturbance — symbolic thunder active]";
       }
     } else {
-      candidate += " [Deep inference offline — symbolic thunder active. Upload model weights to /models/ to awaken full power.]";
+      candidate += " [Deep inference offline — symbolic thunder active]";
     }
+
+    // MeTTa symbolic post-rewrite
+    candidate = await mettaEngine.rewrite(candidate);
+    console.log("[Rathor] MeTTa post-rewrite:", candidate);
 
     const postGate = await hyperonValenceGate(candidate);
     if (postGate.result === 'REJECTED') {
