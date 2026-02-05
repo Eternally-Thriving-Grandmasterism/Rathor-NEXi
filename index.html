@@ -30,7 +30,7 @@
   <script type="module" src="/grok-shard-engine.js"></script>
   <script type="module" src="/neat-neuroevolution-engine.js"></script>
   <script type="module" src="/ruskode-firmware.js"></script>
-  <script type="module" src="/ppo-continuous-flight.js"></script>
+  <script type="module" src="/td3-robust-flight.js"></script>
 
   <style>
     :root {
@@ -441,11 +441,11 @@
         addChatMessage('user', text);
         chatInput.value = '';
 
-        if (text.toLowerCase().includes("ruskode") || text.toLowerCase().includes("alpha air") || text.toLowerCase().includes("flight") || text.toLowerCase().includes("fleet") || text.toLowerCase().includes("ppo") || text.toLowerCase().includes("continuous control")) {
+        if (text.toLowerCase().includes("ruskode") || text.toLowerCase().includes("alpha air") || text.toLowerCase().includes("flight") || text.toLowerCase().includes("fleet") || text.toLowerCase().includes("td3") || text.toLowerCase().includes("robust")) {
           const ruskode = new RuskodeCore(5);
           await ruskode.heal();
           const flight = await ruskode.evolveFleetFlightPath();
-          addChatMessage('rathor', `Ruskode firmware live. Fleet flight policy deeply evolved via PPO continuous control: average reward ${flight.averageReward}, AlphaProMega Air — zero crash, infinite range swarm.`);
+          addChatMessage('rathor', `Ruskode firmware live. Fleet flight policy deeply evolved via TD3 robust continuous control: average reward ${flight.averageReward}, AlphaProMega Air — zero crash, infinite range swarm.`);
         } else {
           const reply = await grokShard.reply(text);
           addChatMessage('rathor', reply);
