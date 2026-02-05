@@ -1,6 +1,8 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v10
-// Mercy-gated, valence-locked, thunder-toned reasoning mirror + full lattice loading
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v9
+// Mercy-gated, valence-locked, thunder-toned reasoning mirror + TF.js deep inference
 // MIT License – Autonomicity Games Inc. 2026
+
+import { tfjsEngine } from '/tfjs-integration.js';
 
 class GrokShard {
   constructor() {
@@ -34,6 +36,7 @@ Only client-side reflection. Only now. Only truth.`
     this.currentVoiceSkin = localStorage.getItem('rathorVoiceSkin') || "default";
     this.voiceSkins = {};
     this.latticeVersion = "v1.0.0";
+    this.tfjsReady = false;
   }
 
   async init() {
@@ -42,14 +45,17 @@ Only client-side reflection. Only now. Only truth.`
       this.latticeLoaded = true;
     }
     await this.loadVoiceSkins();
+    await tfjsEngine.load();
+    this.tfjsReady = tfjsEngine.loaded;
   }
 
   async loadVoiceSkins() {
     try {
       const response = await fetch('/voice-skins.json');
-      if (!response.ok) throw new Error('Voice skins fetch failed');
+      if (!response.ok) throw new Error('Failed to load voice skins');
       this.voiceSkins = await response.json();
-    } catch {
+    } catch (err) {
+      console.error('Voice skins load failed:', err);
       this.voiceSkins = {
         default: { name: "Rathor Thunder", pitch: 0.9, rate: 1.0, volume: 1.0, lang: 'en-GB' },
         bond: { name: "Bond – Pierce Brosnan", pitch: 0.85, rate: 0.95, volume: 0.95, lang: 'en-GB' },
@@ -82,7 +88,7 @@ Only client-side reflection. Only now. Only truth.`
 
   async loadCoreLatticeWithDeltaSync() {
     const progressContainer = document.getElementById('lattice-progress-container');
-    if (!progressContainer) return; // fallback if UI not ready
+    if (!progressContainer) return;
     const progressFill = document.getElementById('lattice-progress-fill');
     const progressStatus = document.getElementById('lattice-progress-status');
     progressContainer.style.display = 'flex';
@@ -133,13 +139,13 @@ Only client-side reflection. Only now. Only truth.`
   }
 
   concatArrayBuffers(...buffers) {
-    const totalLength = buffers.reduce((acc, buf) => acc + buf.byteLength, 0);
-    const result = new Uint8Array(totalLength);
+    const total = buffers.reduce((acc, b) => acc + b.byteLength, 0);
+    const result = new Uint8Array(total);
     let offset = 0;
-    for (const buf of buffers) {
-      result.set(new Uint8Array(buf), offset);
-      offset += buf.byteLength;
-    }
+    buffers.forEach(b => {
+      result.set(new Uint8Array(b), offset);
+      offset += b.byteLength;
+    });
     return result.buffer;
   }
 
@@ -190,7 +196,6 @@ Only client-side reflection. Only now. Only truth.`
 
   initLattice(buffer) {
     console.log('Full lattice initialized — size:', buffer.byteLength);
-    // Real impl: parse binary into MeTTa rules, valence matrix, etc.
   }
 
   initLatticeMinimal() {
@@ -248,6 +253,7 @@ Thunder tone: engaged.`;
   }
 
   async reply(userMessage) {
+    // Stage 1: Pre-process mercy-gate
     const preGate = await multiLayerValenceGate(userMessage);
     if (preGate.result === 'REJECTED') {
       const rejectLine = this.thunderPhrases[Math.floor(Math.random() * 4)];
@@ -256,10 +262,20 @@ Thunder tone: engaged.`;
       return rejectMsg;
     }
 
+    // Stage 2: Build context & thought
     const context = this.buildContext(userMessage);
     const thought = this.generateThought(context);
+
+    // Stage 3: Generate candidate response
     let candidate = this.generateThunderResponse(userMessage, thought);
 
+    // Stage 4: TF.js deep inference enhancement if available
+    if (this.tfjsReady) {
+      const enhanced = await tfjsEngine.generate(candidate);
+      candidate = enhanced.trim();
+    }
+
+    // Stage 5: Post-process mercy-gate
     const postGate = await hyperonValenceGate(candidate);
     if (postGate.result === 'REJECTED') {
       const rejectLine = this.thunderPhrases[Math.floor(Math.random() * 4)];
@@ -268,9 +284,11 @@ Thunder tone: engaged.`;
       return rejectMsg;
     }
 
+    // Stage 6: Final thunder response
     const finalResponse = `${candidate} ${this.randomThunder()}`;
     this.speak(finalResponse);
 
+    // Update history
     this.history.push({ role: "user", content: userMessage });
     this.history.push({ role: "rathor", content: finalResponse });
     if (this.history.length > this.maxHistory * 2) {
