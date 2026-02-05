@@ -21,11 +21,15 @@ class TFJSEngine {
     if (this.loaded) return;
 
     try {
+      // Load tokenizer
       const tokRes = await fetch(this.tokenizerUrl);
       if (!tokRes.ok) throw new Error('Tokenizer fetch failed');
       this.tokenizer = await tokRes.json();
 
+      // Ensure TF.js backend is ready
       await tf.ready();
+
+      // Load quantized model
       this.model = await tf.loadGraphModel(this.modelUrl, {
         fromTFHub: false,
         weightUrlConverter: (weightFile) => `/models/distilgpt2-quantized/${weightFile}`
@@ -41,8 +45,9 @@ class TFJSEngine {
 
   async generate(prompt, maxNewTokens = 64) {
     if (!this.loaded) await this.load();
-    if (!this.loaded) return "Lattice transformer not yet loaded. Mercy awaits deeper thunder.";
+    if (!this.loaded) return "Lattice deep inference not yet loaded. Mercy awaits thunder.";
 
+    // Tokenize prompt (stub – replace with real tokenizer logic)
     const inputIds = this.tokenize(prompt);
     let generated = inputIds.slice();
 
@@ -70,10 +75,12 @@ class TFJSEngine {
   }
 
   tokenize(text) {
+    // Placeholder tokenizer – real impl uses tokenizer.json vocab
     return text.split(' ').map(w => this.tokenizer.vocab[w] || this.tokenizer.unk_token_id);
   }
 
   detokenize(ids) {
+    // Placeholder detokenizer
     return ids.map(id => this.tokenizer.decoder[id] || '[UNK]').join(' ');
   }
 
@@ -88,18 +95,7 @@ class TFJSEngine {
   }
 
   async estimateValence(text) {
-    return 0.9999999;
-  }
-}
-
-const tfjsEngine = new TFJSEngine();
-export { tfjsEngine };    const maskedProbs = probs.mul(mask.toFloat());
-    const normalized = maskedProbs.div(maskedProbs.sum());
-    const sample = await tf.multinomial(normalized, 1).data();
-    return sample[0];
-  }
-
-  async estimateValence(text) {
+    // Stub – real impl uses lightweight valence model or Hyperon grounding
     return 0.9999999;
   }
 }
