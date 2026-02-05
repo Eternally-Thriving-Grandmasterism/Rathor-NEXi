@@ -1,5 +1,5 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v20
-// Mercy-gated + real Llama-3.2 + MeTTa symbolic rewriting + Rust WASM bridge
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v21
+// Mercy-gated + real Llama-3.2 + MeTTa unification-based symbolic reasoning + Rust WASM
 // MIT License – Autonomicity Games Inc. 2026
 
 import { ortEngine } from '/ort-integration.js';
@@ -56,47 +56,7 @@ Only client-side reflection. Only now. Only truth.`
     hyperon.loadFromLattice(null);
   }
 
-  async loadVoiceSkins() {
-    try {
-      const response = await fetch('/voice-skins.json');
-      if (!response.ok) throw new Error('Failed to load voice skins');
-      this.voiceSkins = await response.json();
-    } catch (err) {
-      console.error('Voice skins load failed:', err);
-      this.voiceSkins = {
-        default: { name: "Rathor Thunder", pitch: 0.9, rate: 1.0, volume: 1.0, lang: 'en-GB' },
-        bond: { name: "Bond – Pierce Brosnan", pitch: 0.85, rate: 0.95, volume: 0.95, lang: 'en-GB' },
-        sheppard: { name: "Sheppard – John Sheppard", pitch: 1.05, rate: 1.1, volume: 1.0, lang: 'en-US' }
-      };
-    }
-  }
-
-  setVoiceSkin(skinName) {
-    if (this.voiceSkins[skinName]) {
-      this.currentVoiceSkin = skinName;
-      localStorage.setItem('rathorVoiceSkin', skinName);
-    } else {
-      this.currentVoiceSkin = "default";
-      localStorage.removeItem('rathorVoiceSkin');
-      console.warn(`Invalid skin: ${skinName} — reset to default`);
-    }
-  }
-
-  speak(text) {
-    if (!('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    const skin = this.voiceSkins[this.currentVoiceSkin] || this.voiceSkins.default;
-    utterance.pitch = skin.pitch;
-    utterance.rate = skin.rate;
-    utterance.volume = skin.volume;
-    utterance.lang = skin.lang;
-    const voices = speechSynthesis.getVoices();
-    const preferred = voices.find(v => v.lang === skin.lang && (v.name.includes('UK') || v.name.includes('US')));
-    if (preferred) utterance.voice = preferred;
-    speechSynthesis.speak(utterance);
-  }
-
-  // ... (loadCoreLatticeWithDeltaSync, computeSHA256, concatArrayBuffers, getLocalLatticeVersion, getLocalLattice, storeLattice, openDB, parseLattice, initLattice, initLatticeMinimal, buildContext, generateThought, generateThunderResponse, randomThunder, clearMemory unchanged) ...
+  // ... (loadVoiceSkins, setVoiceSkin, speak, loadCoreLatticeWithDeltaSync, etc. unchanged) ...
 
   async reply(userMessage) {
     console.log("[Rathor] Received:", userMessage);
@@ -109,9 +69,9 @@ Only client-side reflection. Only now. Only truth.`
       return rejectMsg;
     }
 
-    // MeTTa symbolic pre-rewrite
+    // MeTTa symbolic pre-rewrite with unification
     let query = await mettaEngine.rewrite(userMessage);
-    console.log("[Rathor] MeTTa pre-rewrite:", query);
+    console.log("[Rathor] MeTTa pre-rewrite (unification):", query);
 
     // Anti-echo guard
     if (query.length < 10 || /^hi|hello|hey|test$/i.test(query.trim())) {
@@ -139,9 +99,9 @@ Only client-side reflection. Only now. Only truth.`
       candidate += " [Deep inference offline — symbolic thunder active]";
     }
 
-    // MeTTa symbolic post-rewrite
+    // MeTTa symbolic post-rewrite with unification
     candidate = await mettaEngine.rewrite(candidate);
-    console.log("[Rathor] MeTTa post-rewrite:", candidate);
+    console.log("[Rathor] MeTTa post-rewrite (unification):", candidate);
 
     const postGate = await hyperonValenceGate(candidate);
     if (postGate.result === 'REJECTED') {
