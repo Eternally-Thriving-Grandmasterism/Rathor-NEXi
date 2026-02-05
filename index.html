@@ -46,6 +46,7 @@
       --neumorph-dark: #080808;
       --shadow-out: 8px 8px 16px rgba(0,0,0,0.6), -4px -4px 12px rgba(255,255,255,0.02);
       --shadow-in: inset 6px 6px 12px rgba(0,0,0,0.8), inset -6px -6px 12px rgba(255,255,255,0.03);
+      --shadow-pressed: inset 10px 10px 20px rgba(0,0,0,0.9), inset -10px -10px 20px rgba(255,255,255,0.02);
       --glass-bg: rgba(255, 255, 255, 0.03);
       --glass-border: rgba(255, 255, 255, 0.06);
       --blur: blur(20px);
@@ -53,7 +54,7 @@
       --focus: #00ffff;
       --progress-bg: rgba(34, 34, 34, 0.8);
       --progress-fill: linear-gradient(90deg, #ffaa00, #ff5500);
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -117,6 +118,10 @@
       color: var(--text-primary);
       cursor: pointer;
       padding: 0.5rem;
+      transition: var(--transition);
+    }
+    .hamburger:active {
+      transform: scale(0.95);
     }
     main {
       flex: 1;
@@ -174,17 +179,23 @@
     .cta button::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(circle at 50% 50%, rgba(255,170,0,0.15), transparent 70%);
+      top: 50%; left: 50%;
+      width: 0; height: 0;
+      background: radial-gradient(circle, rgba(255,170,0,0.4), transparent 70%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
       opacity: 0;
-      transition: opacity 0.4s;
+      transition: width 0.6s, height 0.6s, opacity 0.6s;
+      pointer-events: none;
     }
-    .cta button:hover::before, .cta button:active::before {
-      opacity: 1;
+    .cta button:active::before {
+      width: 300px;
+      height: 300px;
+      opacity: 0.6;
     }
     .cta button:active {
-      transform: translateY(2px);
-      box-shadow: inset 6px 6px 12px rgba(0,0,0,0.8), inset -6px -6px 12px rgba(255,255,255,0.03);
+      transform: translateY(2px) scale(0.98);
+      box-shadow: var(--shadow-pressed);
     }
     .cta button:hover {
       transform: translateY(-4px);
@@ -241,8 +252,13 @@
       max-width: 85%;
       word-wrap: break-word;
       opacity: 0;
-      transition: opacity 0.6s ease, transform 0.3s;
+      transform: translateY(10px);
+      transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
       box-shadow: var(--shadow-out), var(--shadow-in);
+    }
+    .chat-message.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
     .chat-message.user {
       background: linear-gradient(135deg, var(--thunder-gold), #ff8800);
@@ -258,6 +274,7 @@
       background: #880000;
       color: #fff;
       font-weight: bold;
+      animation: subtle-tremor 0.4s ease;
     }
     .chat-input-area {
       display: flex;
@@ -297,8 +314,8 @@
       overflow: hidden;
     }
     button.chat-send:active, button.voice-btn:active, button.skin-btn:active {
-      transform: translateY(2px);
-      box-shadow: inset 6px 6px 12px rgba(0,0,0,0.8), inset -6px -6px 12px rgba(255,255,255,0.03);
+      transform: translateY(2px) scale(0.96);
+      box-shadow: var(--shadow-pressed);
     }
     button.chat-send:hover, button.voice-btn:hover, button.skin-btn:hover {
       transform: translateY(-4px);
@@ -306,7 +323,7 @@
     }
     button.voice-btn.listening {
       background: linear-gradient(135deg, #00ff00, #00cc00);
-      animation: pulse-green 1s infinite;
+      animation: pulse-green 1s infinite, breathing 3s infinite ease-in-out;
       transform: scale(1.05);
     }
     button.skin-btn.active {
@@ -337,7 +354,17 @@
     }
     @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.9 } }
     @keyframes pulse-green { 0%,100% { background:#00ff00 } 50% { background:#00cc00 } }
+    @keyframes breathing {
+      0%,100% { transform: scale(1.05); }
+      50% { transform: scale(1.12); }
+    }
     @keyframes glowShift { 0% { background-position:0% 50% } 100% { background-position:200% 50% } }
+    @keyframes subtle-tremor {
+      0%,100% { transform: translate(0,0); }
+      25% { transform: translate(1px,1px); }
+      50% { transform: translate(-1px,-1px); }
+      75% { transform: translate(1px,-1px); }
+    }
     @media (max-width:768px) {
       .hamburger { display:block; }
       nav ul {
@@ -508,9 +535,15 @@
       div.className = `chat-message ${role}`;
       div.textContent = content;
       div.style.opacity = '0';
+      div.style.transform = 'translateY(10px)';
       chatMessages.appendChild(div);
       chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-      setTimeout(() => { div.style.transition = 'opacity 0.6s'; div.style.opacity = '1'; }, 10);
+      setTimeout(() => {
+        div.classList.add('visible');
+        div.style.transition = 'opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        div.style.opacity = '1';
+        div.style.transform = 'translateY(0)';
+      }, 10);
       saveMessage(role, content);
     }
 
