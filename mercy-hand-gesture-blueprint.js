@@ -1,6 +1,6 @@
-// mercy-hand-gesture-blueprint.js – v4 sovereign Mercy Hand Gesture Detection Blueprint
-// XRHand joint-based gestures (pinch/point/grab/open-palm/thumbs-up + swipe left/right/up/down + diagonal)
-// + visual swipe trail rendering, mercy-gated, valence-modulated feedback
+// mercy-hand-gesture-blueprint.js – v5 sovereign Mercy Hand Gesture Detection Blueprint
+// XRHand joint-based gestures (pinch/point/grab/open-palm/thumbs-up + swipe cardinal/diagonal + CIRCULAR clockwise/counterclockwise)
+// + visual swipe/circle trail rendering, mercy-gated, valence-modulated feedback
 // MIT License – Autonomicity Games Inc. 2026
 
 import { fuzzyMercy } from './fuzzy-mercy-logic.js';
@@ -16,31 +16,33 @@ const OPEN_HAND_SPREAD_THRESHOLD = 0.25;
 const THUMBS_UP_ANGLE_THRESHOLD = 60;
 
 // Swipe thresholds
-const SWIPE_MIN_DISPLACEMENT = 0.10;      // meters (dominant axis for cardinal)
-const SWIPE_MIN_DIAG_DISPLACEMENT = 0.14; // meters (combined for diagonal)
-const SWIPE_MIN_VELOCITY = 0.60;          // m/s
-const SWIPE_MAX_DURATION = 500;           // ms
-const SWIPE_DIRECTION_TOLERANCE = 30;     // degrees from cardinal/diagonal axis
+const SWIPE_MIN_DISPLACEMENT = 0.10;
+const SWIPE_MIN_DIAG_DISPLACEMENT = 0.14;
+const SWIPE_MIN_VELOCITY = 0.60;
+const SWIPE_MAX_DURATION = 500;
+const SWIPE_DIRECTION_TOLERANCE = 30;
 
-// Diagonal angle windows (around 45°)
-const DIAGONAL_ANGLE_WINDOWS = [
-  { name: 'up-right',   angle: 45,  tolerance: SWIPE_DIRECTION_TOLERANCE },
-  { name: 'up-left',    angle: 135, tolerance: SWIPE_DIRECTION_TOLERANCE },
-  { name: 'down-right', angle: 315, tolerance: SWIPE_DIRECTION_TOLERANCE },
-  { name: 'down-left',  angle: 225, tolerance: SWIPE_DIRECTION_TOLERANCE }
-];
+// Circular gesture thresholds
+const CIRCLE_MIN_POINTS = 10;
+const CIRCLE_MIN_RADIUS = 0.06;
+const CIRCLE_MAX_RADIUS = 0.35;
+const CIRCLE_RADIUS_STD_MAX = 0.30;      // std dev < 30% of avg radius
+const CIRCLE_MIN_ANGLE_COVERAGE = 300;   // degrees for full circle
+const CIRCLE_ANGLE_TOLERANCE = 35;       // max deviation per step
+const CIRCLE_MIN_DURATION = 200;         // ms
+const CIRCLE_MAX_DURATION = 1200;        // ms
 
-// Swipe trail visual settings
-const SWIPE_TRAIL_MAX_POINTS = 25;        // max trail length
-const SWIPE_TRAIL_FADE_SPEED = 0.08;      // alpha decay per frame
+// Trail visual settings
+const TRAIL_MAX_POINTS = 30;
+const TRAIL_FADE_SPEED = 0.08;
 
 class MercyHandGesture {
   constructor(scene) {
     this.scene = scene;
-    this.hands = new Map();               // inputSource → XRHand
-    this.gestures = new Map();            // inputSource → current gesture state
-    this.swipeHistory = new Map();        // inputSource → {startTime, startPos, lastPos, direction, trailPoints}
-    this.trailMeshes = new Map();         // inputSource → trail line mesh
+    this.hands = new Map();
+    this.gestures = new Map();
+    this.motionHistory = new Map(); // inputSource → {startTime, points: Vector3[], type: 'swipe'|'circle'|null}
+    this.trailMeshes = new Map();
     this.valence = 1.0;
   }
 
@@ -56,7 +58,6 @@ class MercyHandGesture {
     return true;
   }
 
-  // Process hand joints from XRFrame (call in onXRFrame)
   processHandJoints(frame, inputSources, referenceSpace) {
     inputSources.forEach(source => {
       if (source.hand) {
@@ -73,158 +74,168 @@ class MercyHandGesture {
 
         if (!joints['thumb-tip'] || !joints['index-finger-tip'] || !joints['wrist']) return;
 
-        // Existing gestures (pinch/point/grab/open-palm/thumbs-up) – abbreviated
-        const thumbTip = joints['thumb-tip'].position;
-        const indexTip = joints['index-finger-tip'].position;
-        const palm = joints['wrist'].position;
-
-        const pinchDist = thumbTip.distanceTo(indexTip);
-        const isPinching = pinchDist < PINCH_DISTANCE_THRESHOLD;
-
-        const forward = new BABYLON.Vector3(0, 0, -1);
-        const indexDir = indexTip.subtract(joints['index-finger-metacarpal']?.position || palm).normalize();
-        const pointAngle = forward.angleTo(indexDir) * (180 / Math.PI);
-        const isPointing = pointAngle < POINT_ANGLE_THRESHOLD && !isPinching;
-
-        const grabScore = ['thumb-tip', 'middle-finger-tip', 'ring-finger-tip', 'pinky-finger-tip']
-          .reduce((sum, name) => sum + (joints[name]?.position.distanceTo(palm) || 0), 0);
-        const isGrabbing = grabScore / 4 < GRAB_FINGER_PALM_DISTANCE && !isPinching && !isPointing;
-
-        const thumbIndexSpread = thumbTip.distanceTo(indexTip);
-        const isOpenPalm = thumbIndexSpread > OPEN_HAND_SPREAD_THRESHOLD && !isGrabbing && !isPinching;
-
-        const thumbUp = thumbTip.y - palm.y > 0.1;
-        const othersCurled = ['index-finger-tip', 'middle-finger-tip', 'ring-finger-tip', 'pinky-finger-tip']
-          .every(name => joints[name]?.position.distanceTo(palm) < 0.12);
-        const isThumbsUp = thumbUp && othersCurled && !isGrabbing;
-
-        const prev = this.gestures.get(source) || {};
-        this.gestures.set(source, { isPinching, isPointing, isGrabbing, isOpenPalm, isThumbsUp });
-
-        // Existing gesture triggers (abbreviated)
-        if (isPinching && !prev.isPinching) mercyHaptic.playPattern('thrivePulse', 1.1);
-        if (isPointing && !prev.isPointing) mercyHaptic.playPattern('uplift', 0.9);
-        if (isGrabbing && !prev.isGrabbing) mercyHaptic.playPattern('compassionWave', 1.0);
-        if (isOpenPalm && !prev.isOpenPalm) mercyHaptic.playPattern('eternalReflection', 0.7);
-        if (isThumbsUp && !prev.isThumbsUp) mercyHaptic.playPattern('abundanceSurge', 1.2);
-
-        // Swipe detection + visual trail (cardinal + diagonal)
-        const trackedPoint = joints['index-finger-tip']?.position || palm;
-        let swipeState = this.swipeHistory.get(source) || { 
+        const trackedPoint = joints['index-finger-tip']?.position || joints['wrist'].position;
+        let motionState = this.motionHistory.get(source) || { 
           startTime: null, 
-          startPos: null, 
-          lastPos: null, 
-          direction: null, 
-          trailPoints: [] 
+          points: [], 
+          type: null 
         };
 
-        if (frame.timestamp - swipeState.startTime > SWIPE_MAX_DURATION * 2) {
-          swipeState = { startTime: null, startPos: null, lastPos: null, direction: null, trailPoints: [] };
+        // Reset if inactive too long
+        if (motionState.startTime && frame.timestamp - motionState.startTime > 2000) {
+          motionState = { startTime: null, points: [], type: null };
         }
 
-        if (!swipeState.startTime) {
-          swipeState.startTime = frame.timestamp;
-          swipeState.startPos = trackedPoint.clone();
-          swipeState.lastPos = trackedPoint.clone();
-          swipeState.trailPoints = [trackedPoint.clone()];
+        if (!motionState.startTime) {
+          motionState.startTime = frame.timestamp;
+          motionState.points = [trackedPoint.clone()];
         } else {
-          const delta = trackedPoint.subtract(swipeState.lastPos);
-          const displacement = trackedPoint.subtract(swipeState.startPos);
-          const speed = delta.length() / ((frame.timestamp - swipeState.startTime) / 1000);
-
-          // Update trail (keep last N points)
-          swipeState.trailPoints.push(trackedPoint.clone());
-          if (swipeState.trailPoints.length > SWIPE_TRAIL_MAX_POINTS) {
-            swipeState.trailPoints.shift();
+          motionState.points.push(trackedPoint.clone());
+          if (motionState.points.length > TRAIL_MAX_POINTS * 2) {
+            motionState.points.shift();
           }
+        }
 
-          // Dominant direction detection (cardinal + diagonal)
-          const absDelta = new BABYLON.Vector3(Math.abs(delta.x), Math.abs(delta.y), Math.abs(delta.z));
+        // --- Swipe detection (cardinal + diagonal) ---
+        if (motionState.points.length >= 4) {
+          const displacement = trackedPoint.subtract(motionState.points[0]);
+          const durationMs = frame.timestamp - motionState.startTime;
+          const speed = displacement.length() / (durationMs / 1000);
+
+          const absDisp = new BABYLON.Vector3(Math.abs(displacement.x), Math.abs(displacement.y), Math.abs(displacement.z));
           let direction = null;
-          let angle = 0;
+          let angle = Math.atan2(displacement.y, displacement.x) * (180 / Math.PI);
+          angle = (angle + 360) % 360;
 
-          // Cardinal first
-          if (absDelta.x > absDelta.y && absDelta.x > absDelta.z && absDelta.x > SWIPE_MIN_DISPLACEMENT) {
-            direction = delta.x > 0 ? 'right' : 'left';
-            angle = 0;
-          } else if (absDelta.y > absDelta.x && absDelta.y > absDelta.z && absDelta.y > SWIPE_MIN_DISPLACEMENT) {
-            direction = delta.y > 0 ? 'up' : 'down';
-            angle = 90;
+          // Cardinal
+          if (absDisp.x > absDisp.y && absDisp.x > absDisp.z && absDisp.x > SWIPE_MIN_DISPLACEMENT && speed > SWIPE_MIN_VELOCITY && durationMs < SWIPE_MAX_DURATION) {
+            direction = displacement.x > 0 ? 'right' : 'left';
+          } else if (absDisp.y > absDisp.x && absDisp.y > absDisp.z && absDisp.y > SWIPE_MIN_DISPLACEMENT && speed > SWIPE_MIN_VELOCITY && durationMs < SWIPE_MAX_DURATION) {
+            direction = displacement.y > 0 ? 'up' : 'down';
           }
 
-          // Diagonal if no strong cardinal
-          if (!direction && displacement.length() > SWIPE_MIN_DIAG_DISPLACEMENT) {
-            angle = Math.atan2(displacement.y, displacement.x) * (180 / Math.PI);
-            angle = (angle + 360) % 360; // positive 0–360
-
-            for (const diag of DIAGONAL_ANGLE_WINDOWS) {
-              const diff = Math.abs(angle - diag.angle);
-              const wrappedDiff = Math.min(diff, 360 - diff);
-              if (wrappedDiff < diag.tolerance && speed > SWIPE_MIN_VELOCITY) {
-                direction = diag.name;
+          // Diagonal
+          if (!direction && displacement.length() > SWIPE_MIN_DIAG_DISPLACEMENT && speed > SWIPE_MIN_VELOCITY && durationMs < SWIPE_MAX_DURATION) {
+            const diagAngles = [45, 135, 225, 315];
+            for (const target of diagAngles) {
+              const diff = Math.min(Math.abs(angle - target), 360 - Math.abs(angle - target));
+              if (diff < SWIPE_DIRECTION_TOLERANCE) {
+                direction = target === 45 ? 'up-right' :
+                            target === 135 ? 'up-left' :
+                            target === 225 ? 'down-left' : 'down-right';
                 break;
               }
             }
           }
 
-          if (direction && speed > SWIPE_MIN_VELOCITY) {
+          if (direction) {
             if (this.gateGesture(`swipe_${direction}`, this.valence)) {
               mercyHaptic.playPattern('abundanceSurge', 1.2);
-              console.log(`[MercyGesture] Swipe ${direction.toUpperCase()} detected – velocity ${speed.toFixed(2)} m/s, displacement ${displacement.length().toFixed(3)} m, angle ${angle.toFixed(1)}°`);
-
-              // Trigger mercy action (e.g., swipe up-right = expand lattice, down-left = collapse)
-              // Example: if (direction === 'up-right') mercyHaptic.playPattern('cosmicHarmony', 1.3);
+              console.log(`[MercyGesture] Swipe ${direction.toUpperCase()} detected – velocity ${speed.toFixed(2)} m/s, displacement ${displacement.length().toFixed(3)} m`);
             }
-            // Reset after successful swipe
-            swipeState = { startTime: null, startPos: null, lastPos: null, direction: null, trailPoints: [] };
-          } else {
-            swipeState.lastPos = trackedPoint.clone();
+            motionState = { startTime: null, points: [], type: null };
           }
         }
 
-        this.swipeHistory.set(source, swipeState);
+        // --- Circular gesture detection ---
+        if (motionState.points.length >= CIRCLE_MIN_POINTS && motionState.type !== 'swipe') {
+          const points = motionState.points;
+          const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+          const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+          const cz = points.reduce((sum, p) => sum + p.z, 0) / points.length;
 
-        // Render visual swipe trail
-        this.renderSwipeTrail(source, swipeState.trailPoints);
+          let radii = [];
+          let angles = [];
+          let prevAngle = null;
+          let totalDelta = 0;
+
+          for (const p of points) {
+            const dx = p.x - cx;
+            const dy = p.y - cy;
+            const r = Math.sqrt(dx*dx + dy*dy);
+            radii.push(r);
+
+            let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+            angles.push(angle);
+
+            if (prevAngle !== null) {
+              let delta = (angle - prevAngle + 360) % 360;
+              if (delta > 180) delta -= 360;
+              totalDelta += delta;
+            }
+            prevAngle = angle;
+          }
+
+          const avgRadius = radii.reduce((sum, r) => sum + r, 0) / radii.length;
+          const radiusStd = Math.sqrt(radii.reduce((sum, r) => sum + (r - avgRadius)**2, 0) / radii.length);
+
+          const angleCoverage = Math.abs(totalDelta);
+          const isCircle = (
+            avgRadius >= CIRCLE_MIN_RADIUS &&
+            avgRadius <= CIRCLE_MAX_RADIUS &&
+            radiusStd <= avgRadius * CIRCLE_RADIUS_STD_MAX &&
+            angleCoverage >= CIRCLE_MIN_ANGLE_COVERAGE &&
+            durationMs >= CIRCLE_MIN_DURATION &&
+            durationMs <= CIRCLE_MAX_DURATION
+          );
+
+          if (isCircle) {
+            const direction = totalDelta > 0 ? 'clockwise' : 'counterclockwise';
+            if (this.gateGesture(`circle_${direction}`, this.valence)) {
+              mercyHaptic.playPattern('cosmicHarmony', 1.3);
+              console.log(`[MercyGesture] Circular ${direction.toUpperCase()} detected – radius ${avgRadius.toFixed(3)} m, coverage ${angleCoverage.toFixed(1)}°, duration ${durationMs.toFixed(0)} ms`);
+
+              // Trigger mercy action (e.g., clockwise = expand view, counterclockwise = collapse)
+            }
+            motionState = { startTime: null, points: [], type: null };
+          }
+        }
+
+        this.swipeHistory.set(source, motionState);
+
+        // Render visual trail (swipe or circle path)
+        this.renderMotionTrail(source, motionState.points);
       }
     });
   }
 
-  // Render glowing swipe trail (line trail with fade-out & valence-modulated gradient)
-  renderSwipeTrail(source, trailPoints) {
+  // Render glowing motion trail (swipe or circle path with fade-out & valence-modulated gradient)
+  renderMotionTrail(source, trailPoints) {
     let trailMesh = this.trailMeshes.get(source);
 
-    if (!trailMesh && trailPoints.length > 1) {
-      trailMesh = BABYLON.MeshBuilder.CreateLines(`swipeTrail_${Date.now()}`, {
+    if (trailPoints.length < 2) {
+      if (trailMesh) {
+        trailMesh.alpha -= SWIPE_TRAIL_FADE_SPEED;
+        if (trailMesh.alpha <= 0.05) {
+          trailMesh.dispose();
+          this.trailMeshes.delete(source);
+        }
+      }
+      return;
+    }
+
+    if (!trailMesh) {
+      trailMesh = BABYLON.MeshBuilder.CreateLines(`motionTrail_${Date.now()}`, {
         points: trailPoints,
         updatable: true
       }, this.scene);
-      trailMesh.color = new BABYLON.Color3(0, 1, 0.5); // emerald mercy base
+      trailMesh.color = new BABYLON.Color3(0, 1, 0.5);
       trailMesh.alpha = 0.9 * this.valence;
       trailMesh.enableEdgesRendering();
       trailMesh.edgesWidth = 5.0;
       trailMesh.edgesColor = new BABYLON.Color4(0, 1, 0.5, 0.9 * this.valence);
       this.trailMeshes.set(source, trailMesh);
-    } else if (trailMesh) {
+    } else {
       trailMesh = BABYLON.MeshBuilder.CreateLines(null, {
         points: trailPoints,
         instance: trailMesh
       }, this.scene);
 
-      // Valence-modulated fade + color gradient (emerald → violet for high thriving)
       trailMesh.alpha = Math.max(0.2, 0.9 * this.valence);
       const greenBoost = 0.7 + (this.valence - 0.999) * 0.3;
       const blueBoost = 0.5 + (this.valence - 0.999) * 0.5;
       trailMesh.color = new BABYLON.Color3(0, greenBoost, blueBoost);
-    }
-
-    // Auto-fade trail over time (if no new points)
-    if (trailMesh && trailPoints.length === 0) {
-      trailMesh.alpha -= SWIPE_TRAIL_FADE_SPEED;
-      if (trailMesh.alpha <= 0.05) {
-        trailMesh.dispose();
-        this.trailMeshes.delete(source);
-      }
     }
   }
 
@@ -234,10 +245,10 @@ class MercyHandGesture {
     this.swipeHistory.clear();
     this.trailMeshes.forEach(mesh => mesh.dispose());
     this.trailMeshes.clear();
-    console.log("[MercyGesture] Hand gesture & swipe trail tracking cleaned up – mercy lattice preserved");
+    console.log("[MercyGesture] Hand gesture & motion trail tracking cleaned up – mercy lattice preserved");
   }
 }
 
-const mercyHandGesture = new MercyHandGesture(scene); // assume scene from Babylon init
+const mercyHandGesture = new MercyHandGesture(scene);
 
 export { mercyHandGesture };
