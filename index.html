@@ -40,20 +40,23 @@
       --thunder-glow: rgba(255, 136, 0, 0.6);
       --text-primary: #ffffff;
       --text-secondary: #cccccc;
-      --bg-primary: #0a0a0a;
-      --bg-gradient: linear-gradient(135deg, #0f0f0f, #1a1a2e);
-      --glass-bg: rgba(255, 255, 255, 0.04);
-      --glass-border: rgba(255, 255, 255, 0.08);
-      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-      --blur: blur(16px);
-      --border-radius: 16px;
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #121212;
+      --neumorph-light: #1c1c1c;
+      --neumorph-dark: #080808;
+      --shadow-out: 8px 8px 16px rgba(0,0,0,0.6);
+      --shadow-in: inset 4px 4px 8px rgba(0,0,0,0.8), inset -4px -4px 8px rgba(255,255,255,0.03);
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.06);
+      --blur: blur(20px);
+      --border-radius: 20px;
       --focus: #00ffff;
       --progress-bg: rgba(34, 34, 34, 0.8);
       --progress-fill: linear-gradient(90deg, #ffaa00, #ff5500);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      background: var(--bg-gradient);
+      background: var(--bg-primary);
       color: var(--text-primary);
       font-family: 'Inter', system-ui, sans-serif;
       min-height: 100vh;
@@ -61,15 +64,6 @@
       flex-direction: column;
       line-height: 1.6;
       overflow-x: hidden;
-      position: relative;
-    }
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at 20% 30%, rgba(255,170,0,0.05) 0%, transparent 40%);
-      pointer-events: none;
-      z-index: -2;
     }
     header {
       position: sticky;
@@ -82,7 +76,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: var(--glass-shadow);
+      box-shadow: var(--shadow-out);
     }
     .logo {
       font-family: 'Orbitron', monospace;
@@ -102,25 +96,17 @@
       color: var(--text-secondary);
       text-decoration: none;
       font-weight: 500;
-      position: relative;
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
       transition: all 0.3s;
-    }
-    nav a::after {
-      content: '';
-      position: absolute;
-      bottom: -4px;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: var(--thunder-gold);
-      transition: width 0.3s;
-    }
-    nav a:hover::after, nav a:focus::after {
-      width: 100%;
+      background: var(--glass-bg);
+      box-shadow: var(--shadow-out);
     }
     nav a:hover, nav a:focus {
       color: var(--thunder-gold);
       text-shadow: 0 0 10px var(--thunder-glow);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-out), var(--shadow-in);
     }
     .hamburger {
       display: none;
@@ -171,20 +157,20 @@
     .cta button {
       padding: clamp(1rem, 4vw, 1.5rem) clamp(2rem, 6vw, 3rem);
       font-size: clamp(1.2rem, 5vw, 1.4rem);
-      background: linear-gradient(45deg, var(--thunder-gold), #ff5500);
-      color: #000;
+      background: var(--neumorph-light);
+      color: var(--thunder-gold);
       border: none;
-      border-radius: 50px;
+      border-radius: var(--border-radius);
       cursor: pointer;
-      box-shadow: 0 0 40px rgba(255,170,0,0.4);
+      box-shadow: var(--shadow-out), var(--shadow-in);
       transition: all 0.4s;
       min-width: 200px;
       min-height: 56px;
       font-weight: 600;
     }
     .cta button:hover, .cta button:focus {
-      transform: scale(1.05) translateY(-2px);
-      box-shadow: 0 0 60px rgba(255,170,0,0.6);
+      transform: translateY(-4px);
+      box-shadow: 12px 12px 24px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.05);
     }
     .features {
       display: grid;
@@ -193,28 +179,23 @@
       margin: clamp(3rem, 8vw, 6rem) 0;
     }
     .feature-card {
-      background: var(--glass-bg);
-      backdrop-filter: var(--blur);
-      border: 1px solid var(--glass-border);
+      background: var(--neumorph-light);
       border-radius: var(--border-radius);
       padding: clamp(1.5rem, 4vw, 2.5rem);
       transition: all 0.4s;
-      box-shadow: var(--glass-shadow);
+      box-shadow: var(--shadow-out), var(--shadow-in);
     }
     .feature-card:hover, .feature-card:focus-within {
-      transform: translateY(-10px);
-      border-color: var(--thunder-gold);
-      box-shadow: 0 0 40px rgba(255,170,0,0.3);
+      transform: translateY(-8px);
+      box-shadow: 12px 12px 24px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.05);
     }
     .chat-section {
       max-width: 900px;
       margin: 0 auto clamp(4rem, 10vw, 8rem);
-      background: var(--glass-bg);
-      backdrop-filter: var(--blur);
-      border: 1px solid var(--glass-border);
+      background: var(--neumorph-light);
       border-radius: var(--border-radius);
       padding: clamp(1.5rem, 5vw, 2.5rem);
-      box-shadow: var(--glass-shadow);
+      box-shadow: var(--shadow-out), var(--shadow-in);
     }
     #loading {
       display: none;
@@ -228,12 +209,11 @@
       min-height: 300px;
       max-height: 60vh;
       overflow-y: auto;
-      background: rgba(15,15,15,0.7);
-      border: 1px solid #222;
+      background: var(--neumorph-dark);
       border-radius: 12px;
       padding: 1.5rem;
       margin-bottom: 1.5rem;
-      backdrop-filter: blur(4px);
+      box-shadow: inset 4px 4px 8px rgba(0,0,0,0.8), inset -4px -4px 8px rgba(255,255,255,0.03);
     }
     .chat-message {
       margin: 1rem 0;
@@ -243,17 +223,16 @@
       word-wrap: break-word;
       opacity: 0;
       transition: opacity 0.6s ease, transform 0.3s;
+      box-shadow: var(--shadow-out), var(--shadow-in);
     }
     .chat-message.user {
       background: linear-gradient(135deg, var(--thunder-gold), #ff8800);
       color: #000;
       margin-left: auto;
-      box-shadow: 0 4px 15px rgba(255,170,0,0.4);
     }
     .chat-message.rathor {
-      background: rgba(26,26,26,0.85);
+      background: var(--neumorph-light);
       margin-right: auto;
-      box-shadow: 0 4px 15px rgba(0,255,255,0.1);
     }
     .chat-message.blocked {
       background: #880000;
@@ -269,23 +248,22 @@
       flex: 1 1 100%;
       padding: 1rem 1.5rem;
       border-radius: 50px;
-      border: 1px solid #333;
-      background: rgba(17,17,17,0.7);
+      border: none;
+      background: var(--neumorph-dark);
       color: #fff;
       font-size: 1.1rem;
       min-height: 48px;
       transition: all 0.3s;
-      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-out), var(--shadow-in);
     }
     #chat-input:focus {
       outline: none;
-      border-color: var(--thunder-gold);
-      box-shadow: 0 0 15px rgba(255,170,0,0.3);
+      box-shadow: inset 4px 4px 8px rgba(0,0,0,0.8), inset -4px -4px 8px rgba(255,255,255,0.05), 0 0 15px rgba(255,170,0,0.3);
     }
     button.chat-send, button.voice-btn, button.skin-btn {
       padding: 1rem 2rem;
-      background: var(--thunder-gold);
-      color: #000;
+      background: var(--neumorph-light);
+      color: var(--thunder-gold);
       min-width: 120px;
       min-height: 48px;
       border: none;
@@ -293,24 +271,26 @@
       cursor: pointer;
       transition: all 0.3s;
       font-weight: 600;
+      box-shadow: var(--shadow-out), var(--shadow-in);
     }
     button.chat-send:hover, button.voice-btn:hover, button.skin-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(255,170,0,0.5);
+      transform: translateY(-4px);
+      box-shadow: 12px 12px 24px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.05);
     }
     button.voice-btn.listening {
-      background: #00ff00;
+      background: linear-gradient(135deg, #00ff00, #00cc00);
       animation: pulse-green 1s infinite;
     }
     button.skin-btn.active {
-      background: #00aa00;
+      background: linear-gradient(135deg, #00aa00, #008800);
       box-shadow: 0 0 20px #00ff00;
     }
     #clear-history, #install-btn {
       margin-top: 1rem;
-      background: #333;
+      background: var(--neumorph-light);
       color: #fff;
       min-height: 48px;
+      box-shadow: var(--shadow-out), var(--shadow-in);
     }
     footer {
       padding: clamp(2rem, 5vw, 4rem) 5% 2rem;
