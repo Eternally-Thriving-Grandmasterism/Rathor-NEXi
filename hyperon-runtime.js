@@ -1,5 +1,5 @@
-// hyperon-runtime.js – sovereign client-side Hyperon atomspace & PLN runtime v7
-// Modus Ponens rule integrated, expanded chaining, variable binding, mercy-gated inference
+// hyperon-runtime.js – sovereign client-side Hyperon atomspace & PLN runtime v8
+// Modus Tollens rule integrated, expanded chaining, variable binding, mercy-gated inference
 // MIT License – Autonomicity Games Inc. 2026
 
 class HyperonAtom {
@@ -57,7 +57,7 @@ class HyperonRuntime {
         priority: 8
       },
 
-      // NEW: Modus Ponens (classic logical rule)
+      // Modus Ponens (already present)
       {
         name: "Modus Ponens",
         direction: "forward",
@@ -67,23 +67,36 @@ class HyperonRuntime {
           strength: tvs[0].strength * tvs[1].strength,
           confidence: Math.min(tvs[0].confidence, tvs[1].confidence) * 0.9
         }),
-        priority: 15, // high priority for classic logical deduction
-        description: "If A → B and A is true, then B is true"
-      },
-      {
-        name: "Modus Ponens-Backward",
-        direction: "backward",
-        premises: ["EvaluationLink $B"],
-        conclusion: "EvaluationLink $A", // seeks antecedent A
-        tvCombiner: (tvs) => ({
-          strength: tvs[0].strength * 0.8,
-          confidence: tvs[0].confidence * 0.7
-        }),
-        priority: 14,
-        description: "Backward Modus Ponens: given B, seek evidence for A where A → B"
+        priority: 15
       },
 
-      // Existing backward chaining rules (unchanged but now with Modus Ponens synergy)
+      // NEW: Modus Tollens (classic negation rule)
+      {
+        name: "Modus Tollens",
+        direction: "forward",
+        premises: ["ImplicationLink $A $B", "EvaluationLink Not $B"],
+        conclusion: "EvaluationLink Not $A",
+        tvCombiner: (tvs) => ({
+          strength: tvs[0].strength * tvs[1].strength * 0.95,
+          confidence: Math.min(tvs[0].confidence, tvs[1].confidence) * 0.85
+        }),
+        priority: 16, // very high priority for contradiction detection
+        description: "If A → B and ¬B is true, then ¬A is true"
+      },
+      {
+        name: "Modus Tollens-Backward",
+        direction: "backward",
+        premises: ["EvaluationLink Not $A"],
+        conclusion: "EvaluationLink Not $B", // seeks consequent B where A → B
+        tvCombiner: (tvs) => ({
+          strength: tvs[0].strength * 0.9,
+          confidence: tvs[0].confidence * 0.75
+        }),
+        priority: 14,
+        description: "Backward Modus Tollens: given ¬A, seek ¬B where A → B"
+      },
+
+      // Existing backward chaining rules (unchanged)
       {
         name: "Backward-Deduction",
         direction: "backward",
@@ -94,17 +107,6 @@ class HyperonRuntime {
           confidence: tvs[0].confidence * 0.7
         }),
         priority: 12
-      },
-      {
-        name: "Backward-Induction",
-        direction: "backward",
-        premises: ["SimilarityLink $B $C"],
-        conclusion: "InheritanceLink $A $B",
-        tvCombiner: (tvs) => ({
-          strength: tvs[0].strength ** 0.6,
-          confidence: tvs[0].confidence * 0.5
-        }),
-        priority: 9
       },
       {
         name: "Mercy-Backward-Boost",
@@ -122,7 +124,7 @@ class HyperonRuntime {
 
   // ... existing methods (newHandle, addAtom, getAtom, matchWithBindings, combineTV, forwardChain, backwardChain, evaluate, loadFromLattice, clear) unchanged ...
 
-  // Forward chaining now uses the expanded rule set (including Modus Ponens)
+  // Forward chaining now includes Modus Tollens
   async forwardChain(maxIterations = 8) {
     let derived = [];
     let iteration = 0;
@@ -159,7 +161,7 @@ class HyperonRuntime {
     return derived;
   }
 
-  // Backward chaining now leverages Modus Ponens backward rule
+  // Backward chaining now leverages Modus Tollens backward rule
   async backwardChain(targetPattern, depth = 0, visited = new Set(), bindings = {}) {
     if (depth > this.maxChainDepth) return { tv: { strength: 0.1, confidence: 0.1 }, chain: [], bindings: {} };
 
@@ -176,7 +178,7 @@ class HyperonRuntime {
         }
       }
 
-      // Apply backward-specific rules (including Modus Ponens backward)
+      // Apply backward-specific rules (including Modus Tollens backward)
       for (const rule of this.inferenceRules.filter(r => r.direction === "backward")) {
         const bound = this.tryBindRule(rule, atom, []);
         if (bound) {
