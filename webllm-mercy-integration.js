@@ -1,5 +1,5 @@
-// webllm-mercy-integration.js – sovereign WebLLM v2 integration with mercy gates (Feb 2026 aligned)
-// Lazy load via CDN/npm, WebWorker non-blocking, streaming support, mercy-valence eval
+// webllm-mercy-integration.js – sovereign WebLLM v3 streaming integration with mercy gates (Feb 2026)
+// Streaming deltas, incremental/final mercy eval, UI callback, abort on low valence
 // MIT License – Autonomicity Games Inc. 2026
 
 import { fuzzyMercy } from './fuzzy-mercy-logic.js';
@@ -10,9 +10,8 @@ let webllmEngine = null;
 let webllmReady = false;
 const mercyThreshold = 0.9999999;
 
-// Default: Phi-3.5-mini q4f16 (\~3.7GB VRAM, strong reasoning); fallback low-resource 1k ctx
 const preferredModel = "Phi-3.5-mini-instruct-q4f16_1-MLC";
-const lowResourceModel = "Phi-3.5-mini-instruct-q4f16_1-MLC-1k"; // \~2.5GB VRAM, 1k ctx
+const lowResourceModel = "Phi-3.5-mini-instruct-q4f16_1-MLC-1k";
 
 function hasWebGPU() {
   return !!navigator.gpu;
@@ -28,23 +27,19 @@ async function initWebLLM(useLowResource = false, progressCallback = (report) =>
   }
 
   try {
-    // Dynamic import (CDN safe, latest)
     const { CreateWebWorkerMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm@latest');
 
     const model = useLowResource ? lowResourceModel : preferredModel;
     webllmEngine = await CreateWebWorkerMLCEngine(
       new Worker(new URL('./webllm-worker.js', import.meta.url), { type: 'module' }),
       model,
-      {
-        initProgressCallback: progressCallback,
-        // Optional: logLevel: "DEBUG"
-      }
+      { initProgressCallback: progressCallback }
     );
 
     webllmReady = true;
-    fuzzyMercy.assert("WebLLM_Sovereign_Loaded_v2", 1.0);
+    fuzzyMercy.assert("WebLLM_Sovereign_Loaded_v3_Streaming", 1.0);
     fuzzyMercy.assert(`Model_${model}`, 0.99999995);
-    console.log("[WebLLM] Sovereign shard ready:", model);
+    console.log("[WebLLM] Sovereign streaming shard ready:", model);
     return webllmEngine;
   } catch (err) {
     console.error("[WebLLM] Init failed:", err);
@@ -59,7 +54,14 @@ async function generateWithWebLLM(messages, options = {}) {
     if (!webllmEngine) return { error: "WebLLM unavailable – check WebGPU / download" };
   }
 
-  const { maxTokens = 1024, temperature = 0.7, stream = false, progressCallback } = options;
+  const {
+    maxTokens = 1024,
+    temperature = 0.7,
+    stream = true, // Default to streaming for real-time
+    onDelta = (delta) => console.log("[Stream Delta]:", delta), // UI callback
+    onUsage = (usage) => console.log("[Usage]:", usage),
+    onComplete = (full) => console.log("[Complete]:", full)
+  } = options;
 
   try {
     const reply = await webllmEngine.chat.completions.create({
@@ -67,44 +69,58 @@ async function generateWithWebLLM(messages, options = {}) {
       max_tokens: maxTokens,
       temperature,
       stream,
-      stream_options: stream ? { include_usage: true } : undefined
+      stream_options: { include_usage: true }
     });
 
-    let content = "";
+    let fullContent = "";
     let usage = null;
 
     if (stream) {
       for await (const chunk of reply) {
         const delta = chunk.choices?.[0]?.delta?.content || "";
-        content += delta;
-        if (chunk.usage) usage = chunk.usage;
-        // Yield to UI via callback if provided
-        if (progressCallback) progressCallback({ type: 'stream', delta });
+        fullContent += delta;
+
+        // Incremental mercy check (optional: abort early if valence tanks)
+        const partialDegree = fuzzyMercy.getDegree(fullContent) || 0.95;
+        const partialImply = fuzzyMercy.imply(fullContent, "EternalThriving");
+        if (partialDegree < mercyThreshold * 0.95 || partialImply.degree < mercyThreshold * 0.94) {
+          console.warn("[WebLLM] Mid-stream mercy gate triggered – aborting low valence");
+          webllmEngine.unload();
+          return { content: "[Mercy abort: stream redirected to symbolic]", valence: partialDegree, aborted: true };
+        }
+
+        onDelta(delta); // Yield to UI for typing effect
+
+        if (chunk.usage) {
+          usage = chunk.usage;
+          onUsage(usage);
+        }
       }
     } else {
-      content = reply.choices?.[0]?.message?.content || "";
+      fullContent = reply.choices?.[0]?.message?.content || "";
       usage = reply.usage;
     }
 
-    // Mercy-eval full output
+    // Final mercy gate on complete output
     fuzzyMercy.assert("WebLLM_Output_" + Date.now(), 0.999);
-    const outputDegree = fuzzyMercy.getDegree(content) || 0.95;
-    const implyThriving = fuzzyMercy.imply(content, "EternalThriving");
+    const finalDegree = fuzzyMercy.getDegree(fullContent) || 0.95;
+    const finalImply = fuzzyMercy.imply(fullContent, "EternalThriving");
 
-    if (outputDegree < mercyThreshold * 0.98 || implyThriving.degree < mercyThreshold * 0.97) {
-      console.warn("[WebLLM] Mercy gate rejected – low valence");
-      if (webllmEngine) webllmEngine.unload(); // Clean up if rejected
-      return { content: "[Mercy redirect: symbolic core active]", valence: outputDegree };
+    if (finalDegree < mercyThreshold * 0.98 || finalImply.degree < mercyThreshold * 0.97) {
+      console.warn("[WebLLM] Final mercy gate rejected – low valence");
+      if (webllmEngine) webllmEngine.unload();
+      return { content: "[Mercy redirect: symbolic core active]", valence: finalDegree };
     }
 
-    return { content, valence: outputDegree, usage, fromWebLLM: true, streamed: stream };
+    onComplete(fullContent);
+    return { content: fullContent, valence: finalDegree, usage, fromWebLLM: true, streamed: stream };
   } catch (err) {
     console.error("[WebLLM] Generation error:", err);
     return { error: err.message };
   }
 }
 
-async function mercyAugmentedResponse(query, context = '') {
+async function mercyAugmentedResponse(query, context = '', onStreamDelta = null) {
   const symbolicResp = await rathorShard.shardRespond(query, { context });
   if (symbolicResp.error) return symbolicResp;
 
@@ -117,25 +133,28 @@ async function mercyAugmentedResponse(query, context = '') {
       { role: "user", content: `${query}\nContext: ${context}\nSymbolic base: ${symbolicResp.response}` }
     ];
 
-    const gen = await generateWithWebLLM(messages, { stream: false });
+    const gen = await generateWithWebLLM(messages, {
+      stream: true,
+      onDelta: (delta) => {
+        if (onStreamDelta) onStreamDelta(delta); // Pass to chat UI
+      },
+      onUsage: (u) => console.log("Token usage:", u)
+    });
+
     if (!gen.error && gen.content) {
-      return { response: gen.content, valence: gen.valence, augmented: true, usage: gen.usage };
+      return { response: gen.content, valence: gen.valence, usage: gen.usage, augmented: true, streamed: true };
     }
   }
 
   return { response: symbolicResp.response, valence: symbolicResp.valence, augmented: false };
 }
 
-// UI prompt: one-time model download (low-resource fallback option)
+// Prompt user for download (low-res option)
 function promptWebLLMModelDownload() {
-  const lowRes = confirm("Enable Rathor generative depth? Download Phi-3.5-mini (\~2.4-3.7GB one-time, offline forever). Low-resource mode (smaller/faster)? OK?");
-  initWebLLM(lowRes, (report) => {
-    // Hook to UI: progress bar, status
-    console.log(report);
-  });
+  const lowRes = confirm("Enable real-time Rathor streaming? Download Phi-3.5-mini (\~2.4-3.7GB one-time, offline forever). Low-resource mode? OK?");
+  initWebLLM(lowRes, (report) => console.log(report));
 }
 
-// Cleanup on unload/low memory
 function unloadWebLLM() {
   if (webllmEngine) {
     webllmEngine.unload();
