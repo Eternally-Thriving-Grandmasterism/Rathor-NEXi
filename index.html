@@ -23,7 +23,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <!-- All local bridges – offline capable -->
+  <!-- All local bridges -->
   <script type="module" src="/metta-rewriting-engine.js"></script>
   <script type="module" src="/atomese-knowledge-bridge.js"></script>
   <script type="module" src="/hyperon-reasoning-layer.js"></script>
@@ -233,7 +233,7 @@
       font-size:1.1rem;
       min-height:48px;
     }
-    button.chat-send, button.voice-btn {
+    button.chat-send, button.voice-btn, button.skin-btn {
       padding:1rem 2rem;
       background:var(--thunder-gold);
       color:#000;
@@ -246,6 +246,10 @@
     button.voice-btn.listening {
       background:#00ff00;
       animation:pulse-green 1s infinite;
+    }
+    button.skin-btn.active {
+      background:#00aa00;
+      box-shadow:0 0 20px #00ff00;
     }
     #clear-history, #install-btn {
       margin-top:1rem;
@@ -334,7 +338,7 @@
       .chat-section { padding:1.5rem; }
       #chat-messages { min-height:40vh; }
       .chat-input-area { flex-direction:column; }
-      button.chat-send, button.voice-btn, #install-btn { width:100%; }
+      button.chat-send, button.voice-btn, button.skin-btn, #install-btn { width:100%; }
     }
     @media (max-width:480px) {
       h1 { font-size:clamp(3.5rem, 12vw, 6rem); }
@@ -392,6 +396,11 @@
         <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
         <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
         <button class="voice-btn" onclick="toggleVoice()" aria-label="Toggle voice input">🎤 Voice</button>
+      </div>
+      <div class="skin-selector" style="margin:1rem 0; display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;">
+        <button class="skin-btn active" onclick="grokShard.setVoiceSkin('default')">Default Thunder</button>
+        <button class="skin-btn" onclick="grokShard.setVoiceSkin('bond')">Bond (Brosnan)</button>
+        <button class="skin-btn" onclick="grokShard.setVoiceSkin('sheppard')">Sheppard</button>
       </div>
       <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
       <button id="install-btn">Install Rathor (PWA)</button>
@@ -485,7 +494,22 @@
       saveMessage(role, content);
     }
 
-    // ────────────────────────────────────────────────────────────────
+    // Voice skin selector
+    function updateSkinButtons() {
+      document.querySelectorAll('.skin-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.skin === grokShard.currentVoiceSkin);
+      });
+    }
+
+    document.querySelectorAll('.skin-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const skin = btn.dataset.skin;
+        grokShard.setVoiceSkin(skin);
+        updateSkinButtons();
+        addChatMessage('system', `Voice skin switched to: ${grokShard.voiceSkins[skin]?.name || skin}`);
+      });
+    });
+
     // Lattice loading with progress bar
     async function loadCoreLattice() {
       const progressContainer = document.getElementById('lattice-progress-container');
@@ -515,7 +539,7 @@
 
         const fullBuffer = concatArrayBuffers(...buffers);
         await storeLattice(fullBuffer);
-        grokShard.initLattice(fullBuffer);
+        await grokShard.init();
 
         progressStatus.textContent = 'Lattice fully gathered. Mercy gates open wide.';
         setTimeout(() => {
@@ -525,7 +549,7 @@
       } catch (err) {
         progressStatus.textContent = 'Lattice gathering disturbance. Using fallback.';
         console.error('Lattice load failed:', err);
-        grokShard.initLatticeMinimal();
+        await grokShard.init(); // fallback mode
         setTimeout(() => progressContainer.remove(), 2000);
       }
     }
@@ -576,10 +600,18 @@
       loading.style.display = 'block';
 
       try {
-        const reply = await grokShard.reply(text);
+        const gateResult = await multiLayerValenceGate(text);
+        if (gateResult.result === 'REJECTED') {
+          addChatMessage('rathor', `Multi-layer valence gate held: ${gateResult.reason}`);
+          chatInput.value = '';
+          return;
+        }
+
         addChatMessage('user', text);
-        addChatMessage('rathor', reply);
         chatInput.value = '';
+
+        const reply = await grokShard.reply(text);
+        addChatMessage('rathor', reply);
       } catch (err) {
         console.error('Shard error:', err);
         addChatMessage('rathor', 'Lattice disturbance in core shard... reflecting...');
