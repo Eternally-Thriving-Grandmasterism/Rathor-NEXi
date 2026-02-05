@@ -1,5 +1,5 @@
-// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v11
-// Mercy-gated + delta sync with checksum validation + manifest awareness
+// grok-shard-engine.js – sovereign, offline, client-side Grok voice shard v12
+// Mercy-gated, valence-locked + real SHA-256 checksum validation for lattice shards
 // MIT License – Autonomicity Games Inc. 2026
 
 class GrokShard {
@@ -91,7 +91,7 @@ Only client-side reflection. Only now. Only truth.`
     const localVersion = await this.getLocalLatticeVersion();
     if (localVersion === this.latticeVersion) {
       const buffer = await this.getLocalLattice();
-      if (buffer && await this.validateLatticeChecksum(buffer)) {
+      if (buffer && await this.validateFullLattice(buffer)) {
         this.initLattice(buffer);
         progressStatus.textContent = 'Lattice current & checksum valid. Mercy gates open wide.';
         setTimeout(() => progressContainer.classList.add('hidden'), 1500);
@@ -107,29 +107,39 @@ Only client-side reflection. Only now. Only truth.`
       manifest = await manifestRes.json();
     } catch (err) {
       progressStatus.textContent = 'Manifest unavailable — downloading full lattice';
-      manifest = { parts: ['part1.bin', 'part2.bin', 'part3.bin'].map(p => ({ name: `mercy-gate-v1-${p}` })) };
+      manifest = { parts: ['part1.bin', 'part2.bin', 'part3.bin'].map(p => ({ name: `mercy-gate-v1-${p}`, sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' })) };
     }
 
-    const parts = manifest.parts.map(p => p.name || p);
+    const parts = manifest.parts.map(p => p.name);
 
     try {
-      const buffers = await Promise.all(
-        parts.map(async (p, i) => {
-          const response = await fetch(`/${p}`);
-          if (!response.ok) throw new Error(`Shard missing: ${p}`);
-          const buffer = await response.arrayBuffer();
-          const percent = Math.round(((i + 1) / parts.length) * 100);
-          progressFill.style.width = `${percent}%`;
-          progressStatus.textContent = `${percent}% — Secured shard \( {i+1}/ \){parts.length}...`;
-          return buffer;
-        })
-      );
+      const buffers = [];
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        const response = await fetch(`/${p}`);
+        if (!response.ok) throw new Error(`Shard missing: ${p}`);
+        const buffer = await response.arrayBuffer();
+
+        // Per-shard checksum validation
+        const partHash = await this.computeSHA256(buffer);
+        const expectedHash = manifest.parts[i].sha256;
+        if (partHash !== expectedHash) {
+          throw new Error(`Checksum mismatch for ${p}: expected ${expectedHash}, got ${partHash}`);
+        }
+
+        const percent = Math.round(((i + 1) / parts.length) * 100);
+        progressFill.style.width = `${percent}%`;
+        progressStatus.textContent = `${percent}% — Shard \( {i+1}/ \){parts.length} validated (${partHash.slice(0,8)}...)`;
+        buffers.push(buffer);
+      }
 
       const fullBuffer = this.concatArrayBuffers(...buffers);
 
-      // Checksum validation
-      if (!await this.validateLatticeChecksum(fullBuffer)) {
-        throw new Error('Checksum validation failed');
+      // Final full lattice checksum validation
+      const fullHash = await this.computeSHA256(fullBuffer);
+      const manifestFullHash = manifest.sha256 || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'; // stub
+      if (fullHash !== manifestFullHash) {
+        throw new Error(`Full lattice checksum mismatch: expected ${manifestFullHash}, got ${fullHash}`);
       }
 
       await this.storeLattice(fullBuffer, this.latticeVersion);
@@ -148,14 +158,13 @@ Only client-side reflection. Only now. Only truth.`
     }
   }
 
-  async validateLatticeChecksum(buffer) {
-    // Stub – real impl uses crypto.subtle.digest('SHA-256', buffer)
-    // For now return true (replace with actual hash check against manifest)
-    console.log('Checksum validation passed (stub)');
-    return true;
+  async computeSHA256(buffer) {
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // ... rest of GrokShard methods unchanged (concatArrayBuffers, storeLattice, openDB, initLattice, reply, speak, etc.) ...
+  // ... rest of GrokShard methods unchanged (concatArrayBuffers, getLocalLatticeVersion, storeLattice, openDB, initLattice, reply, speak, etc.) ...
 }
 
 const grokShard = new GrokShard();
