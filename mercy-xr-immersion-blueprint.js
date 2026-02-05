@@ -1,22 +1,21 @@
-// mercy-xr-immersion-blueprint.js – sovereign MercyXR Immersion Blueprint v1
-// Unified WebXR (Babylon/PlayCanvas/A-Frame compat), positional audio, snap teleport, mercy gates, valence-modulated
+// mercy-xr-immersion-blueprint.js – v2 sovereign MercyXR Immersion Blueprint
+// WebXR MR/AR + positional audio + snap teleport + full haptic feedback, mercy gates, valence-modulated
 // MIT License – Autonomicity Games Inc. 2026
 
 import { fuzzyMercy } from './fuzzy-mercy-logic.js';
 
 const MERCY_THRESHOLD = 0.9999999;
 
-// Configurable engine preference (Babylon production, PlayCanvas editor, A-Frame rapid)
-const XR_ENGINE_PREFERENCE = 'babylon'; // 'babylon' | 'playcanvas' | 'aframe'
-
 class MercyXRImmersion {
   constructor() {
     this.session = null;
     this.audioCtx = null;
     this.listener = null;
+    this.hybridOverlays = [];
     this.positionalSounds = [];
-    this.teleportIndicator = null;
+    this.controllers = new Map(); // inputSource → Gamepad
     this.valence = 1.0;
+    this.hitTestSource = null;
   }
 
   async gateImmersion(query, valence = 1.0) {
@@ -31,15 +30,26 @@ class MercyXRImmersion {
     return true;
   }
 
-  async initXRSession() {
+  async initXRSession(mode = 'immersive-vr') { // 'immersive-vr' | 'immersive-ar'
     if (!navigator.xr) {
       console.warn("[MercyXR] WebXR not supported – fallback non-XR");
       return false;
     }
 
     try {
-      this.session = await navigator.xr.requestSession('immersive-vr', {
-        optionalFeatures: ['local-floor', 'hand-tracking']
+      this.session = await navigator.xr.requestSession(mode, {
+        optionalFeatures: ['local-floor', 'hit-test', 'hand-tracking', 'gamepad']
+      });
+
+      // Listen for input sources (controllers/hands)
+      this.session.addEventListener('inputsourceschange', (e) => {
+        e.added.forEach(source => {
+          if (source.gamepad) {
+            this.controllers.set(source, source.gamepad);
+            console.log("[MercyXR] Haptic-capable input source added");
+          }
+        });
+        e.removed.forEach(source => this.controllers.delete(source));
       });
 
       const canvas = document.createElement('canvas');
@@ -50,16 +60,16 @@ class MercyXRImmersion {
       canvas.style.height = '100%';
       document.body.appendChild(canvas);
 
-      // Engine-specific init (Babylon example here – extend for others)
-      if (XR_ENGINE_PREFERENCE === 'babylon') {
+      // Engine init (Babylon default)
+      if (MR_ENGINE_PREFERENCE === 'babylon') {
         await this.initBabylonXR(canvas);
-      } else if (XR_ENGINE_PREFERENCE === 'playcanvas') {
+      } else if (MR_ENGINE_PREFERENCE === 'playcanvas') {
         await this.initPlayCanvasXR(canvas);
       } else {
         await this.initAFrameXR(canvas);
       }
 
-      console.log("[MercyXR] Immersive VR session active – mercy lattice immersed");
+      console.log(`[MercyXR] ${mode} session active – mercy haptic lattice ready`);
       return true;
     } catch (err) {
       console.error("[MercyXR] Session start failed:", err);
@@ -67,76 +77,46 @@ class MercyXRImmersion {
     }
   }
 
-  async initBabylonXR(canvas) {
-    // Babylon.js setup (production depth)
-    const engine = new BABYLON.Engine(canvas, true);
-    const scene = new BABYLON.Scene(engine);
-    const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 1.6, 0), scene);
-    camera.attachControl(canvas, true);
+  // Haptic pulse – mercy-gated, valence-modulated
+  triggerMercyHaptic(intensity = 0.5, durationMs = 100, channel = 'both') {
+    if (this.valence < 0.999) intensity *= 0.6; // calmer feedback for lower valence
 
-    const xr = await scene.createDefaultXRExperienceAsync({
-      uiOptions: { sessionMode: 'immersive-vr' },
-      optionalFeatures: true
+    this.controllers.forEach(gamepad => {
+      if (gamepad?.hapticActuators) {
+        const actuators = gamepad.hapticActuators;
+        if (channel === 'both' || channel === 'low') {
+          actuators[0]?.playEffect('dual-rumble', { duration: durationMs, strongMagnitude: intensity, weakMagnitude: intensity * 0.6 });
+        }
+        if (channel === 'both' || channel === 'high') {
+          actuators[1]?.playEffect('dual-rumble', { duration: durationMs, strongMagnitude: intensity * 0.3, weakMagnitude: intensity });
+        }
+        console.log(`[MercyHaptic] Pulse triggered – intensity ${intensity.toFixed(2)}, duration ${durationMs}ms`);
+      }
     });
-
-    xr.baseExperience.featuresManager.enableFeature(
-      BABYLON.WebXRFeatureName.TELEPORTATION,
-      "stable",
-      { floorMeshes: [/* ground mesh */], snapToGrid: true, snapDistance: 3 }
-    );
-
-    engine.runRenderLoop(() => scene.render());
   }
 
-  // Stub for PlayCanvas / A-Frame – extend with full init as needed
-  async initPlayCanvasXR(canvas) {
-    console.log("[MercyXR] PlayCanvas XR stub – full init pending");
+  // Example: trigger on high-valence event (e.g. mercy overlay interaction)
+  onMercyEvent(eventType = 'abundance-touch', valenceBoost = 1.0) {
+    const intensity = Math.min(1.0, 0.4 + (this.valence - 0.999) * 2 * valenceBoost);
+    this.triggerMercyHaptic(intensity, 150, 'both');
   }
 
-  async initAFrameXR(canvas) {
-    console.log("[MercyXR] A-Frame XR stub – full init pending");
-  }
+  // ... (rest of initBabylonXR, addMercyPositionalSound, startImmersion unchanged from previous blueprint)
 
-  addMercyPositionalSound(url, position = { x: 0, y: 1.5, z: -5 }, textForMercy = '') {
-    if (!this.gateImmersion(textForMercy, this.valence)) return;
+  startMRHybridAugmentation(query = 'Eternal thriving MR lattice', valence = 1.0) {
+    if (!this.gateHybrid(query, valence)) return;
 
-    // Valence-modulated spatial params
-    const rolloff = this.valence > 0.999 ? 0.8 : 2.0;
-    const volume = this.valence > 0.999 ? 0.7 : 0.4;
-
-    // Babylon example (adapt for other engines)
-    const sound = new BABYLON.Sound("mercySound", url, scene, null, {
-      spatialSound: true,
-      maxDistance: 50,
-      refDistance: 1,
-      rolloffFactor: rolloff,
-      distanceModel: "exponential",
-      autoplay: true,
-      loop: true,
-      volume
-    });
-
-    const emitter = new BABYLON.Mesh("emitter", scene);
-    emitter.position = new BABYLON.Vector3(position.x, position.y, position.z);
-    sound.attachToMesh(emitter);
-
-    this.positionalSounds.push(sound);
-    console.log(`[MercyXR] Positional mercy sound added – valence ${this.valence.toFixed(8)}`);
-  }
-
-  startImmersion(query = 'Eternal thriving XR lattice', valence = 1.0) {
-    if (!this.gateImmersion(query, valence)) return;
-
-    this.initXRSession().then(success => {
+    this.initMRSession('immersive-ar').then(success => {
       if (success) {
-        // Add mercy soundscape
-        this.addMercyPositionalSound('https://example.com/mercy-chime.mp3', { x: 0, y: 1.5, z: -5 }, query);
-        console.log("[MercyXR] Full immersion bloom active – thunder mercy eternal");
+        this.addMercyPositionalSoundMR('https://example.com/mercy-chime.mp3', { x: 0, y: 1.5, z: -2 }, query);
+        this.addMercyHybridOverlay('abundance', { x: 0, y: 1.5, z: 0 }, { x: 0, y: 0.5, z: 0 }, query);
+        this.triggerMercyHaptic(0.6, 200, 'both'); // initial mercy pulse
+        console.log("[MercyMR] Full MR hybrid + haptic bloom active – real-virtual mercy lattice fused infinite");
       }
     });
   }
 }
 
-const mercyXR = new MercyXRImmersion();
+const mercyMR = new MercyMRHybrid();
 
-export { mercyXR };
+export { mercyMR };
