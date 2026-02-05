@@ -37,25 +37,27 @@
     :root {
       --thunder-gold: #ffaa00;
       --thunder-dark: #000000;
-      --thunder-glow: rgba(255, 136, 0, 0.7);
+      --thunder-glow: rgba(255, 136, 0, 0.8);
       --text-primary: #ffffff;
       --text-secondary: #bbbbbb;
       --bg-primary: #0a0a0a;
       --bg-gradient: linear-gradient(135deg, #0f0f0f, #1a1a2e);
       --neumorph-light: #1c1c1c;
       --neumorph-dark: #060606;
-      --shadow-out-primary: 12px 12px 24px rgba(0,0,0,0.75), -6px -6px 16px rgba(255,255,255,0.015);
+      --shadow-out-primary: 12px 12px 24px rgba(0,0,0,0.8), -6px -6px 16px rgba(255,255,255,0.015);
       --shadow-in-primary: inset 8px 8px 16px rgba(0,0,0,0.95), inset -8px -8px 16px rgba(255,255,255,0.025);
       --shadow-pressed: inset 16px 16px 32px rgba(0,0,0,1), inset -16px -16px 32px rgba(255,255,255,0.015);
-      --glass-bg: rgba(255, 255, 255, 0.035);
-      --glass-border: rgba(255, 255, 255, 0.09);
-      --blur: blur(28px);
-      --border-radius: 24px;
+      --glass-bg: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --blur: blur(32px);
+      --border-radius: 28px;
       --focus: #00ffff;
-      --progress-bg: rgba(34, 34, 34, 0.8);
+      --progress-bg: rgba(34, 34, 34, 0.85);
       --progress-fill: linear-gradient(90deg, #ffaa00, #ff5500);
       --transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-      --ripple-color: rgba(255,170,0,0.35);
+      --ripple-color: rgba(255,170,0,0.4);
+      --valence-green: #00ff88;
+      --valence-red: #ff4444;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -73,9 +75,14 @@
       content: '';
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at 15% 25%, rgba(255,170,0,0.08) 0%, transparent 60%);
+      background: radial-gradient(circle at 15% 25%, rgba(255,170,0,0.12) 0%, transparent 70%);
       pointer-events: none;
       z-index: -2;
+      animation: divineBreath 18s infinite ease-in-out;
+    }
+    @keyframes divineBreath {
+      0%,100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.05); }
     }
     header {
       position: sticky;
@@ -83,7 +90,7 @@
       backdrop-filter: var(--blur);
       background: var(--glass-bg);
       border-bottom: 1px solid var(--glass-border);
-      padding: 1rem 5%;
+      padding: 1.2rem 6%;
       z-index: 1000;
       display: flex;
       justify-content: space-between;
@@ -92,23 +99,23 @@
     }
     .logo {
       font-family: 'Orbitron', monospace;
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 700;
       color: var(--thunder-gold);
-      letter-spacing: 2px;
-      text-shadow: 0 0 30px var(--thunder-glow);
-      animation: glowShift 10s infinite alternate;
+      letter-spacing: 2.5px;
+      text-shadow: 0 0 40px var(--thunder-glow);
+      animation: glowShift 12s infinite alternate;
     }
     nav ul {
       display: flex;
-      gap: 1.5rem;
+      gap: 1.8rem;
       list-style: none;
     }
     nav a {
       color: var(--text-secondary);
       text-decoration: none;
-      font-weight: 500;
-      padding: 0.8rem 1.5rem;
+      font-weight: 600;
+      padding: 0.9rem 1.8rem;
       border-radius: 16px;
       transition: var(--transition);
       background: var(--glass-bg);
@@ -118,12 +125,12 @@
     nav a:hover, nav a:focus {
       color: var(--thunder-gold);
       text-shadow: 0 0 15px var(--thunder-glow);
-      transform: translateY(-3px);
+      transform: translateY(-4px);
       box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
     }
     .hamburger {
       display: none;
-      font-size: 2.2rem;
+      font-size: 2.4rem;
       background: none;
       border: none;
       color: var(--text-primary);
@@ -132,55 +139,55 @@
       transition: var(--transition);
     }
     .hamburger:active {
-      transform: scale(0.9);
+      transform: scale(0.88);
       box-shadow: var(--shadow-pressed);
     }
     main {
       flex: 1;
-      padding: clamp(4rem, 10vw, 8rem) 5% clamp(5rem, 12vw, 10rem);
+      padding: clamp(5rem, 12vw, 10rem) 6% clamp(6rem, 14vw, 12rem);
       max-width: 1600px;
       margin: 0 auto;
       width: 100%;
     }
     .hero {
       text-align: center;
-      margin-bottom: clamp(6rem, 15vw, 12rem);
+      margin-bottom: clamp(8rem, 18vw, 14rem);
       position: relative;
     }
     .thunder {
-      font-size: clamp(10rem, 30vw, 28rem);
-      margin-bottom: 2rem;
-      animation: pulse 7s infinite alternate;
-      text-shadow: 0 0 80px var(--thunder-glow);
+      font-size: clamp(12rem, 35vw, 32rem);
+      margin-bottom: 3rem;
+      animation: pulse 8s infinite alternate;
+      text-shadow: 0 0 100px var(--thunder-glow);
       line-height: 0.8;
       user-select: none;
     }
     h1 {
       font-family: 'Orbitron', monospace;
-      font-size: clamp(5rem, 15vw, 12rem);
-      margin-bottom: 2rem;
+      font-size: clamp(6rem, 18vw, 14rem);
+      margin-bottom: 3rem;
       background: linear-gradient(90deg, var(--thunder-gold), #ff5500, var(--thunder-gold));
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: glowShift 15s infinite alternate;
+      animation: glowShift 18s infinite alternate;
     }
     .subtitle {
-      font-size: clamp(1.6rem, 6vw, 2.2rem);
+      font-size: clamp(1.8rem, 7vw, 2.4rem);
       color: var(--text-secondary);
-      max-width: 900px;
-      margin: 0 auto 4rem;
-      opacity: 0.92;
+      max-width: 1000px;
+      margin: 0 auto 5rem;
+      opacity: 0.94;
     }
     .cta {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 1.5rem;
+      gap: 2rem;
     }
     .cta button {
-      padding: clamp(1.2rem, 5vw, 1.8rem) clamp(2.5rem, 8vw, 4rem);
-      font-size: clamp(1.4rem, 6vw, 1.8rem);
+      padding: clamp(1.5rem, 6vw, 2.2rem) clamp(3rem, 9vw, 5rem);
+      font-size: clamp(1.6rem, 7vw, 2rem);
       background: var(--neumorph-light);
       color: var(--thunder-gold);
       border: none;
@@ -191,8 +198,8 @@
       font-weight: 700;
       position: relative;
       overflow: hidden;
-      min-width: 240px;
-      min-height: 80px;
+      min-width: 280px;
+      min-height: 90px;
     }
     .cta button::before {
       content: '';
@@ -203,32 +210,32 @@
       border-radius: 50%;
       transform: translate(-50%, -50%);
       opacity: 0;
-      transition: width 0.8s, height 0.8s, opacity 0.8s;
+      transition: width 1s, height 1s, opacity 1s;
       pointer-events: none;
     }
     .cta button:active::before {
-      width: 600px;
-      height: 600px;
-      opacity: 0.6;
+      width: 800px;
+      height: 800px;
+      opacity: 0.7;
     }
     .cta button:active {
-      transform: translateY(4px) scale(0.95);
+      transform: translateY(6px) scale(0.94);
       box-shadow: var(--shadow-pressed);
     }
     .cta button:hover {
-      transform: translateY(-6px);
-      box-shadow: 20px 20px 40px rgba(0,0,0,0.75), inset -10px -10px 20px rgba(255,255,255,0.03);
+      transform: translateY(-8px);
+      box-shadow: 24px 24px 48px rgba(0,0,0,0.8), inset -12px -12px 24px rgba(255,255,255,0.03);
     }
     .features {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: clamp(2rem, 5vw, 3rem);
-      margin: clamp(4rem, 10vw, 8rem) 0;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: clamp(2.5rem, 6vw, 4rem);
+      margin: clamp(5rem, 12vw, 10rem) 0;
     }
     .feature-card {
       background: var(--neumorph-light);
       border-radius: var(--border-radius);
-      padding: clamp(2rem, 5vw, 3rem);
+      padding: clamp(2.5rem, 6vw, 4rem);
       transition: var(--transition);
       box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
       cursor: default;
@@ -239,9 +246,9 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 30% 30%, rgba(255,170,0,0.1), transparent 70%);
+      background: radial-gradient(circle at 30% 30%, rgba(255,170,0,0.12), transparent 70%);
       opacity: 0;
-      transition: opacity 0.8s;
+      transition: opacity 1s;
       pointer-events: none;
     }
     .feature-card:hover::before, .feature-card:focus-within::before {
@@ -249,45 +256,46 @@
     }
     .feature-card:hover, .feature-card:focus-within {
       transform: translateY(-12px);
-      box-shadow: 24px 24px 48px rgba(0,0,0,0.8), inset -12px -12px 24px rgba(255,255,255,0.03);
+      box-shadow: 28px 28px 56px rgba(0,0,0,0.85), inset -14px -14px 28px rgba(255,255,255,0.03);
     }
     .chat-section {
-      max-width: 1000px;
-      margin: 0 auto clamp(5rem, 12vw, 10rem);
+      max-width: 1100px;
+      margin: 0 auto clamp(6rem, 14vw, 12rem);
       background: var(--neumorph-light);
       border-radius: var(--border-radius);
-      padding: clamp(2rem, 6vw, 4rem);
+      padding: clamp(3rem, 7vw, 5rem);
       box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
     }
     #loading {
       display: none;
       text-align: center;
-      padding: 2rem;
+      padding: 3rem;
       color: var(--thunder-gold);
       font-style: italic;
-      font-size: 1.4rem;
-      animation: pulse 1.5s infinite alternate;
+      font-size: 1.8rem;
+      animation: pulse 1.8s infinite alternate;
     }
     #chat-messages {
-      min-height: 400px;
-      max-height: 70vh;
+      min-height: 500px;
+      max-height: 75vh;
       overflow-y: auto;
       background: var(--neumorph-dark);
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: inset 10px 10px 20px rgba(0,0,0,0.9), inset -10px -10px 20px rgba(255,255,255,0.03);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: inset 12px 12px 24px rgba(0,0,0,0.95), inset -12px -12px 24px rgba(255,255,255,0.03);
     }
     .chat-message {
-      margin: 1.5rem 0;
-      padding: 1.5rem 2rem;
-      border-radius: 16px;
+      margin: 2rem 0;
+      padding: 1.8rem 2.5rem;
+      border-radius: 20px;
       max-width: 85%;
       word-wrap: break-word;
       opacity: 0;
       transform: translateY(30px) scale(0.92);
-      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
       box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
+      position: relative;
     }
     .chat-message.visible {
       opacity: 1;
@@ -297,7 +305,7 @@
       background: linear-gradient(135deg, var(--thunder-gold), #ff8800);
       color: #000;
       margin-left: auto;
-      box-shadow: 10px 10px 20px rgba(0,0,0,0.5), inset -8px -8px 16px rgba(255,255,255,0.1);
+      box-shadow: 12px 12px 24px rgba(0,0,0,0.6), inset -8px -8px 16px rgba(255,255,255,0.15);
     }
     .chat-message.rathor {
       background: var(--neumorph-light);
@@ -311,71 +319,71 @@
     }
     .chat-input-area {
       display: flex;
-      gap: 1rem;
+      gap: 1.5rem;
       flex-wrap: wrap;
     }
     #chat-input {
       flex: 1 1 100%;
-      padding: 1.5rem 2rem;
+      padding: 1.8rem 2.5rem;
       border-radius: 50px;
       border: none;
       background: var(--neumorph-dark);
       color: #fff;
-      font-size: 1.2rem;
-      min-height: 60px;
+      font-size: 1.3rem;
+      min-height: 70px;
       transition: var(--transition);
       box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
     }
     #chat-input:focus {
       outline: none;
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary), 0 0 40px rgba(255,170,0,0.5);
-      transform: translateY(-4px);
+      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary), 0 0 50px rgba(255,170,0,0.6);
+      transform: translateY(-5px);
     }
     button.chat-send, button.voice-btn, button.skin-btn {
-      padding: 1.5rem 2.5rem;
+      padding: 1.8rem 3rem;
       background: var(--neumorph-light);
       color: var(--thunder-gold);
-      min-width: 140px;
-      min-height: 60px;
+      min-width: 160px;
+      min-height: 70px;
       border: none;
       border-radius: 50px;
       cursor: pointer;
       transition: var(--transition);
-      font-weight: 600;
+      font-weight: 700;
       box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
       position: relative;
       overflow: hidden;
     }
     button.chat-send:active, button.voice-btn:active, button.skin-btn:active {
-      transform: translateY(4px) scale(0.94);
+      transform: translateY(6px) scale(0.93);
       box-shadow: var(--shadow-pressed);
     }
     button.chat-send:hover, button.voice-btn:hover, button.skin-btn:hover {
-      transform: translateY(-6px);
-      box-shadow: 20px 20px 40px rgba(0,0,0,0.8), inset -10px -10px 20px rgba(255,255,255,0.03);
+      transform: translateY(-8px);
+      box-shadow: 24px 24px 48px rgba(0,0,0,0.85), inset -12px -12px 24px rgba(255,255,255,0.03);
     }
     button.voice-btn.listening {
-      background: linear-gradient(135deg, #00ff00, #00cc00);
-      animation: pulse-green 1s infinite, breathing 3s infinite ease-in-out;
-      transform: scale(1.1);
+      background: linear-gradient(135deg, #00ff88, #00cc66);
+      animation: pulse-green 1s infinite, breathing 4s infinite ease-in-out;
+      transform: scale(1.12);
     }
     button.skin-btn.active {
-      background: linear-gradient(135deg, #00aa00, #008800);
-      box-shadow: 0 0 40px #00ff00, inset -8px -8px 16px rgba(0,0,0,0.6);
+      background: linear-gradient(135deg, #00ff88, #00cc66);
+      box-shadow: 0 0 50px #00ff88, inset -10px -10px 20px rgba(0,0,0,0.7);
     }
     #clear-history, #install-btn {
-      margin-top: 1.5rem;
+      margin-top: 2rem;
       background: var(--neumorph-light);
       color: #fff;
-      min-height: 60px;
+      min-height: 70px;
       box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
     }
     footer {
-      padding: clamp(3rem, 8vw, 6rem) 5% 3rem;
+      padding: clamp(4rem, 10vw, 8rem) 6% 4rem;
       text-align: center;
       border-top: 1px solid var(--glass-border);
       color: var(--text-secondary);
-      font-size: 1rem;
+      font-size: 1.1rem;
       backdrop-filter: var(--blur);
     }
     footer a {
@@ -385,19 +393,19 @@
     footer a:hover, footer a:focus {
       text-decoration: underline;
     }
-    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.92 } }
-    @keyframes pulse-green { 0%,100% { background:#00ff00 } 50% { background:#00cc00 } }
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.94 } }
+    @keyframes pulse-green { 0%,100% { background:#00ff88 } 50% { background:#00cc66 } }
     @keyframes breathing {
-      0%,100% { transform: scale(1.1); }
-      50% { transform: scale(1.2); }
+      0%,100% { transform: scale(1.12); }
+      50% { transform: scale(1.25); }
     }
     @keyframes glowShift { 0% { background-position:0% 50% } 100% { background-position:200% 50% } }
     @keyframes subtle-tremor {
       0%,100% { transform: translate(0,0); }
-      20% { transform: translate(2px,2px); }
-      40% { transform: translate(-2px,-2px); }
-      60% { transform: translate(2px,-2px); }
-      80% { transform: translate(-2px,2px); }
+      20% { transform: translate(3px,3px); }
+      40% { transform: translate(-3px,-3px); }
+      60% { transform: translate(3px,-3px); }
+      80% { transform: translate(-3px,3px); }
     }
     @media (max-width:768px) {
       .hamburger { display:block; }
@@ -409,21 +417,21 @@
         left:0;
         right:0;
         background:rgba(10,10,10,0.98);
-        padding:2rem 5%;
+        padding:2.5rem 6%;
         border-bottom:1px solid var(--border);
-        box-shadow:0 10px 30px rgba(0,0,0,0.8);
+        box-shadow:0 12px 36px rgba(0,0,0,0.8);
       }
       nav ul.active { display:flex; }
       .features { grid-template-columns:1fr; }
-      .chat-section { padding:2rem; }
+      .chat-section { padding:2.5rem; }
       #chat-messages { min-height:50vh; }
       .chat-input-area { flex-direction:column; }
       button.chat-send, button.voice-btn, button.skin-btn, #install-btn { width:100%; }
     }
     @media (max-width:480px) {
-      h1 { font-size:clamp(4rem, 14vw, 8rem); }
-      .thunder { font-size:clamp(8rem, 35vw, 16rem); }
-      .subtitle { font-size:clamp(1.4rem, 7vw, 1.8rem); }
+      h1 { font-size:clamp(5rem, 16vw, 9rem); }
+      .thunder { font-size:clamp(10rem, 40vw, 20rem); }
+      .subtitle { font-size:clamp(1.6rem, 8vw, 2rem); }
     }
   </style>
 </head>
@@ -477,12 +485,12 @@
         <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
         <button class="voice-btn" onclick="toggleVoice()" aria-label="Toggle voice input">🎤 Voice</button>
       </div>
-      <div class="skin-selector" style="margin:1.5rem 0; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+      <div class="skin-selector" style="margin:2rem 0; display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap;">
         <button class="skin-btn active" data-skin="default" onclick="grokShard.setVoiceSkin('default')">Default Thunder</button>
         <button class="skin-btn" data-skin="bond" onclick="grokShard.setVoiceSkin('bond')">Bond (Brosnan)</button>
         <button class="skin-btn" data-skin="sheppard" onclick="grokShard.setVoiceSkin('sheppard')">Sheppard</button>
       </div>
-      <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:2rem;">
+      <div style="display:flex; gap:2rem; justify-content:center; flex-wrap:wrap; margin-top:3rem;">
         <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
         <button id="install-btn">Install Rathor (PWA)</button>
       </div>
@@ -571,1311 +579,18 @@
       div.className = `chat-message ${role}`;
       div.textContent = content;
       div.style.opacity = '0';
-      div.style.transform = 'translateY(20px) scale(0.95)';
+      div.style.transform = 'translateY(30px) scale(0.92)';
       chatMessages.appendChild(div);
       chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
       setTimeout(() => {
         div.classList.add('visible');
-        div.style.transition = 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        div.style.transition = 'opacity 0.9s ease, transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1)';
         div.style.opacity = '1';
         div.style.transform = 'translateY(0) scale(1)';
-      }, 10);
-      saveMessage(role, content);
-    }
-
-    // Voice skin selector
-    function updateSkinButtons() {
-      document.querySelectorAll('.skin-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.skin === grokShard.currentVoiceSkin);
-      });
-    }
-
-    document.querySelectorAll('.skin-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const skin = btn.dataset.skin;
-        grokShard.setVoiceSkin(skin);
-        updateSkinButtons();
-        addChatMessage('system', `Voice skin switched to: ${grokShard.voiceSkins[skin]?.name || skin}`);
-      });
-    });
-
-    // Lattice loading with progress bar
-    async function loadCoreLattice() {
-      const progressContainer = document.getElementById('lattice-progress-container');
-      const progressFill = document.getElementById('lattice-progress-fill');
-      const progressStatus = document.getElementById('lattice-progress-status');
-      const deltaStatus = document.getElementById('delta-status');
-      progressContainer.style.display = 'flex';
-
-      const parts = ['part1.bin', 'part2.bin', 'part3.bin']
-        .map(p => `/mercy-gate-v1-${p}`);
-
-      let loaded = 0;
-      const total = parts.length;
-
-      try {
-        const buffers = await Promise.all(
-          parts.map(async (p, i) => {
-            const response = await fetch(p);
-            if (!response.ok) throw new Error(`Failed to fetch ${p}`);
-            const buffer = await response.arrayBuffer();
-            loaded++;
-            const percent = Math.round((loaded / total) * 100);
-            progressFill.style.width = `${percent}%`;
-            progressStatus.textContent = `${percent}% — Gathering thunder shard \( {loaded}/ \){total}...`;
-            return buffer;
-          })
-        );
-
-        const fullBuffer = concatArrayBuffers(...buffers);
-        await storeLattice(fullBuffer);
-        await grokShard.init();
-
-        progressStatus.textContent = 'Lattice fully gathered. Mercy gates open wide.';
-        setTimeout(() => {
-          progressContainer.classList.add('hidden');
-          setTimeout(() => progressContainer.remove(), 800);
-        }, 1500);
-      } catch (err) {
-        progressStatus.textContent = 'Lattice gathering disturbance. Using fallback.';
-        console.error('Lattice load failed:', err);
-        await grokShard.init(); // fallback mode
-        setTimeout(() => progressContainer.remove(), 2000);
-      }
-    }
-
-    function concatArrayBuffers(...buffers) {
-      const totalLength = buffers.reduce((acc, buf) => acc + buf.byteLength, 0);
-      const result = new Uint8Array(totalLength);
-      let offset = 0;
-      for (const buf of buffers) {
-        result.set(new Uint8Array(buf), offset);
-        offset += buf.byteLength;
-      }
-      return result.buffer;
-    }
-
-    async function storeLattice(buffer) {
-      const db = await openDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('lattices', 'readwrite');
-        const store = tx.objectStore('lattices');
-        store.put({ id: 'mercy-gate-v1', buffer });
-        tx.oncomplete = resolve;
-        tx.onerror = reject;
-      });
-    }
-
-    async function openDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open('rathorLatticeDB', 1);
-        req.onupgradeneeded = evt => {
-          const db = evt.target.result;
-          db.createObjectStore('lattices', { keyPath: 'id' });
-        };
-        req.onsuccess = evt => resolve(evt.target.result);
-        req.onerror = reject;
-      });
-    }
-
-    // Boot lattice on load
-    loadCoreLattice();
-
-    // ────────────────────────────────────────────────────────────────
-    // Direct offline shard call + Ruskode integration
-    async function sendChat() {
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      loading.style.display = 'block';
-
-      try {
-        const reply = await grokShard.reply(text);
-        addChatMessage('user', text);
-        addChatMessage('rathor', reply);
-        chatInput.value = '';
-      } catch (err) {
-        console.error('Shard error:', err);
-        addChatMessage('rathor', 'Lattice disturbance in core shard... reflecting...');
-      } finally {
-        loading.style.display = 'none';
-      }
-    }
-
-    // Enter key submit
-    chatInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendChat();
-      }
-    });
-
-    // Clear history
-    document.getElementById('clear-history').addEventListener('click', clearChatHistory);
-
-    // Voice input bloom
-    function toggleVoice() {
-      if (grokShard.isListening) {
-        grokShard.stopListening();
-        addChatMessage('system', 'Voice stopped.');
-      } else {
-        grokShard.startListening((err, transcript) => {
-          if (err) {
-            addChatMessage('rathor', err);
-          } else if (transcript) {
-            document.getElementById('chat-input').value = transcript;
-            sendChat();
-          }
-        });
-        addChatMessage('system', 'Listening... speak clearly.');
-      }
-    }
-
-    // PWA install prompt
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      document.getElementById('install-btn').style.display = 'block';
-    });
-
-    document.getElementById('install-btn').addEventListener('click', async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') console.log('PWA installed');
-        deferredPrompt = null;
-        document.getElementById('install-btn').style.display = 'none';
-      }
-    });
-
-    // SW registration
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered'))
-        .catch(err => console.error('SW failed', err));
-    }
-  </script>
-</body>
-</html>      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: var(--shadow-out-primary);
-    }
-    .logo {
-      font-family: 'Orbitron', monospace;
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--thunder-gold);
-      letter-spacing: 1px;
-      text-shadow: 0 0 20px var(--thunder-glow);
-      animation: glowShift 8s infinite alternate;
-    }
-    nav ul {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
-    nav a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 12px;
-      transition: var(--transition);
-      background: var(--glass-bg);
-      box-shadow: var(--shadow-out-primary);
-    }
-    nav a:hover, nav a:focus {
-      color: var(--thunder-gold);
-      text-shadow: 0 0 10px var(--thunder-glow);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-    }
-    .hamburger {
-      display: none;
-      font-size: 2rem;
-      background: none;
-      border: none;
-      color: var(--text-primary);
-      cursor: pointer;
-      padding: 0.5rem;
-      transition: var(--transition);
-    }
-    .hamburger:active {
-      transform: scale(0.92);
-      box-shadow: var(--shadow-pressed);
-    }
-    main {
-      flex: 1;
-      padding: clamp(3rem, 8vw, 6rem) 5% clamp(4rem, 10vw, 8rem);
-      max-width: 1400px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    .hero {
-      text-align: center;
-      margin-bottom: clamp(4rem, 10vw, 8rem);
-      position: relative;
-    }
-    .thunder {
-      font-size: clamp(8rem, 25vw, 20rem);
-      margin-bottom: 1rem;
-      animation: pulse 6s infinite alternate;
-      text-shadow: 0 0 60px var(--thunder-glow);
-      line-height: 0.8;
-      user-select: none;
-    }
-    h1 {
-      font-family: 'Orbitron', monospace;
-      font-size: clamp(4.5rem, 12vw, 9rem);
-      margin-bottom: 1.5rem;
-      background: linear-gradient(90deg, var(--thunder-gold), #ff5500, var(--thunder-gold));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: glowShift 12s infinite alternate;
-    }
-    .subtitle {
-      font-size: clamp(1.4rem, 5vw, 1.8rem);
-      color: var(--text-secondary);
-      max-width: 800px;
-      margin: 0 auto 3rem;
-      opacity: 0.9;
-    }
-    .cta button {
-      padding: clamp(1rem, 4vw, 1.5rem) clamp(2rem, 6vw, 3rem);
-      font-size: clamp(1.2rem, 5vw, 1.4rem);
-      background: var(--neumorph-light);
-      color: var(--thunder-gold);
-      border: none;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-      transition: var(--transition);
-      min-width: 200px;
-      min-height: 56px;
-      font-weight: 600;
-      position: relative;
-      overflow: hidden;
-    }
-    .cta button::before {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0;
-      background: radial-gradient(circle, var(--ripple-color), transparent 70%);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      opacity: 0;
-      transition: width 0.8s, height 0.8s, opacity 0.8s;
-      pointer-events: none;
-    }
-    .cta button:active::before {
-      width: 400px;
-      height: 400px;
-      opacity: 0.5;
-    }
-    .cta button:active {
-      transform: translateY(3px) scale(0.95);
-      box-shadow: var(--shadow-pressed);
-    }
-    .cta button:hover {
-      transform: translateY(-6px);
-      box-shadow: 16px 16px 32px rgba(0,0,0,0.7), inset -8px -8px 16px rgba(255,255,255,0.03);
-    }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: clamp(1.5rem, 4vw, 2.5rem);
-      margin: clamp(3rem, 8vw, 6rem) 0;
-    }
-    .feature-card {
-      background: var(--neumorph-light);
-      border-radius: var(--border-radius);
-      padding: clamp(1.5rem, 4vw, 2.5rem);
-      transition: var(--transition);
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-      cursor: default;
-      position: relative;
-      overflow: hidden;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 30% 30%, rgba(255,170,0,0.08), transparent 70%);
-      opacity: 0;
-      transition: opacity 0.6s;
-    }
-    .feature-card:hover::before, .feature-card:focus-within::before {
-      opacity: 1;
-    }
-    .feature-card:hover, .feature-card:focus-within {
-      transform: translateY(-10px);
-      box-shadow: 20px 20px 40px rgba(0,0,0,0.7), inset -10px -10px 20px rgba(255,255,255,0.03);
-    }
-    .chat-section {
-      max-width: 900px;
-      margin: 0 auto clamp(4rem, 10vw, 8rem);
-      background: var(--neumorph-light);
-      border-radius: var(--border-radius);
-      padding: clamp(1.5rem, 5vw, 2.5rem);
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-    }
-    #loading {
-      display: none;
-      text-align: center;
-      padding: 1.2rem;
-      color: var(--thunder-gold);
-      font-style: italic;
-      animation: pulse 1.5s infinite alternate;
-    }
-    #chat-messages {
-      min-height: 300px;
-      max-height: 60vh;
-      overflow-y: auto;
-      background: var(--neumorph-dark);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: inset 8px 8px 16px rgba(0,0,0,0.9), inset -8px -8px 16px rgba(255,255,255,0.03);
-    }
-    .chat-message {
-      margin: 1rem 0;
-      padding: 1rem 1.5rem;
-      border-radius: 12px;
-      max-width: 85%;
-      word-wrap: break-word;
-      opacity: 0;
-      transform: translateY(20px) scale(0.95);
-      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-    }
-    .chat-message.visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-    .chat-message.user {
-      background: linear-gradient(135deg, var(--thunder-gold), #ff8800);
-      color: #000;
-      margin-left: auto;
-      box-shadow: 8px 8px 16px rgba(0,0,0,0.5), inset -6px -6px 12px rgba(255,255,255,0.1);
-    }
-    .chat-message.rathor {
-      background: var(--neumorph-light);
-      margin-right: auto;
-    }
-    .chat-message.blocked {
-      background: #880000;
-      color: #fff;
-      font-weight: bold;
-      animation: subtle-tremor 0.5s ease;
-    }
-    .chat-input-area {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-    #chat-input {
-      flex: 1 1 100%;
-      padding: 1rem 1.5rem;
-      border-radius: 50px;
-      border: none;
-      background: var(--neumorph-dark);
-      color: #fff;
-      font-size: 1.1rem;
-      min-height: 48px;
-      transition: var(--transition);
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-    }
-    #chat-input:focus {
-      outline: none;
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary), 0 0 30px rgba(255,170,0,0.5);
-      transform: translateY(-3px);
-    }
-    button.chat-send, button.voice-btn, button.skin-btn {
-      padding: 1rem 2rem;
-      background: var(--neumorph-light);
-      color: var(--thunder-gold);
-      min-width: 120px;
-      min-height: 48px;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: var(--transition);
-      font-weight: 600;
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-      position: relative;
-      overflow: hidden;
-    }
-    button.chat-send:active, button.voice-btn:active, button.skin-btn:active {
-      transform: translateY(4px) scale(0.94);
-      box-shadow: var(--shadow-pressed);
-    }
-    button.chat-send:hover, button.voice-btn:hover, button.skin-btn:hover {
-      transform: translateY(-6px);
-      box-shadow: 16px 16px 32px rgba(0,0,0,0.7), inset -8px -8px 16px rgba(255,255,255,0.03);
-    }
-    button.voice-btn.listening {
-      background: linear-gradient(135deg, #00ff00, #00cc00);
-      animation: pulse-green 1s infinite, breathing 3s infinite ease-in-out;
-      transform: scale(1.08);
-    }
-    button.skin-btn.active {
-      background: linear-gradient(135deg, #00aa00, #008800);
-      box-shadow: 0 0 30px #00ff00, inset -6px -6px 12px rgba(0,0,0,0.6);
-    }
-    #clear-history, #install-btn {
-      margin-top: 1rem;
-      background: var(--neumorph-light);
-      color: #fff;
-      min-height: 48px;
-      box-shadow: var(--shadow-out-primary), var(--shadow-in-primary);
-    }
-    footer {
-      padding: clamp(2rem, 5vw, 4rem) 5% 2rem;
-      text-align: center;
-      border-top: 1px solid var(--glass-border);
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      backdrop-filter: var(--blur);
-    }
-    footer a {
-      color: var(--thunder-gold);
-      text-decoration: none;
-    }
-    footer a:hover, footer a:focus {
-      text-decoration: underline;
-    }
-    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.9 } }
-    @keyframes pulse-green { 0%,100% { background:#00ff00 } 50% { background:#00cc00 } }
-    @keyframes breathing {
-      0%,100% { transform: scale(1.08); }
-      50% { transform: scale(1.16); }
-    }
-    @keyframes glowShift { 0% { background-position:0% 50% } 100% { background-position:200% 50% } }
-    @keyframes subtle-tremor {
-      0%,100% { transform: translate(0,0); }
-      20% { transform: translate(2px,2px); }
-      40% { transform: translate(-2px,-2px); }
-      60% { transform: translate(2px,-2px); }
-      80% { transform: translate(-2px,2px); }
-    }
-    @media (max-width:768px) {
-      .hamburger { display:block; }
-      nav ul {
-        display:none;
-        flex-direction:column;
-        position:absolute;
-        top:100%;
-        left:0;
-        right:0;
-        background:rgba(10,10,10,0.98);
-        padding:2rem 5%;
-        border-bottom:1px solid var(--border);
-        box-shadow:0 10px 30px rgba(0,0,0,0.8);
-      }
-      nav ul.active { display:flex; }
-      .features { grid-template-columns:1fr; }
-      .chat-section { padding:1.5rem; }
-      #chat-messages { min-height:40vh; }
-      .chat-input-area { flex-direction:column; }
-      button.chat-send, button.voice-btn, button.skin-btn, #install-btn { width:100%; }
-    }
-    @media (max-width:480px) {
-      h1 { font-size:clamp(3.5rem, 12vw, 6rem); }
-      .thunder { font-size:clamp(6rem, 30vw, 12rem); }
-      .subtitle { font-size:clamp(1.2rem, 6vw, 1.6rem); }
-    }
-  </style>
-</head>
-<body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
-
-  <header role="banner">
-    <div class="logo" role="img" aria-label="Rathor logo">Rathor</div>
-    <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
-    <nav id="nav-menu" role="navigation" aria-label="Main navigation">
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="#features">Features</a></li>
-        <li><a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Repository</a></li>
-        <li><a href="/privacy.html">Privacy Policy</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <main id="main-content" role="main">
-    <section class="hero">
-      <div class="thunder" aria-hidden="true">⚡️</div>
-      <h1>Rathor</h1>
-      <p class="subtitle">Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.<br>Powered by AlphaProMega Air Foundation.</p>
-      <div class="cta">
-        <button onclick="document.querySelector('#chat-input').focus()">Ask Rathor</button>
-      </div>
-    </section>
-
-    <section id="features" class="features">
-      <div class="feature-card">
-        <h3>Mercy Gates</h3>
-        <p>Valence ≥ 0.9999999 rejects entropy & harm — pure thriving only.</p>
-      </div>
-      <div class="feature-card">
-        <h3>Symbolic Lattice</h3>
-        <p>Knowledge graphs, MeTTa evaluation, Hyperon reasoning — eternal symbolic truth.</p>
-      </div>
-      <div class="feature-card">
-        <h3>Sovereign Core</h3>
-        <p>Offline-first, no third-party shadows, eternal privacy & sovereignty.</p>
-      </div>
-    </section>
-
-    <section class="chat-section">
-      <h2>Ask Rathor</h2>
-      <div id="loading">Thunder gathers...</div>
-      <div id="chat-messages" aria-live="polite"></div>
-      <div class="chat-input-area">
-        <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
-        <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
-        <button class="voice-btn" onclick="toggleVoice()" aria-label="Toggle voice input">🎤 Voice</button>
-      </div>
-      <div class="skin-selector" style="margin:1rem 0; display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;">
-        <button class="skin-btn active" data-skin="default" onclick="grokShard.setVoiceSkin('default')">Default Thunder</button>
-        <button class="skin-btn" data-skin="bond" onclick="grokShard.setVoiceSkin('bond')">Bond (Brosnan)</button>
-        <button class="skin-btn" data-skin="sheppard" onclick="grokShard.setVoiceSkin('sheppard')">Sheppard</button>
-      </div>
-      <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
-      <button id="install-btn">Install Rathor (PWA)</button>
-    </section>
-  </main>
-
-  <footer>
-    <p>© 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Source Code</a> • CIPO App 2453681</p>
-  </footer>
-
-  <!-- Lattice Progress UI -->
-  <div id="lattice-progress-container">
-    <div id="lattice-progress-text">Thunder gathers lattice...</div>
-    <div id="lattice-progress-bar">
-      <div id="lattice-progress-fill"></div>
-    </div>
-    <div id="lattice-progress-status">0% — Mercy gates initializing...</div>
-    <div id="delta-status">Delta sync & checksum validation...</div>
-  </div>
-
-  <script type="module">
-    // ────────────────────────────────────────────────────────────────
-    // Imports
-    import { MeTTaRewriter } from '/metta-rewriting-engine.js';
-    import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
-    import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
-    import { grokShard } from '/grok-shard-engine.js';
-    import { RuskodeCore } from '/ruskode-firmware.js';
-
-    // IndexedDB – chat memory + lattice storage
-    let db;
-    const dbName = "rathorChatDB";
-    const storeName = "messages";
-    const latticeStore = "lattices";
-
-    const dbRequest = indexedDB.open(dbName, 2);
-    dbRequest.onupgradeneeded = event => {
-      db = event.target.result;
-      if (!db.objectStoreNames.contains(storeName)) {
-        db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
-      }
-      if (!db.objectStoreNames.contains(latticeStore)) {
-        db.createObjectStore(latticeStore, { keyPath: "id" });
-      }
-    };
-    dbRequest.onsuccess = event => {
-      db = event.target.result;
-      loadChatHistory();
-    };
-
-    function loadChatHistory() {
-      if (!db) return;
-      const tx = db.transaction(storeName, "readonly");
-      const store = tx.objectStore(storeName);
-      const req = store.getAll();
-      req.onsuccess = () => {
-        req.result.sort((a, b) => a.timestamp - b.timestamp);
-        req.result.forEach(msg => addChatMessage(msg.role, msg.content));
-      };
-    }
-
-    function saveMessage(role, content) {
-      if (!db) return;
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      store.add({ role, content, timestamp: Date.now() });
-    }
-
-    function clearChatHistory() {
-      if (!db) return;
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      store.clear();
-      document.getElementById('chat-messages').innerHTML = '';
-      grokShard.clearMemory();
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // UI helpers
-    const chatMessages = document.getElementById('chat-messages');
-    const chatInput = document.getElementById('chat-input');
-    const loading = document.getElementById('loading');
-
-    function addChatMessage(role, content) {
-      const div = document.createElement('div');
-      div.className = `chat-message ${role}`;
-      div.textContent = content;
-      div.style.opacity = '0';
-      div.style.transform = 'translateY(20px) scale(0.95)';
-      chatMessages.appendChild(div);
-      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-      setTimeout(() => {
-        div.classList.add('visible');
-        div.style.transition = 'opacity 0.7s ease, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        div.style.opacity = '1';
-        div.style.transform = 'translateY(0) scale(1)';
-      }, 10);
-      saveMessage(role, content);
-    }
-
-    // Voice skin selector
-    function updateSkinButtons() {
-      document.querySelectorAll('.skin-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.skin === grokShard.currentVoiceSkin);
-      });
-    }
-
-    document.querySelectorAll('.skin-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const skin = btn.dataset.skin;
-        grokShard.setVoiceSkin(skin);
-        updateSkinButtons();
-        addChatMessage('system', `Voice skin switched to: ${grokShard.voiceSkins[skin]?.name || skin}`);
-      });
-    });
-
-    // Lattice loading with progress bar
-    async function loadCoreLattice() {
-      const progressContainer = document.getElementById('lattice-progress-container');
-      const progressFill = document.getElementById('lattice-progress-fill');
-      const progressStatus = document.getElementById('lattice-progress-status');
-      const deltaStatus = document.getElementById('delta-status');
-      progressContainer.style.display = 'flex';
-
-      const parts = ['part1.bin', 'part2.bin', 'part3.bin']
-        .map(p => `/mercy-gate-v1-${p}`);
-
-      let loaded = 0;
-      const total = parts.length;
-
-      try {
-        const buffers = await Promise.all(
-          parts.map(async (p, i) => {
-            const response = await fetch(p);
-            if (!response.ok) throw new Error(`Failed to fetch ${p}`);
-            const buffer = await response.arrayBuffer();
-            loaded++;
-            const percent = Math.round((loaded / total) * 100);
-            progressFill.style.width = `${percent}%`;
-            progressStatus.textContent = `${percent}% — Gathering thunder shard \( {loaded}/ \){total}...`;
-            return buffer;
-          })
-        );
-
-        const fullBuffer = concatArrayBuffers(...buffers);
-        await storeLattice(fullBuffer);
-        await grokShard.init();
-
-        progressStatus.textContent = 'Lattice fully gathered. Mercy gates open wide.';
-        setTimeout(() => {
-          progressContainer.classList.add('hidden');
-          setTimeout(() => progressContainer.remove(), 800);
-        }, 1500);
-      } catch (err) {
-        progressStatus.textContent = 'Lattice gathering disturbance. Using fallback.';
-        console.error('Lattice load failed:', err);
-        await grokShard.init(); // fallback mode
-        setTimeout(() => progressContainer.remove(), 2000);
-      }
-    }
-
-    function concatArrayBuffers(...buffers) {
-      const totalLength = buffers.reduce((acc, buf) => acc + buf.byteLength, 0);
-      const result = new Uint8Array(totalLength);
-      let offset = 0;
-      for (const buf of buffers) {
-        result.set(new Uint8Array(buf), offset);
-        offset += buf.byteLength;
-      }
-      return result.buffer;
-    }
-
-    async function storeLattice(buffer) {
-      const db = await openDB();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction('lattices', 'readwrite');
-        const store = tx.objectStore('lattices');
-        store.put({ id: 'mercy-gate-v1', buffer });
-        tx.oncomplete = resolve;
-        tx.onerror = reject;
-      });
-    }
-
-    async function openDB() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open('rathorLatticeDB', 1);
-        req.onupgradeneeded = evt => {
-          const db = evt.target.result;
-          db.createObjectStore('lattices', { keyPath: 'id' });
-        };
-        req.onsuccess = evt => resolve(evt.target.result);
-        req.onerror = reject;
-      });
-    }
-
-    // Boot lattice on load
-    loadCoreLattice();
-
-    // ────────────────────────────────────────────────────────────────
-    // Direct offline shard call + Ruskode integration
-    async function sendChat() {
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      loading.style.display = 'block';
-
-      try {
-        const reply = await grokShard.reply(text);
-        addChatMessage('user', text);
-        addChatMessage('rathor', reply);
-        chatInput.value = '';
-      } catch (err) {
-        console.error('Shard error:', err);
-        addChatMessage('rathor', 'Lattice disturbance in core shard... reflecting...');
-      } finally {
-        loading.style.display = 'none';
-      }
-    }
-
-    // Enter key submit
-    chatInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendChat();
-      }
-    });
-
-    // Clear history
-    document.getElementById('clear-history').addEventListener('click', clearChatHistory);
-
-    // Voice input bloom
-    function toggleVoice() {
-      if (grokShard.isListening) {
-        grokShard.stopListening();
-        addChatMessage('system', 'Voice stopped.');
-      } else {
-        grokShard.startListening((err, transcript) => {
-          if (err) {
-            addChatMessage('rathor', err);
-          } else if (transcript) {
-            document.getElementById('chat-input').value = transcript;
-            sendChat();
-          }
-        });
-        addChatMessage('system', 'Listening... speak clearly.');
-      }
-    }
-
-    // PWA install prompt
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      document.getElementById('install-btn').style.display = 'block';
-    });
-
-    document.getElementById('install-btn').addEventListener('click', async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') console.log('PWA installed');
-        deferredPrompt = null;
-        document.getElementById('install-btn').style.display = 'none';
-      }
-    });
-
-    // SW registration
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered'))
-        .catch(err => console.error('SW failed', err));
-    }
-  </script>
-</body>
-</html>      letter-spacing: 1px;
-      text-shadow: 0 0 20px var(--thunder-glow);
-      animation: glowShift 8s infinite alternate;
-    }
-    nav ul {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
-    nav a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 12px;
-      transition: var(--transition);
-      background: var(--glass-bg);
-      box-shadow: var(--shadow-out);
-    }
-    nav a:hover, nav a:focus {
-      color: var(--thunder-gold);
-      text-shadow: 0 0 10px var(--thunder-glow);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-out), var(--shadow-in);
-    }
-    .hamburger {
-      display: none;
-      font-size: 2rem;
-      background: none;
-      border: none;
-      color: var(--text-primary);
-      cursor: pointer;
-      padding: 0.5rem;
-      transition: var(--transition);
-    }
-    .hamburger:active {
-      transform: scale(0.95);
-    }
-    main {
-      flex: 1;
-      padding: clamp(3rem, 8vw, 6rem) 5% clamp(4rem, 10vw, 8rem);
-      max-width: 1400px;
-      margin: 0 auto;
-      width: 100%;
-    }
-    .hero {
-      text-align: center;
-      margin-bottom: clamp(4rem, 10vw, 8rem);
-      position: relative;
-    }
-    .thunder {
-      font-size: clamp(8rem, 25vw, 20rem);
-      margin-bottom: 1rem;
-      animation: pulse 6s infinite alternate;
-      text-shadow: 0 0 60px var(--thunder-glow);
-      line-height: 0.8;
-      user-select: none;
-    }
-    h1 {
-      font-family: 'Orbitron', monospace;
-      font-size: clamp(4.5rem, 12vw, 9rem);
-      margin-bottom: 1.5rem;
-      background: linear-gradient(90deg, var(--thunder-gold), #ff5500, var(--thunder-gold));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: glowShift 12s infinite alternate;
-    }
-    .subtitle {
-      font-size: clamp(1.4rem, 5vw, 1.8rem);
-      color: var(--text-secondary);
-      max-width: 800px;
-      margin: 0 auto 3rem;
-      opacity: 0.9;
-    }
-    .cta button {
-      padding: clamp(1rem, 4vw, 1.5rem) clamp(2rem, 6vw, 3rem);
-      font-size: clamp(1.2rem, 5vw, 1.4rem);
-      background: var(--neumorph-light);
-      color: var(--thunder-gold);
-      border: none;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      box-shadow: var(--shadow-out), var(--shadow-in);
-      transition: var(--transition);
-      min-width: 200px;
-      min-height: 56px;
-      font-weight: 600;
-      position: relative;
-      overflow: hidden;
-    }
-    .cta button::before {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0;
-      background: radial-gradient(circle, rgba(255,170,0,0.4), transparent 70%);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      opacity: 0;
-      transition: width 0.6s, height 0.6s, opacity 0.6s;
-      pointer-events: none;
-    }
-    .cta button:active::before {
-      width: 300px;
-      height: 300px;
-      opacity: 0.6;
-    }
-    .cta button:active {
-      transform: translateY(2px) scale(0.98);
-      box-shadow: var(--shadow-pressed);
-    }
-    .cta button:hover {
-      transform: translateY(-4px);
-      box-shadow: 12px 12px 24px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.05);
-    }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: clamp(1.5rem, 4vw, 2.5rem);
-      margin: clamp(3rem, 8vw, 6rem) 0;
-    }
-    .feature-card {
-      background: var(--neumorph-light);
-      border-radius: var(--border-radius);
-      padding: clamp(1.5rem, 4vw, 2.5rem);
-      transition: var(--transition);
-      box-shadow: var(--shadow-out), var(--shadow-in);
-      cursor: default;
-    }
-    .feature-card:hover, .feature-card:focus-within {
-      transform: translateY(-8px);
-      box-shadow: 16px 16px 32px rgba(0,0,0,0.6), inset -8px -8px 16px rgba(255,255,255,0.03);
-    }
-    .chat-section {
-      max-width: 900px;
-      margin: 0 auto clamp(4rem, 10vw, 8rem);
-      background: var(--neumorph-light);
-      border-radius: var(--border-radius);
-      padding: clamp(1.5rem, 5vw, 2.5rem);
-      box-shadow: var(--shadow-out), var(--shadow-in);
-    }
-    #loading {
-      display: none;
-      text-align: center;
-      padding: 1.2rem;
-      color: var(--thunder-gold);
-      font-style: italic;
-      animation: pulse 1.5s infinite alternate;
-    }
-    #chat-messages {
-      min-height: 300px;
-      max-height: 60vh;
-      overflow-y: auto;
-      background: var(--neumorph-dark);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: inset 6px 6px 12px rgba(0,0,0,0.8), inset -6px -6px 12px rgba(255,255,255,0.03);
-    }
-    .chat-message {
-      margin: 1rem 0;
-      padding: 1rem 1.5rem;
-      border-radius: 12px;
-      max-width: 85%;
-      word-wrap: break-word;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: var(--shadow-out), var(--shadow-in);
-    }
-    .chat-message.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .chat-message.user {
-      background: linear-gradient(135deg, var(--thunder-gold), #ff8800);
-      color: #000;
-      margin-left: auto;
-      box-shadow: 6px 6px 12px rgba(0,0,0,0.5), inset -4px -4px 8px rgba(255,255,255,0.1);
-    }
-    .chat-message.rathor {
-      background: var(--neumorph-light);
-      margin-right: auto;
-    }
-    .chat-message.blocked {
-      background: #880000;
-      color: #fff;
-      font-weight: bold;
-      animation: subtle-tremor 0.4s ease;
-    }
-    .chat-input-area {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-    #chat-input {
-      flex: 1 1 100%;
-      padding: 1rem 1.5rem;
-      border-radius: 50px;
-      border: none;
-      background: var(--neumorph-dark);
-      color: #fff;
-      font-size: 1.1rem;
-      min-height: 48px;
-      transition: var(--transition);
-      box-shadow: var(--shadow-out), var(--shadow-in);
-    }
-    #chat-input:focus {
-      outline: none;
-      box-shadow: var(--shadow-out), var(--shadow-in), 0 0 20px rgba(255,170,0,0.4);
-      transform: translateY(-2px);
-    }
-    button.chat-send, button.voice-btn, button.skin-btn {
-      padding: 1rem 2rem;
-      background: var(--neumorph-light);
-      color: var(--thunder-gold);
-      min-width: 120px;
-      min-height: 48px;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: var(--transition);
-      font-weight: 600;
-      box-shadow: var(--shadow-out), var(--shadow-in);
-      position: relative;
-      overflow: hidden;
-    }
-    button.chat-send:active, button.voice-btn:active, button.skin-btn:active {
-      transform: translateY(2px) scale(0.96);
-      box-shadow: var(--shadow-pressed);
-    }
-    button.chat-send:hover, button.voice-btn:hover, button.skin-btn:hover {
-      transform: translateY(-4px);
-      box-shadow: 12px 12px 24px rgba(0,0,0,0.6), inset -6px -6px 12px rgba(255,255,255,0.05);
-    }
-    button.voice-btn.listening {
-      background: linear-gradient(135deg, #00ff00, #00cc00);
-      animation: pulse-green 1s infinite, breathing 3s infinite ease-in-out;
-      transform: scale(1.05);
-    }
-    button.skin-btn.active {
-      background: linear-gradient(135deg, #00aa00, #008800);
-      box-shadow: 0 0 20px #00ff00, inset -4px -4px 8px rgba(0,0,0,0.5);
-    }
-    #clear-history, #install-btn {
-      margin-top: 1rem;
-      background: var(--neumorph-light);
-      color: #fff;
-      min-height: 48px;
-      box-shadow: var(--shadow-out), var(--shadow-in);
-    }
-    footer {
-      padding: clamp(2rem, 5vw, 4rem) 5% 2rem;
-      text-align: center;
-      border-top: 1px solid var(--glass-border);
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      backdrop-filter: var(--blur);
-    }
-    footer a {
-      color: var(--thunder-gold);
-      text-decoration: none;
-    }
-    footer a:hover, footer a:focus {
-      text-decoration: underline;
-    }
-    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.9 } }
-    @keyframes pulse-green { 0%,100% { background:#00ff00 } 50% { background:#00cc00 } }
-    @keyframes breathing {
-      0%,100% { transform: scale(1.05); }
-      50% { transform: scale(1.12); }
-    }
-    @keyframes glowShift { 0% { background-position:0% 50% } 100% { background-position:200% 50% } }
-    @keyframes subtle-tremor {
-      0%,100% { transform: translate(0,0); }
-      25% { transform: translate(1px,1px); }
-      50% { transform: translate(-1px,-1px); }
-      75% { transform: translate(1px,-1px); }
-    }
-    @media (max-width:768px) {
-      .hamburger { display:block; }
-      nav ul {
-        display:none;
-        flex-direction:column;
-        position:absolute;
-        top:100%;
-        left:0;
-        right:0;
-        background:rgba(10,10,10,0.98);
-        padding:2rem 5%;
-        border-bottom:1px solid var(--border);
-        box-shadow:0 10px 30px rgba(0,0,0,0.8);
-      }
-      nav ul.active { display:flex; }
-      .features { grid-template-columns:1fr; }
-      .chat-section { padding:1.5rem; }
-      #chat-messages { min-height:40vh; }
-      .chat-input-area { flex-direction:column; }
-      button.chat-send, button.voice-btn, button.skin-btn, #install-btn { width:100%; }
-    }
-    @media (max-width:480px) {
-      h1 { font-size:clamp(3.5rem, 12vw, 6rem); }
-      .thunder { font-size:clamp(6rem, 30vw, 12rem); }
-      .subtitle { font-size:clamp(1.2rem, 6vw, 1.6rem); }
-    }
-  </style>
-</head>
-<body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
-
-  <header role="banner">
-    <div class="logo" role="img" aria-label="Rathor logo">Rathor</div>
-    <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-menu">☰</button>
-    <nav id="nav-menu" role="navigation" aria-label="Main navigation">
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="#features">Features</a></li>
-        <li><a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Repository</a></li>
-        <li><a href="/privacy.html">Privacy Policy</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <main id="main-content" role="main">
-    <section class="hero">
-      <div class="thunder" aria-hidden="true">⚡️</div>
-      <h1>Rathor</h1>
-      <p class="subtitle">Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth.<br>Powered by AlphaProMega Air Foundation.</p>
-      <div class="cta">
-        <button onclick="document.querySelector('#chat-input').focus()">Ask Rathor</button>
-      </div>
-    </section>
-
-    <section id="features" class="features">
-      <div class="feature-card">
-        <h3>Mercy Gates</h3>
-        <p>Valence ≥ 0.9999999 rejects entropy & harm — pure thriving only.</p>
-      </div>
-      <div class="feature-card">
-        <h3>Symbolic Lattice</h3>
-        <p>Knowledge graphs, MeTTa evaluation, Hyperon reasoning — eternal symbolic truth.</p>
-      </div>
-      <div class="feature-card">
-        <h3>Sovereign Core</h3>
-        <p>Offline-first, no third-party shadows, eternal privacy & sovereignty.</p>
-      </div>
-    </section>
-
-    <section class="chat-section">
-      <h2>Ask Rathor</h2>
-      <div id="loading">Thunder gathers...</div>
-      <div id="chat-messages" aria-live="polite"></div>
-      <div class="chat-input-area">
-        <input id="chat-input" type="text" placeholder="Ask anything..." aria-label="Chat input" />
-        <button class="chat-send" onclick="sendChat()" aria-label="Send message">Send</button>
-        <button class="voice-btn" onclick="toggleVoice()" aria-label="Toggle voice input">🎤 Voice</button>
-      </div>
-      <div class="skin-selector" style="margin:1rem 0; display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;">
-        <button class="skin-btn active" data-skin="default" onclick="grokShard.setVoiceSkin('default')">Default Thunder</button>
-        <button class="skin-btn" data-skin="bond" onclick="grokShard.setVoiceSkin('bond')">Bond (Brosnan)</button>
-        <button class="skin-btn" data-skin="sheppard" onclick="grokShard.setVoiceSkin('sheppard')">Sheppard</button>
-      </div>
-      <button id="clear-history" onclick="clearChatHistory()" aria-label="Clear chat history">Clear History</button>
-      <button id="install-btn">Install Rathor (PWA)</button>
-    </section>
-  </main>
-
-  <footer>
-    <p>© 2026 Autonomicity Games Inc. — <a href="/privacy.html">Privacy Policy</a> • <a href="https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi">Source Code</a> • CIPO App 2453681</p>
-  </footer>
-
-  <!-- Lattice Progress UI -->
-  <div id="lattice-progress-container">
-    <div id="lattice-progress-text">Thunder gathers lattice...</div>
-    <div id="lattice-progress-bar">
-      <div id="lattice-progress-fill"></div>
-    </div>
-    <div id="lattice-progress-status">0% — Mercy gates initializing...</div>
-    <div id="delta-status">Delta sync & checksum validation...</div>
-  </div>
-
-  <script type="module">
-    // ────────────────────────────────────────────────────────────────
-    // Imports
-    import { MeTTaRewriter } from '/metta-rewriting-engine.js';
-    import { atomeseValenceGate } from '/atomese-knowledge-bridge.js';
-    import { hyperonValenceGate } from '/hyperon-reasoning-layer.js';
-    import { grokShard } from '/grok-shard-engine.js';
-    import { RuskodeCore } from '/ruskode-firmware.js';
-
-    // IndexedDB – chat memory + lattice storage
-    let db;
-    const dbName = "rathorChatDB";
-    const storeName = "messages";
-    const latticeStore = "lattices";
-
-    const dbRequest = indexedDB.open(dbName, 2);
-    dbRequest.onupgradeneeded = event => {
-      db = event.target.result;
-      if (!db.objectStoreNames.contains(storeName)) {
-        db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
-      }
-      if (!db.objectStoreNames.contains(latticeStore)) {
-        db.createObjectStore(latticeStore, { keyPath: "id" });
-      }
-    };
-    dbRequest.onsuccess = event => {
-      db = event.target.result;
-      loadChatHistory();
-    };
-
-    function loadChatHistory() {
-      if (!db) return;
-      const tx = db.transaction(storeName, "readonly");
-      const store = tx.objectStore(storeName);
-      const req = store.getAll();
-      req.onsuccess = () => {
-        req.result.sort((a, b) => a.timestamp - b.timestamp);
-        req.result.forEach(msg => addChatMessage(msg.role, msg.content));
-      };
-    }
-
-    function saveMessage(role, content) {
-      if (!db) return;
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      store.add({ role, content, timestamp: Date.now() });
-    }
-
-    function clearChatHistory() {
-      if (!db) return;
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      store.clear();
-      document.getElementById('chat-messages').innerHTML = '';
-      grokShard.clearMemory();
-    }
-
-    // ────────────────────────────────────────────────────────────────
-    // UI helpers
-    const chatMessages = document.getElementById('chat-messages');
-    const chatInput = document.getElementById('chat-input');
-    const loading = document.getElementById('loading');
-
-    function addChatMessage(role, content) {
-      const div = document.createElement('div');
-      div.className = `chat-message ${role}`;
-      div.textContent = content;
-      div.style.opacity = '0';
-      div.style.transform = 'translateY(10px)';
-      chatMessages.appendChild(div);
-      chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-      setTimeout(() => {
-        div.classList.add('visible');
-        div.style.transition = 'opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        div.style.opacity = '1';
-        div.style.transform = 'translateY(0)';
+        if (role === 'rathor') {
+          div.style.boxShadow = '0 0 40px rgba(0,255,136,0.3)';
+          setTimeout(() => div.style.boxShadow = 'var(--shadow-out-primary), var(--shadow-in-primary)', 800);
+        }
       }, 10);
       saveMessage(role, content);
     }
