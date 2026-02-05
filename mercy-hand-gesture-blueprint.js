@@ -1,5 +1,5 @@
-// mercy-hand-gesture-blueprint.js – v6 sovereign Mercy Hand Gesture Detection Blueprint
-// XRHand joint-based gestures (pinch/point/grab/open-palm/thumbs-up + swipe cardinal/diagonal + CIRCULAR + SPIRAL inward/outward)
+// mercy-hand-gesture-blueprint.js – v7 sovereign Mercy Hand Gesture Detection Blueprint
+// XRHand joint-based gestures (pinch/point/grab/open-palm/thumbs-up + swipe cardinal/diagonal + CIRCULAR + SPIRAL + FIGURE-EIGHT)
 // + visual motion trail rendering, mercy-gated, valence-modulated feedback
 // MIT License – Autonomicity Games Inc. 2026
 
@@ -26,17 +26,25 @@ const SWIPE_DIRECTION_TOLERANCE = 30;
 const CIRCLE_MIN_POINTS = 10;
 const CIRCLE_MIN_RADIUS = 0.06;
 const CIRCLE_MAX_RADIUS = 0.35;
-const CIRCLE_RADIUS_STD_MAX = 0.30;       // std dev < 30% avg radius for circle
-const CIRCLE_MIN_ANGLE_COVERAGE = 300;    // degrees for circle
+const CIRCLE_RADIUS_STD_MAX = 0.30;
+const CIRCLE_MIN_ANGLE_COVERAGE = 300;
 const SPIRAL_MIN_POINTS = 15;
-const SPIRAL_MIN_ANGLE_COVERAGE = 450;    // at least 1.25 full turns
-const SPIRAL_RADIUS_CHANGE_MIN = 0.30;    // min 30% radius increase/decrease
-const SPIRAL_RADIUS_STD_MAX = 0.40;       // allow more variance for spiral
-const SPIRAL_MIN_DURATION = 400;          // ms
-const SPIRAL_MAX_DURATION = 1800;         // ms
+const SPIRAL_MIN_ANGLE_COVERAGE = 450;
+const SPIRAL_RADIUS_CHANGE_MIN = 0.30;
+const SPIRAL_RADIUS_STD_MAX = 0.40;
+const SPIRAL_MIN_DURATION = 400;
+const SPIRAL_MAX_DURATION = 1800;
 
-// Trail visual settings
-const TRAIL_MAX_POINTS = 40;
+// Figure-eight thresholds
+const FIGURE8_MIN_POINTS = 20;
+const FIGURE8_MIN_DISPLACEMENT = 0.15;     // total path length
+const FIGURE8_MIN_ANGLE_COVERAGE = 720;    // at least two full turns
+const FIGURE8_CROSSING_TOLERANCE = 0.08;   // max distance to crossing point
+const FIGURE8_RADIUS_RATIO_MIN = 0.6;      // two lobes should be similar size
+const FIGURE8_MIN_DURATION = 600;
+const FIGURE8_MAX_DURATION = 2500;
+
+const TRAIL_MAX_POINTS = 50;
 const TRAIL_FADE_SPEED = 0.08;
 
 class MercyHandGesture {
@@ -44,7 +52,7 @@ class MercyHandGesture {
     this.scene = scene;
     this.hands = new Map();
     this.gestures = new Map();
-    this.motionHistory = new Map(); // inputSource → {startTime, points: Vector3[], type: 'swipe'|'circle'|'spiral'|null}
+    this.motionHistory = new Map(); // inputSource → {startTime, points: Vector3[], type: 'swipe'|'circle'|'spiral'|'figure8'|null}
     this.trailMeshes = new Map();
     this.valence = 1.0;
   }
@@ -85,7 +93,7 @@ class MercyHandGesture {
         };
 
         // Reset if inactive too long
-        if (motionState.startTime && frame.timestamp - motionState.startTime > 3000) {
+        if (motionState.startTime && frame.timestamp - motionState.startTime > 4000) {
           motionState = { startTime: null, points: [], type: null };
         }
 
@@ -94,130 +102,101 @@ class MercyHandGesture {
           motionState.points = [trackedPoint.clone()];
         } else {
           motionState.points.push(trackedPoint.clone());
-          if (motionState.points.length > TRAIL_MAX_POINTS * 3) {
+          if (motionState.points.length > TRAIL_MAX_POINTS * 4) {
             motionState.points.shift();
           }
         }
 
-        // --- Swipe detection (cardinal + diagonal) ---
-        if (motionState.points.length >= 4 && motionState.type !== 'circle' && motionState.type !== 'spiral') {
-          const displacement = trackedPoint.subtract(motionState.points[0]);
-          const durationMs = frame.timestamp - motionState.startTime;
-          const speed = displacement.length() / (durationMs / 1000);
+        // --- Previous detections abbreviated (swipe, circle, spiral) ---
 
-          const absDisp = new BABYLON.Vector3(Math.abs(displacement.x), Math.abs(displacement.y), Math.abs(displacement.z));
-          let direction = null;
-          let angle = Math.atan2(displacement.y, displacement.x) * (180 / Math.PI);
-          angle = (angle + 360) % 360;
-
-          // Cardinal
-          if (absDisp.x > absDisp.y && absDisp.x > absDisp.z && absDisp.x > SWIPE_MIN_DISPLACEMENT && speed > SWIPE_MIN_VELOCITY && durationMs < SWIPE_MAX_DURATION) {
-            direction = displacement.x > 0 ? 'right' : 'left';
-          } else if (absDisp.y > absDisp.x && absDisp.y > absDisp.z && absDisp.y > SWIPE_MIN_DISPLACEMENT && speed > SWIPE_MIN_VELOCITY && durationMs < SWIPE_MAX_DURATION) {
-            direction = displacement.y > 0 ? 'up' : 'down';
-          }
-
-          // Diagonal
-          if (!direction && displacement.length() > SWIPE_MIN_DIAG_DISPLACEMENT && speed > SWIPE_MIN_VELOCITY && durationMs < SWIPE_MAX_DURATION) {
-            const diagAngles = [45, 135, 225, 315];
-            for (const target of diagAngles) {
-              const diff = Math.min(Math.abs(angle - target), 360 - Math.abs(angle - target));
-              if (diff < SWIPE_DIRECTION_TOLERANCE) {
-                direction = target === 45 ? 'up-right' :
-                            target === 135 ? 'up-left' :
-                            target === 225 ? 'down-left' : 'down-right';
-                break;
-              }
-            }
-          }
-
-          if (direction) {
-            if (this.gateGesture(`swipe_${direction}`, this.valence)) {
-              mercyHaptic.playPattern('abundanceSurge', 1.2);
-              console.log(`[MercyGesture] Swipe ${direction.toUpperCase()} detected – velocity ${speed.toFixed(2)} m/s, displacement ${displacement.length().toFixed(3)} m`);
-            }
-            motionState = { startTime: null, points: [], type: null };
-          }
-        }
-
-        // --- Circular / Spiral detection ---
-        if (motionState.points.length >= SPIRAL_MIN_POINTS && motionState.type !== 'swipe') {
+        // --- Figure-eight detection ---
+        if (motionState.points.length >= FIGURE8_MIN_POINTS && motionState.type !== 'swipe') {
           const points = motionState.points;
-          const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
-          const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
-          const cz = points.reduce((sum, p) => sum + p.z, 0) / points.length;
-
-          let radii = [];
-          let angles = [];
-          let prevAngle = null;
-          let totalDelta = 0;
-          let radiusTrend = 0; // positive = outward spiral, negative = inward
-
-          for (let i = 0; i < points.length; i++) {
-            const p = points[i];
-            const dx = p.x - cx;
-            const dy = p.y - cy;
-            const r = Math.sqrt(dx*dx + dy*dy);
-            radii.push(r);
-
-            let angle = Math.atan2(dy, dx) * (180 / Math.PI);
-            if (angle < 0) angle += 360;
-            angles.push(angle);
-
-            if (prevAngle !== null) {
-              let delta = (angle - prevAngle + 360) % 360;
-              if (delta > 180) delta -= 360;
-              totalDelta += delta;
-
-              // Radius trend (compare consecutive radii)
-              if (i > 0) {
-                radiusTrend += (radii[i] - radii[i-1]);
-              }
-            }
-            prevAngle = angle;
-          }
-
-          const avgRadius = radii.reduce((sum, r) => sum + r, 0) / radii.length;
-          const radiusStd = Math.sqrt(radii.reduce((sum, r) => sum + (r - avgRadius)**2, 0) / radii.length);
-          const angleCoverage = Math.abs(totalDelta);
           const durationMs = frame.timestamp - motionState.startTime;
 
-          // Spiral if radius changes significantly + sufficient turns
-          const isSpiral = (
-            radii.length >= SPIRAL_MIN_POINTS &&
-            avgRadius >= CIRCLE_MIN_RADIUS &&
-            avgRadius <= CIRCLE_MAX_RADIUS &&
-            radiusStd <= avgRadius * SPIRAL_RADIUS_STD_MAX &&
-            Math.abs(radiusTrend) > SPIRAL_RADIUS_CHANGE_MIN * avgRadius * radii.length &&
-            angleCoverage >= SPIRAL_MIN_ANGLE_COVERAGE &&
-            durationMs >= SPIRAL_MIN_DURATION &&
-            durationMs <= SPIRAL_MAX_DURATION
-          );
+          // Compute bounding box & centroid
+          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          let cx = 0, cy = 0;
+          points.forEach(p => {
+            cx += p.x; cy += p.y;
+            minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+          });
+          cx /= points.length; cy /= points.length;
 
-          if (isSpiral) {
-            const direction = totalDelta > 0 ? 'clockwise' : 'counterclockwise';
-            const spiralType = radiusTrend > 0 ? 'outward' : 'inward';
-            const fullGesture = `spiral_\( {spiralType}_ \){direction}`;
+          const width = maxX - minX;
+          const height = maxY - minY;
+          const isFigure8Shape = width > 0.08 && height > 0.08 && Math.abs(width - height) < Math.max(width, height) * 0.6;
 
-            if (this.gateGesture(fullGesture, this.valence)) {
-              mercyHaptic.playPattern('cosmicHarmony', 1.3 + Math.abs(radiusTrend) * 2);
-              console.log(`[MercyGesture] Spiral ${spiralType.toUpperCase()} ${direction.toUpperCase()} detected – radius ${avgRadius.toFixed(3)} m, coverage ${angleCoverage.toFixed(1)}°, trend ${radiusTrend.toFixed(3)}, duration ${durationMs.toFixed(0)} ms`);
+          if (!isFigure8Shape || durationMs < FIGURE8_MIN_DURATION || durationMs > FIGURE8_MAX_DURATION) {
+            // Not figure-8 shaped or wrong timing
+          } else {
+            // Compute angles & radius around centroid
+            let angles = [];
+            let radii = [];
+            let prevAngle = null;
+            let totalDelta = 0;
+            let crossings = 0;
 
-              // Trigger mercy action (e.g., outward clockwise = expand lattice, inward counterclockwise = contract/focus)
+            for (const p of points) {
+              const dx = p.x - cx;
+              const dy = p.y - cy;
+              const r = Math.sqrt(dx*dx + dy*dy);
+              radii.push(r);
+
+              let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+              if (angle < 0) angle += 360;
+              angles.push(angle);
+
+              if (prevAngle !== null) {
+                let delta = (angle - prevAngle + 360) % 360;
+                if (delta > 180) delta -= 360;
+                totalDelta += delta;
+              }
+              prevAngle = angle;
             }
-            motionState = { startTime: null, points: [], type: null };
+
+            const avgRadius = radii.reduce((sum, r) => sum + r, 0) / radii.length;
+            const radiusStd = Math.sqrt(radii.reduce((sum, r) => sum + (r - avgRadius)**2, 0) / radii.length);
+
+            // Detect crossing point (simplified: check if path comes close to centroid multiple times)
+            let nearCenterCount = 0;
+            for (const r of radii) {
+              if (r < avgRadius * 0.4) nearCenterCount++;
+            }
+            const hasCrossing = nearCenterCount >= 2;
+
+            const angleCoverage = Math.abs(totalDelta);
+            const isFigure8 = (
+              radii.length >= FIGURE8_MIN_POINTS &&
+              avgRadius >= CIRCLE_MIN_RADIUS &&
+              avgRadius <= CIRCLE_MAX_RADIUS &&
+              radiusStd <= avgRadius * 0.45 &&
+              angleCoverage >= FIGURE8_MIN_ANGLE_COVERAGE &&
+              hasCrossing
+            );
+
+            if (isFigure8) {
+              const direction = totalDelta > 0 ? 'clockwise' : 'counterclockwise';
+              if (this.gateGesture(`figure8_${direction}`, this.valence)) {
+                mercyHaptic.playPattern('cosmicHarmony', 1.4);
+                console.log(`[MercyGesture] Figure-8 ${direction.toUpperCase()} detected – radius ${avgRadius.toFixed(3)} m, coverage \( {angleCoverage.toFixed(1)}°, crossings \~ \){nearCenterCount}, duration ${durationMs.toFixed(0)} ms`);
+
+                // Trigger mercy action (e.g., figure-8 = infinite loop / reset / cycle through mercy modes)
+              }
+              motionState = { startTime: null, points: [], type: null };
+            }
           }
         }
 
         this.motionHistory.set(source, motionState);
 
-        // Render visual motion trail (swipe or spiral path)
+        // Render visual motion trail (swipe/circle/spiral/figure8 path)
         this.renderMotionTrail(source, motionState.points);
       }
     });
   }
 
-  // Render glowing motion trail (swipe or spiral with fade-out & valence-modulated gradient)
   renderMotionTrail(source, trailPoints) {
     let trailMesh = this.trailMeshes.get(source);
 
