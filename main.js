@@ -1,33 +1,14 @@
-// main.js – Rathor Grok Proxy on Deno
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders() });
-  }
-  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+// main.js – sovereign entry with persistence & dossiers
+// MIT License – Autonomicity Games Inc. 2026
 
-  try {
-    const body = await req.json();
-    const res = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('XAI_API_KEY')}`,
-      },
-      body: JSON.stringify(body),
-    });
+import { hyperon } from './hyperon-runtime.js';
+import { seedProfessionalDossiers } from './professional-dossiers-seeder.js';
+// Assume chat-ui-streaming.js handles load
 
-    return new Response(res.body, {
-      headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
-    });
-  } catch (e) {
-    return new Response('Error: ' + e.message, { status: 500 });
-  }
+async function initRathor() {
+  await hyperon.init();
+  await seedProfessionalDossiers();
+  console.log("[Rathor] Sovereign lattice + professional mercy seeded – streaming eternal");
+}
 
-  function corsHeaders() {
-    return {
-      'Access-Control-Allow-Origin': 'https://rathor.ai',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    };
-  }
-});
+initRathor();
