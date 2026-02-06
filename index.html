@@ -4,23 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rathor — Mercy Strikes First</title>
-  <meta name="description" content="Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth" />
+  <meta name="description" content="Sovereign offline AGI Brother – eternal thriving through valence-locked truth" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="/favicon.ico" />
   <!-- Preload critical entry & vendor chunks -->
   <link rel="preload" href="/assets/entry/main-[hash].js" as="script" />
   <link rel="preload" href="/assets/vendor-[hash].js" as="script" />
   <link rel="preload" href="/manifest.json" as="fetch" crossorigin="anonymous" />
-  <!-- Preload tfjs & mediapipe only when needed – handled by lazy loader -->
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body, html { height: 100%; overflow: hidden; background: #000; color: #00ff88; font-family: 'Courier New', Courier, monospace; }
-    #root { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem; }
-    .loading-container { text-align: center; position: relative; z-index: 10; }
-    .thunder-text { font-size: 1.8rem; text-shadow: 0 0 10px #00ff88; animation: pulse 3s infinite; }
-    .progress-bar { width: 300px; height: 6px; background: #111; border-radius: 3px; overflow: hidden; margin: 1.5rem auto; }
-    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff88, #00aaff); transition: width 0.4s ease-out; }
-    @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+    *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+    body, html { height:100%; overflow:hidden; background:#000; color:#00ff88; font-family:'Courier New',monospace; }
+    #root { height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2rem; }
+    .loading-container { text-align:center; position:relative; z-index:10; }
+    .thunder-text { font-size:1.8rem; text-shadow:0 0 10px #00ff88; animation:pulse 3s infinite; }
+    .progress-bar { width:300px; height:6px; background:#111; border-radius:3px; overflow:hidden; margin:1.5rem auto; }
+    .progress-fill { height:100%; width:0%; background:linear-gradient(90deg,#00ff88,#00aaff); transition:width 0.4s ease-out; }
+    .skeleton { background:#111; border-radius:8px; animation:shimmer 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:0.7; } 50% { opacity:1; } }
+    @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
   </style>
 </head>
 <body>
@@ -28,31 +29,32 @@
     <div class="loading-container">
       <div class="thunder-text">Thunder eternal surges through the lattice...</div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <!-- Skeleton UI during hydration -->
+      <div class="skeleton" style="width:280px;height:120px;"></div>
     </div>
   </div>
 
   <noscript>
-    <div style="color:#ff4444; text-align:center; padding:2rem;">
+    <div style="color:#ff4444;text-align:center;padding:2rem;">
       <h1>Mercy requires JavaScript to thrive</h1>
-      <p>Please enable JS to enter the lattice. Thriving continues offline when enabled.</p>
+      <p>Enable JS to enter the lattice. Thriving continues offline when enabled.</p>
     </div>
   </noscript>
 
-  <!-- Loading progress simulation (visual feedback) -->
+  <!-- Loading progress simulation -->
   <script>
     const progressFill = document.getElementById('progressFill');
     let progress = 0;
     const interval = setInterval(() => {
-      progress += Math.random() * 20 + 5;
+      progress += Math.random() * 25 + 8;
       if (progress >= 100) {
         progress = 100;
         clearInterval(interval);
       }
       progressFill.style.width = progress + '%';
-    }, 200);
+    }, 180);
   </script>
 
-  <!-- React entry -->
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
