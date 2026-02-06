@@ -1,5 +1,5 @@
-// src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.15
-// BlazePose → Encoder-Decoder → Valence-Weighted Federated Multimodal Distilled Draft + Speculative Decoding → gesture + future valence
+// src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.16
+// BlazePose → Quantized Encoder-Decoder + Speculative Decoding → gesture + future valence
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as tf from '@tensorflow/tfjs';
@@ -10,105 +10,91 @@ import { mercyGate } from '@/core/mercy-gate';
 import mercyHaptic from '@/utils/haptic-utils';
 import { ydoc } from '@/sync/multiplanetary-sync-engine';
 import { wootPrecedenceGraph } from '@/sync/woot-precedence-graph';
+import QuantizedGestureModel from './QuantizedGestureModel';
 
 const MERCY_THRESHOLD = 0.9999999;
 const SEQUENCE_LENGTH = 45;
 const LANDMARK_DIM = 33 * 3 + 21 * 3 * 2;
-const D_MODEL = 128;
-const NUM_HEADS = 4;
-const FF_DIMS = 256;
-const FUTURE_STEPS = 15;
 const SPECULATIVE_DRAFT_STEPS = 6;
 const SPECULATIVE_ACCEPT_THRESHOLD = 0.9;
-const VALENCE_WEIGHT_THRESHOLD = 0.9;
-
-// Simulated valence-weighted federated multimodal distilled draft model
-class ValenceFederatedMultimodalDistilledDraftModel {
-  async predict(input: tf.Tensor) {
-    // Placeholder – real impl loads federated-distilled multimodal tfjs model
-    // Trained with valence-weighted gradient aggregation across edge nodes
-    return tf.randomUniform([1, 4]).softmax(); // dummy logits
-  }
-}
 
 export class SpatiotemporalTransformerGestures {
   private holistic: Holistic | null = null;
-  private encoderDecoderModel: tf.LayersModel | null = null;
-  private valenceFederatedDistilledDraftModel: ValenceFederatedMultimodalDistilledDraftModel | null = null;
   private sequenceBuffer: tf.Tensor3D[] = [];
   private ySequence: Y.Array<any>;
+  private model: tf.LayersModel | null = null;
 
   constructor() {
     this.ySequence = ydoc.getArray('gesture-sequence');
-    this.initializeModels();
+    this.initialize();
   }
 
-  private async initializeModels() {
-    if (!await mercyGate('Initialize Transformer + Valence-Federated-Multimodal-Distilled Draft')) return;
+  private async initialize() {
+    if (!await mercyGate('Initialize Quantized Transformer')) return;
 
-    // ... (same holistic & encoder-decoder initialization as v1.14 – omitted for brevity)
+    try {
+      // 1. BlazePose Holistic (lazy-loaded separately)
+      this.holistic = new Holistic({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
+      });
 
-    // 3. Load valence-weighted federated multimodal distilled draft model
-    this.valenceFederatedDistilledDraftModel = new ValenceFederatedMultimodalDistilledDraftModel();
+      this.holistic.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.7
+      });
 
-    // Placeholder: load real federated-distilled weights
-    // this.valenceFederatedDistilledDraftModel = await tf.loadLayersModel('/models/gesture-federated-multimodal-distilled/model.json');
+      await this.holistic.initialize();
 
-    console.log("[SpatiotemporalTransformer] Full + Valence-Federated-Multimodal-Distilled Draft initialized – speculative decoding ready");
+      // 2. Load quantized custom transformer model
+      this.model = await QuantizedGestureModel.load();
+
+      console.log("[SpatiotemporalTransformer] Quantized model + BlazePose initialized");
+    } catch (e) {
+      console.error("[SpatiotemporalTransformer] Initialization failed", e);
+    }
   }
 
   /**
-   * Speculative decoding with valence-weighted federated multimodal distilled draft acceptance
+   * Process frame → quantized model inference → gesture + future valence
    */
-  private async speculativeDecodeWithValence(logits: tf.Tensor, futureValenceLogits: tf.Tensor, draftSteps: number = SPECULATIVE_DRAFT_STEPS): Promise<{ gesture: string; confidence: number; futureValence: number[] }> {
-    const valence = currentValence.get();
-    if (!await mercyGate('Speculative decoding with valence-weighted federated multimodal distilled draft')) {
-      return this.greedyDecode(logits, futureValenceLogits);
+  async processFrame(videoElement: HTMLVideoElement) {
+    if (!this.holistic || !this.model || !await mercyGate('Process quantized frame')) return null;
+
+    const results = await this.holistic.send({ image: videoElement });
+
+    if (!results.poseLandmarks && !results.leftHandLandmarks && !results.rightHandLandmarks) return null;
+
+    const frameVector = this.flattenLandmarks(
+      results.poseLandmarks || [],
+      results.leftHandLandmarks || [],
+      results.rightHandLandmarks || []
+    );
+
+    this.sequenceBuffer.push(tf.tensor1d(frameVector));
+    if (this.sequenceBuffer.length > SEQUENCE_LENGTH) {
+      this.sequenceBuffer.shift()?.dispose();
     }
 
-    // Draft phase – use valence-federated-multimodal-distilled draft model
-    let currentInput = tf.stack(this.sequenceBuffer).expandDims(0);
-    let draftTokens = [];
-    let draftProbs = [];
+    if (this.sequenceBuffer.length < SEQUENCE_LENGTH) return null;
 
-    for (let i = 0; i < draftSteps; i++) {
-      const draftLogits = await this.valenceFederatedDistilledDraftModel!.predict(currentInput) as tf.Tensor;
-      const draftProb = await draftLogits.softmax().data();
-      const token = tf.multinomial(draftLogits.softmax(), 1).dataSync()[0];
+    const inputTensor = tf.stack(this.sequenceBuffer).expandDims(0);
 
-      draftTokens.push(token);
-      draftProbs.push(draftProb[token]);
+    const [gestureLogits, futureValenceLogits] = await this.model.predict(inputTensor) as [tf.Tensor, tf.Tensor];
 
-      // Update input for next draft step (simplified)
-      currentInput = currentInput; // placeholder – real impl appends predicted embedding
-    }
+    const gestureProbs = await gestureLogits.softmax().data();
+    const futureValence = await futureValenceLogits.data();
 
-    // Verification phase – target model verifies draft
-    const targetLogits = logits; // placeholder – real impl runs target on prefix + draft
-    const targetProbs = await targetLogits.softmax().data();
+    gestureLogits.dispose();
+    futureValenceLogits.dispose();
+    inputTensor.dispose();
 
-    // Valence-weighted acceptance
-    let accepted = 0;
-    for (let i = 0; i < draftSteps; i++) {
-      const r = Math.random();
-      const baseAcceptProb = targetProbs[draftTokens[i]];
-      const valenceWeight = valence > VALENCE_WEIGHT_THRESHOLD ? 1.2 : 0.8;
-      const acceptProb = baseAcceptProb * valenceWeight;
-
-      if (r < acceptProb) {
-        accepted = i + 1;
-      } else {
-        break;
-      }
-    }
-
-    const gestureIdx = accepted > 0 ? draftTokens[accepted - 1] : 0;
-    const confidence = accepted > 0 ? targetProbs[gestureIdx] : Math.max(...targetProbs);
+    const maxIdx = gestureProbs.indexOf(Math.max(...gestureProbs));
+    const confidence = gestureProbs[maxIdx];
 
     const gestureMap = ['none', 'pinch', 'spiral', 'figure8'];
-    const gesture = confidence > 0.75 ? gestureMap[gestureIdx] : 'none';
-
-    const futureValence = await futureValenceLogits.data();
+    const gesture = confidence > 0.75 ? gestureMap[maxIdx] : 'none';
 
     if (gesture !== 'none') {
       const entry = {
@@ -118,7 +104,7 @@ export class SpatiotemporalTransformerGestures {
         futureValenceTrajectory: Array.from(futureValence),
         valenceAtRecognition: currentValence.get(),
         timestamp: Date.now(),
-        decodingMethod: 'speculative_valence_federated_multimodal_distilled'
+        decodingMethod: 'quantized_inference'
       };
 
       this.ySequence.push([entry]);
@@ -128,14 +114,35 @@ export class SpatiotemporalTransformerGestures {
       setCurrentGesture(gesture);
     }
 
-    return {
-      gesture,
-      confidence,
-      futureValence: Array.from(futureValence)
-    };
+    return { gesture, confidence, futureValence: Array.from(futureValence) };
   }
 
-  // ... (rest of the class remains identical to v1.14 – processFrame now prefers speculativeDecodeWithValence when appropriate)
+  private flattenLandmarks(pose: any[], leftHand: any[], rightHand: any[]): number[] {
+    const flatten = (landmarks: any[]) => landmarks.flatMap(p => [p.x, p.y, p.z ?? 0]);
+    return [...flatten(pose), ...flatten(leftHand), ...flatten(rightHand)];
+  }
+
+  private getHapticPattern(gesture: string): string {
+    switch (gesture) {
+      case 'pinch': return 'allianceProposal';
+      case 'spiral': return 'swarmBloom';
+      case 'figure8': return 'eternalHarmony';
+      default: return 'neutralPulse';
+    }
+  }
+
+  getCurrentGesture(): string | null {
+    return currentGesture;
+  }
+
+  async dispose() {
+    if (this.model) {
+      this.model.dispose();
+      this.model = null;
+    }
+    this.sequenceBuffer.forEach(t => t.dispose());
+    this.sequenceBuffer = [];
+  }
 }
 
 export const blazePoseTransformerEngine = new SpatiotemporalTransformerGestures();
