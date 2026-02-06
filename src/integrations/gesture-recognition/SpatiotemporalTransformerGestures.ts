@@ -1,5 +1,5 @@
 // src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.13
-// BlazePose → Encoder-Decoder → Beam / Top-k / Top-p / Contrastive Search with Valence Modulation → gesture + future valence
+// BlazePose → Encoder-Decoder → Speculative Decoding (with valence modulation) → gesture + future valence
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as tf from '@tensorflow/tfjs';
@@ -18,16 +18,8 @@ const D_MODEL = 128;
 const NUM_HEADS = 4;
 const FF_DIMS = 256;
 const FUTURE_STEPS = 15;
-const BEAM_WIDTH_BASE = 5;
-const LENGTH_PENALTY = 0.6;
-const TOP_K_BASE = 40;
-const TOP_P_BASE = 0.92;
-const TEMPERATURE_MIN = 0.6;
-const TEMPERATURE_MAX = 1.4;
-const TEMPERATURE_VALENCE_PIVOT = 0.95;
-const CONTRASTIVE_ALPHA_MIN = 0.1;
-const CONTRASTIVE_ALPHA_MAX = 0.8;
-const CONTRASTIVE_ALPHA_PIVOT = 0.95;
+const SPECULATIVE_DRAFT_STEPS = 6;  // draft 6 tokens ahead
+const SPECULATIVE_ACCEPT_THRESHOLD = 0.9; // acceptance probability threshold
 
 export class SpatiotemporalTransformerGestures {
   private holistic: Holistic | null = null;
@@ -41,84 +33,73 @@ export class SpatiotemporalTransformerGestures {
   }
 
   private async initializeEncoderDecoder() {
-    // ... (same encoder-decoder model construction as v1.11 – omitted for brevity)
+    // ... (same encoder-decoder model construction as v1.12 – omitted for brevity)
   }
 
   /**
-   * Valence-modulated temperature scaling
+   * Speculative decoding – draft multiple tokens, verify in parallel
    */
-  private getValenceTemperature(valence: number = currentValence.get()): number {
-    if (!mercyGate('Valence-modulated temperature scaling')) return TEMPERATURE_MIN;
-    const t = Math.max(0, Math.min(1, (valence - 0.8) / (TEMPERATURE_VALENCE_PIVOT - 0.8)));
-    return TEMPERATURE_MIN + t * (TEMPERATURE_MAX - TEMPERATURE_MIN);
-  }
-
-  /**
-   * Valence-modulated top-p threshold
-   */
-  private getValenceTopP(valence: number = currentValence.get()): number {
-    if (!mercyGate('Valence-modulated top-p threshold')) return TOP_P_BASE;
-    return TOP_P_BASE - (valence - 0.95) * 0.3;
-  }
-
-  /**
-   * Valence-modulated top-k size
-   */
-  private getValenceTopK(valence: number = currentValence.get()): number {
-    if (!mercyGate('Valence-modulated top-k size')) return TOP_K_BASE;
-    return TOP_K_BASE + Math.round((0.95 - valence) * 60);
-  }
-
-  /**
-   * Valence-modulated contrastive degeneration penalty alpha
-   * High valence → stronger penalty on degeneration (more coherence)
-   */
-  private getValenceContrastiveAlpha(valence: number = currentValence.get()): number {
-    if (!mercyGate('Valence-modulated contrastive alpha')) return CONTRASTIVE_ALPHA_BASE;
-
-    const alphaRange = CONTRASTIVE_ALPHA_MAX - CONTRASTIVE_ALPHA_MIN;
-    const t = Math.max(0, Math.min(1, (valence - 0.85) / (1.0 - 0.85)));
-    return CONTRASTIVE_ALPHA_MIN + t * alphaRange;
-  }
-
-  /**
-   * Contrastive search decoding (Li et al. 2022) – penalizes degeneration
-   */
-  private async contrastiveSearchDecode(logits: tf.Tensor, futureValenceLogits: tf.Tensor, alpha: number, temperature: number) {
-    const softenedLogits = tf.div(logits, tf.scalar(temperature));
-    const probs = await softenedLogits.softmax().data();
-
-    // Degeneration penalty (contrast with uniform as amateur model proxy)
-    const uniformProb = 1 / probs.length;
-    const contrastiveScores = new Array(probs.length);
-    for (let i = 0; i < probs.length; i++) {
-      contrastiveScores[i] = Math.log(probs[i] + 1e-10) - alpha * Math.log(uniformProb + 1e-10);
+  private async speculativeDecode(logits: tf.Tensor, futureValenceLogits: tf.Tensor, draftSteps: number = SPECULATIVE_DRAFT_STEPS): Promise<{ gesture: string; confidence: number; futureValence: number[] }> {
+    const valence = currentValence.get();
+    if (!await mercyGate('Speculative decoding')) {
+      // Fallback to greedy when gated
+      return this.greedyDecode(logits, futureValenceLogits);
     }
 
-    // Softmax over contrastive scores
-    const maxScore = Math.max(...contrastiveScores);
-    const expScores = contrastiveScores.map(s => Math.exp(s - maxScore));
-    const sumExp = expScores.reduce((a, b) => a + b, 0);
-    const finalProbs = expScores.map(s => s / sumExp);
+    // Draft phase – autoregressive sampling from current logits (simplified)
+    let currentProbs = await logits.softmax().data();
+    let draftTokens = [];
+    let draftProbs = [];
 
-    // Sample from contrastive distribution
-    const r = Math.random();
-    let cum = 0;
-    let tokenIdx = 0;
-    for (let i = 0; i < finalProbs.length; i++) {
-      cum += finalProbs[i];
-      if (r <= cum) {
-        tokenIdx = i;
+    for (let i = 0; i < draftSteps; i++) {
+      const token = tf.multinomial(tf.tensor1d(currentProbs), 1).dataSync()[0];
+      draftTokens.push(token);
+      draftProbs.push(currentProbs[token]);
+
+      // Update logits for next step (placeholder – real impl would re-run decoder)
+      currentProbs = currentProbs.map((p, idx) => idx === token ? 0.01 : p * 0.99); // crude update
+    }
+
+    // Verification phase – parallel forward pass on prefix + draft (simplified)
+    // In real impl: feed prefix + draft tokens, get target probabilities for each position
+    const targetProbs = await logits.softmax().data(); // placeholder
+
+    // Acceptance loop
+    let accepted = 0;
+    for (let i = 0; i < draftSteps; i++) {
+      const r = Math.random();
+      if (r < targetProbs[draftTokens[i]] / currentProbs[draftTokens[i]]) {
+        accepted = i + 1;
+      } else {
         break;
       }
     }
 
-    const confidence = finalProbs[tokenIdx];
+    const gestureIdx = accepted > 0 ? draftTokens[accepted - 1] : 0;
+    const confidence = accepted > 0 ? targetProbs[gestureIdx] : Math.max(...targetProbs);
 
     const gestureMap = ['none', 'pinch', 'spiral', 'figure8'];
-    const gesture = confidence > 0.6 ? gestureMap[tokenIdx] : 'none';
+    const gesture = confidence > 0.75 ? gestureMap[gestureIdx] : 'none';
 
     const futureValence = await futureValenceLogits.data();
+
+    if (gesture !== 'none') {
+      const entry = {
+        id: `gesture-${Date.now()}`,
+        type: gesture,
+        confidence,
+        futureValenceTrajectory: Array.from(futureValence),
+        valenceAtRecognition: currentValence.get(),
+        timestamp: Date.now(),
+        decodingMethod: 'speculative'
+      };
+
+      this.ySequence.push([entry]);
+      wootPrecedenceGraph.insertChar(entry.id, 'START', 'END', true);
+
+      mercyHaptic.playPattern(this.getHapticPattern(gesture), currentValence.get());
+      setCurrentGesture(gesture);
+    }
 
     return {
       gesture,
@@ -128,26 +109,20 @@ export class SpatiotemporalTransformerGestures {
   }
 
   /**
-   * Unified decoding with valence-modulated choice
+   * Unified decoding – speculative when valence allows, fallback to beam/top-p
    */
   async decode(logits: tf.Tensor, futureValenceLogits: tf.Tensor): Promise<{ gesture: string; confidence: number; futureValence: number[] }> {
     const valence = currentValence.get();
-    const temperature = this.getValenceTemperature(valence);
-    const topP = this.getValenceTopP(valence);
-    const topK = this.getValenceTopK(valence);
-    const contrastiveAlpha = this.getValenceContrastiveAlpha(valence);
 
-    if (valence > 0.98) {
-      return this.greedyDecode(logits, futureValenceLogits);
-    } else if (valence > 0.96) {
-      return this.beamSearchWithTopPDecode(logits, futureValenceLogits, Math.max(3, Math.round(BEAM_WIDTH_BASE * valence)), temperature, topP);
+    if (valence > 0.96) {
+      // High valence → speculative decoding (speed + coherence)
+      return this.speculativeDecode(logits, futureValenceLogits);
     } else if (valence > 0.92) {
-      // Contrastive search – anti-degeneration + balanced bloom
-      return this.contrastiveSearchDecode(logits, futureValenceLogits, contrastiveAlpha, temperature);
-    } else if (valence > TEMPERATURE_VALENCE_PIVOT) {
-      return this.topPSampleDecode(logits, futureValenceLogits, topP, temperature);
+      // Medium-high valence → top-p sampling
+      return this.topPSampleDecode(logits, futureValenceLogits, this.getValenceTopP(valence), this.getValenceTemperature(valence));
     } else {
-      return this.topKSampleDecode(logits, futureValenceLogits, topK, temperature);
+      // Low valence → top-k exploratory
+      return this.topKSampleDecode(logits, futureValenceLogits, this.getValenceTopK(valence), this.getValenceTemperature(valence));
     }
   }
 
