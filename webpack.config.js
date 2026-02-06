@@ -1,5 +1,5 @@
-// webpack.config.js – Optimized Webpack 5 Production Config v1
-// React 18 + tfjs + MediaPipe + Framer Motion + PWA + aggressive optimization
+// webpack.config.js – ML-Optimized Webpack 5 Production Config v1
+// React 18 + TensorFlow.js + MediaPipe + Framer Motion + PWA + extreme ML bundle optimization
 // MIT License – Autonomicity Games Inc. 2026
 
 const path = require('path');
@@ -12,6 +12,7 @@ const CompressionPlugin = require('compression-webpack-plugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -24,7 +25,7 @@ module.exports = (env, argv) => {
       path: path.resolve(__dirname, 'dist'),
       filename: isProduction ? 'assets/js/[name].[contenthash:8].js' : 'assets/js/[name].js',
       chunkFilename: isProduction ? 'assets/js/[name].[contenthash:8].chunk.js' : 'assets/js/[name].chunk.js',
-      publicPath: '/Rathor-NEXi/', // IMPORTANT: matches GitHub Pages base
+      publicPath: '/Rathor-NEXi/', // Critical for GitHub Pages
       clean: true,
       assetModuleFilename: 'assets/static/[name].[hash:8][ext]',
     },
@@ -35,9 +36,12 @@ module.exports = (env, argv) => {
         '@': path.resolve(__dirname, 'src'),
       },
       fallback: {
-        // tfjs polyfills needed for some node built-ins
+        // tfjs polyfills
         buffer: require.resolve('buffer/'),
         process: require.resolve('process/browser'),
+        crypto: require.resolve('crypto-browserify'),
+        stream: require.resolve('stream-browserify'),
+        path: require.resolve('path-browserify'),
       },
     },
 
@@ -73,11 +77,11 @@ module.exports = (env, argv) => {
           ],
         },
         {
-          test: /\.(png|jpe?g|gif|webp|svg|ico)$/,
+          test: /\.(png|jpe?g|gif|webp|svg|ico|wasm)$/,
           type: 'asset',
           parser: {
             dataUrlCondition: {
-              maxSize: 10 * 1024, // 10 KB inline limit
+              maxSize: 8 * 1024, // 8 KB inline limit
             },
           },
         },
@@ -86,6 +90,190 @@ module.exports = (env, argv) => {
           type: 'asset/resource',
         },
       ],
+    },
+
+    optimization: {
+      minimize: isProduction,
+      minimizer: [
+        new TerserPlugin({
+          parallel: true,
+          extractComments: false,
+          terserOptions: {
+            compress: {
+              drop_console: false,
+              passes: 3,
+              pure_funcs: ['console.debug'],
+              pure_getters: true,
+              unsafe: true,
+              unsafe_comps: true,
+              unsafe_math: true,
+              unsafe_methods: true,
+              unsafe_undefined: true,
+            },
+            mangle: true,
+            format: {
+              comments: false,
+            },
+          },
+        }),
+        new CssMinimizerPlugin(),
+      ],
+      splitChunks: {
+        chunks: 'all',
+        minSize: 15000,
+        maxSize: 0,
+        minChunks: 1,
+        cacheGroups: {
+          // ML-heavy chunks (tfjs + backends)
+          tfjs: {
+            test: /[\\/]node_modules[\\/](@tensorflow)[\\/]/,
+            name: 'tfjs',
+            priority: 15,
+            chunks: 'all',
+            enforce: true,
+          },
+
+          // MediaPipe WASM & models
+          mediapipe: {
+            test: /[\\/]node_modules[\\/](@mediapipe)[\\/]/,
+            name: 'mediapipe',
+            priority: 14,
+            chunks: 'all',
+            enforce: true,
+          },
+
+          // Core vendor (React + motion)
+          vendor: {
+            test: /[\\/]node_modules[\\/](react|react-dom|framer-motion)[\\/]/,
+            name: 'vendor-core',
+            priority: 12,
+            chunks: 'initial',
+          },
+
+          // Other vendors
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10,
+            reuseExistingChunk: true,
+          },
+
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+        },
+      },
+      runtimeChunk: {
+        name: 'runtime',
+      },
+    },
+
+    plugins: [
+      new HtmlWebpackPlugin({
+        template: './index.html',
+        filename: 'index.html',
+        minify: isProduction && {
+          collapseWhitespace: true,
+          removeComments: true,
+          removeRedundantAttributes: true,
+          removeScriptTypeAttributes: true,
+          removeStyleLinkTypeAttributes: true,
+          useShortDoctype: true,
+        },
+      }),
+
+      isProduction && new MiniCssExtractPlugin({
+        filename: 'assets/css/[name].[contenthash:8].css',
+        chunkFilename: 'assets/css/[name].[contenthash:8].chunk.css',
+      }),
+
+      new CleanWebpackPlugin(),
+
+      // Brotli + Gzip compression
+      new CompressionPlugin({
+        algorithm: 'brotliCompress',
+        test: /\.(js|css|html|svg|wasm|json)$/,
+        threshold: 10240,
+        minRatio: 0.8,
+        deleteOriginalAssets: false,
+      }),
+
+      new CompressionPlugin({
+        algorithm: 'gzip',
+        test: /\.(js|css|html|svg|wasm|json)$/,
+        threshold: 10240,
+        minRatio: 0.8,
+        deleteOriginalAssets: false,
+      }),
+
+      new WebpackManifestPlugin({
+        fileName: 'asset-manifest.json',
+      }),
+
+      // PWA service worker
+      new WorkboxWebpackPlugin.GenerateSW({
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'cdn-assets',
+              expiration: { maxEntries: 50, maxAgeSeconds: 2592000 },
+            },
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico|wasm|json)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-resources',
+              expiration: { maxEntries: 200, maxAgeSeconds: 2592000 },
+            },
+          },
+        ],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+      }),
+
+      new CopyPlugin({
+        patterns: [
+          { from: 'public/manifest.json', to: 'manifest.json' },
+          { from: 'public/pwa-*.png', to: 'assets/[name][ext]' },
+        ],
+      }),
+
+      // Define environment variables
+      new webpack.DefinePlugin({
+        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+      }),
+    ].filter(Boolean),
+
+    performance: {
+      hints: isProduction && 'warning',
+      maxEntrypointSize: 2500000,
+      maxAssetSize: 1500000,
+    },
+
+    devServer: {
+      port: 3000,
+      open: true,
+      hot: true,
+      historyApiFallback: true,
+      compress: true,
+      static: {
+        directory: path.join(__dirname, 'public'),
+      },
+    },
+
+    externals: {
+      // Optional: exclude heavy tfjs deps from bundle if you want to load from CDN
+      // '@tensorflow/tfjs': 'tf',
+    },
+  };
+};      ],
     },
 
     optimization: {
