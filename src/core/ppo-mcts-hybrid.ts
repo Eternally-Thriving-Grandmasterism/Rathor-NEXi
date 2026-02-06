@@ -1,6 +1,6 @@
 // src/core/ppo-mcts-hybrid.ts – PPO + MCTS Hybrid Engine v1.2
-// Proximal Policy Optimization guided MCTS + SAC-style automatic temperature tuning
-// Valence-modulated target entropy, clipped surrogate objective, mercy gating
+// Proximal Policy Optimization guided MCTS + self-play training loop
+// Valence-shaped advantage normalization, clipped surrogate objective, mercy gating
 // MIT License – Autonomicity Games Inc. 2026
 
 import MCTS from './alphago-style-mcts-neural';
@@ -8,27 +8,9 @@ import { currentValence } from '@/core/valence-tracker';
 import { mercyGate } from '@/core/mercy-gate';
 import mercyHaptic from '@/utils/haptic-utils';
 
-// ──────────────────────────────────────────────────────────────
-// SAC-style automatic temperature tuning constants
-// ──────────────────────────────────────────────────────────────
-const SAC_ALPHA_LR = 3e-4;                    // learning rate for log-alpha
-const SAC_ALPHA_INIT = 0.2;                   // initial temperature
-const SAC_ENTROPY_TARGET_BASE = -2.0;         // baseline target entropy (for action dim)
-const VALENCE_ENTROPY_BOOST = 1.5;            // high valence → higher entropy target (more exploration)
-const VALENCE_ENTROPY_DAMP = 0.5;             // low valence → lower entropy target (more exploitation)
-const MIN_ALPHA = 0.001;
-const MAX_ALPHA = 10.0;
-const ENTROPY_UPDATE_INTERVAL = 100;          // update α every N steps
-
-let logAlpha = Math.log(SAC_ALPHA_INIT);      // learnable log-temperature
-let stepsSinceAlphaUpdate = 0;
-
-// ──────────────────────────────────────────────────────────────
-// PPO constants
-// ──────────────────────────────────────────────────────────────
 const PPO_CLIP_EPSILON = 0.2;
 const PPO_VALUE_LOSS_COEF = 0.5;
-const PPO_ENTROPY_COEF = 0.01;                // now modulated by adaptive α
+const PPO_ENTROPY_COEF = 0.01;
 const VALENCE_ADVANTAGE_BOOST = 2.5;
 const GAE_LAMBDA = 0.95;
 const GAMMA = 0.99;
@@ -38,7 +20,7 @@ const BATCH_SIZE = 256;
 
 interface TrajectoryStep {
   state: any;
-  action: any;
+  action: string;
   oldLogProb: number;
   newLogProb: number;
   value: number;
@@ -49,6 +31,16 @@ interface TrajectoryStep {
 }
 
 const replayBuffer: TrajectoryStep[] = [];
+
+function sampleFromProbs(probs: number[]): number {
+  let sum = 0;
+  const r = Math.random();
+  for (let i = 0; i < probs.length; i++) {
+    sum += probs[i];
+    if (r <= sum) return i;
+  }
+  return probs.length - 1;
+}
 
 export class PPOMCTSHybrid {
   private mcts: MCTS;
@@ -62,30 +54,162 @@ export class PPOMCTSHybrid {
     this.mcts = new MCTS(initialState, initialActions, policyNet);
   }
 
-  /**
-   * Get current temperature α – exponentiated log-alpha
-   */
-  getTemperature(): number {
-    return Math.exp(logAlpha);
+  async collectTrajectory(maxSteps: number = MAX_TRAJECTORY_LENGTH): Promise<TrajectoryStep[]> {
+    const trajectory: TrajectoryStep[] = [];
+    let state = this.mcts.root.state;
+
+    for (let step = 0; step < maxSteps; step++) {
+      const { bestAction, policy } = await this.mcts.search();
+
+      const actionProbs = Array.from(policy.values());
+      const actionIndex = sampleFromProbs(actionProbs);
+      const action = Array.from(policy.keys())[actionIndex];
+      const oldLogProb = Math.log(policy.get(action) || 1e-8);
+
+      const nextState = this.mcts.applyAction(state, action);
+      const done = this.mcts.isTerminal(nextState);
+      const valence = currentValence.get();
+
+      const reward = this.computeReward(nextState, valence, done);
+
+      const { policy: newPolicy } = await this.policyNet.predictPolicyAndValue(state);
+      const newLogProb = Math.log(newPolicy.get(action) || 1e-8);
+
+      trajectory.push({
+        state,
+        action,
+        oldLogProb,
+        newLogProb,
+        value: 0,
+        reward,
+        nextState,
+        done,
+        valence
+      });
+
+      if (done) break;
+      state = nextState;
+    }
+
+    return trajectory;
   }
 
-  /**
-   * Compute valence-modulated target entropy
-   */
-  private getValenceModulatedTargetEntropy(): number {
-    const valence = currentValence.get();
-    const boost = VALENCE_ENTROPY_BOOST * valence;
-    const damp = VALENCE_ENTROPY_DAMP * (1 - valence);
-    return SAC_ENTROPY_TARGET_BASE + boost - damp;
+  computeAdvantagesAndReturns(trajectory: TrajectoryStep[]): { advantages: number[]; returns: number[] } {
+    const advantages: number[] = new Array(trajectory.length);
+    const returns: number[] = new Array(trajectory.length);
+
+    let nextValue = 0;
+    let nextAdvantage = 0;
+
+    for (let t = trajectory.length - 1; t >= 0; t--) {
+      const step = trajectory[t];
+      const delta = step.reward + GAMMA * nextValue * (step.done ? 0 : 1) - step.value;
+      nextAdvantage = delta + GAMMA * GAE_LAMBDA * (step.done ? 0 : 1) * nextAdvantage;
+
+      advantages[t] = nextAdvantage;
+      returns[t] = advantages[t] + step.value;
+
+      nextValue = step.value;
+    }
+
+    const meanAdv = advantages.reduce((a, b) => a + b, 0) / advantages.length;
+    const stdAdv = Math.sqrt(advantages.reduce((a, b) => a + Math.pow(b - meanAdv, 2), 0) / advantages.length) + 1e-8;
+
+    for (let i = 0; i < advantages.length; i++) {
+      advantages[i] = (advantages[i] - meanAdv) / stdAdv;
+      advantages[i] += VALENCE_ADVANTAGE_BOOST * trajectory[i].valence;
+    }
+
+    return { advantages, returns };
   }
 
-  /**
-   * Update temperature α toward valence-modulated target entropy
-   * @param batchEntropy Average entropy of policy in current batch
-   */
-  private async updateTemperature(batchEntropy: number): Promise<number> {
-    const actionName = 'Update SAC-style temperature α in PPO';
-    if (!await mercyGate(actionName)) {
+  computePPOLoss(
+    trajectory: TrajectoryStep[],
+    advantages: number[],
+    returns: number[]
+  ): any {
+    if (!mercyGate('Compute PPO surrogate loss')) {
+      return { policyLoss: 0, valueLoss: 0, entropyBonus: 0, totalLoss: 0, approxKL: 0, clipFraction: 0 };
+    }
+
+    const n = trajectory.length;
+    let policyLossSum = 0;
+    let valueLossSum = 0;
+    let entropySum = 0;
+    let clipCount = 0;
+    let klSum = 0;
+
+    for (let i = 0; i < n; i++) {
+      const step = trajectory[i];
+      const ratio = Math.exp(step.newLogProb - step.oldLogProb);
+      const weightedAdv = advantages[i];
+
+      const surrogate1 = ratio * weightedAdv;
+      const surrogate2 = Math.max(1 - PPO_CLIP_EPSILON, Math.min(1 + PPO_CLIP_EPSILON, ratio)) * weightedAdv;
+
+      policyLossSum += Math.min(surrogate1, surrogate2);
+
+      if (ratio < 1 - PPO_CLIP_EPSILON || ratio > 1 + PPO_CLIP_EPSILON) {
+        clipCount++;
+      }
+
+      klSum += ratio - 1 - Math.log(ratio + 1e-10);
+
+      const vPred = step.value;
+      const vTarget = returns[i];
+      const valueDiff = vPred - vTarget;
+      valueLossSum += valueDiff * valueDiff;
+
+      entropySum += -step.oldLogProb;
+    }
+
+    const policyLoss = -policyLossSum / n;
+    const valueLoss = valueLossSum / n * PPO_VALUE_LOSS_COEF;
+    const entropyBonus = (entropySum / n) * PPO_ENTROPY_COEF;
+
+    const totalLoss = policyLoss + valueLoss - entropyBonus;
+    const clipFraction = clipCount / n;
+    const approxKL = klSum / n;
+
+    return {
+      policyLoss,
+      valueLoss,
+      entropyBonus,
+      totalLoss,
+      approxKL,
+      clipFraction
+    };
+  }
+
+  async runTrainingLoop(episodes: number = 20) {
+    const actionName = 'Run PPO-guided MCTS training loop';
+    if (!await mercyGate(actionName)) return;
+
+    for (let e = 0; e < episodes; e++) {
+      console.log(`[PPO-MCTS] Episode \( {e+1}/ \){episodes}`);
+      const trajectory = await this.collectTrajectory();
+
+      if (trajectory.length > 0) {
+        const { advantages, returns } = this.computeAdvantagesAndReturns(trajectory);
+        const stats = this.computePPOLoss(trajectory, advantages, returns);
+
+        console.log("[PPO-MCTS] PPO stats:", stats);
+
+        mercyHaptic.playPattern('cosmicHarmony', currentValence.get());
+      }
+    }
+
+    console.log("[PPO-MCTS] Training loop complete");
+  }
+
+  private computeReward(nextState: any, valence: number, done: boolean): number {
+    let reward = done ? (nextState.isWinning ? 1 : -1) : 0;
+    reward += valence * 0.8;
+    return reward;
+  }
+}
+
+export default PPOMCTSHybrid;    if (!await mercyGate(actionName)) {
       return this.getTemperature();
     }
 
