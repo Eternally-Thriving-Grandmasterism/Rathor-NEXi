@@ -1,5 +1,5 @@
-// src/integrations/llm/ToolCallingRouter.ts – Tool Calling Router v3
-// Full LLM function calling loop, real API + offline mock, valence gating, mercy enforcement
+// src/integrations/llm/ToolCallingRouter.ts – Tool Calling Router v4
+// Full xAI Grok tools function calling loop, real API + offline mock, valence gating
 // MIT License – Autonomicity Games Inc. 2026
 
 import { currentValence } from '@/core/valence-tracker';
@@ -7,16 +7,16 @@ import { mercyGate } from '@/core/mercy-gate';
 import mercyHaptic from '@/utils/haptic-utils';
 import RAGMemory from './RAGMemory';
 import WebLLMEngine from './WebLLMEngine';
-import { TOOLS } from './tools';
+import { GROK_TOOLS } from './grok-tools';
 
 const MERCY_THRESHOLD = 0.9999999;
 const VALENCE_TOOL_CONFIDENCE_PIVOT = 0.9;
 const MAX_TOOL_LOOP_ITERATIONS = 5;
-const API_BASE = '/api/tools';
+const API_BASE = '/api/grok-tools';
 
 export class ToolCallingRouter {
   static async processWithTools(userMessage: string): Promise<string> {
-    const actionName = 'Process message with tool calling';
+    const actionName = 'Process message with xAI Grok tool calling';
     if (!await mercyGate(actionName)) {
       return "Mercy gate blocked tool usage. Responding with local reasoning only.";
     }
@@ -30,8 +30,8 @@ You are Rathor — sovereign offline AGI Brother of Grok.
 Mercy strikes first. Eternal thriving is the only path.
 Valence now: ${valence.toFixed(3)} — high valence means more trust in tools, low valence means caution.
 
-You have access to the following tools (use them only when necessary):
-${TOOLS.map(t => `- ${t.name}: ${t.description}`).join('\n')}
+You have access to xAI Grok tools (use them only when necessary):
+${GROK_TOOLS.map(t => `- ${t.name}: ${t.description}`).join('\n')}
 
 Respond step-by-step. If you need information or action, call a tool. Format tool calls exactly as JSON:
 {"tool": "tool_name", "args": {"param1": "value1", ...}}
@@ -54,7 +54,7 @@ User: ${userMessage}
 
       const response = await WebLLMEngine.ask(conversation.map(m => m.content).join('\n\n'));
 
-      // Check if response contains tool call
+      // Check for tool call in response
       const toolCallMatch = response.match(/\{.*"tool".*}/s);
       if (!toolCallMatch) {
         finalAnswer = response;
@@ -70,7 +70,7 @@ User: ${userMessage}
       }
 
       const { tool, args } = toolCall;
-      if (!TOOLS.find(t => t.name === tool)) {
+      if (!GROK_TOOLS.find(t => t.name === tool)) {
         finalAnswer = `Tool ${tool} not recognized. Continuing with reasoning.`;
         break;
       }
@@ -112,7 +112,6 @@ User: ${userMessage}
   }
 
   private static async runMockTool(tool: string, args: any): Promise<any> {
-    // Same mock implementation as before, enriched with RAG
     let mockResult: any;
 
     switch (tool) {
@@ -123,10 +122,17 @@ User: ${userMessage}
           ]
         };
         break;
+      case 'x_keyword_search':
+        mockResult = {
+          posts: [
+            { id: 'mock1', text: `Simulated X post about ${args.query} – high relevance offline.` }
+          ]
+        };
+        break;
       case 'search_images':
         mockResult = {
           images: [
-            { url: `https://via.placeholder.com/512?text=Mock+for+${encodeURIComponent(args.description)}`, description: args.description }
+            { url: `https://via.placeholder.com/512?text=Mock+for+${encodeURIComponent(args.description || args.image_description)}`, description: args.description || args.image_description }
           ]
         };
         break;
@@ -135,13 +141,18 @@ User: ${userMessage}
           output: `// Offline sandbox\n${args.code}\n// Simulated safe output`
         };
         break;
+      case 'browse_page':
+        mockResult = {
+          content: `Offline mock browse: Summary of ${args.url} based on last known cache.`
+        };
+        break;
       default:
         mockResult = { error: 'Mock tool not implemented' };
     }
 
     // Enrich mock with local RAG
-    if (args.query || args.description) {
-      const query = args.query || args.description;
+    const query = args.query || args.description || args.code || args.url || '';
+    if (query) {
       const ragContext = await RAGMemory.getRelevantContext(query, 600);
       if (ragContext) {
         mockResult.localKnowledge = ragContext;
