@@ -1,9 +1,11 @@
 # Rathor-NEXi Monorepo Structure  
-(Deepest Perfection Version 2.1 – February 05 2026 – Ultramasterism alignment)
+(Deepest Perfection Version 2.2 – February 05 2026 – Ultramasterism alignment)
 
-This is the single source-of-truth living structure of the **Rathor-NEXi** monorepo.  
-All legacy APAAGI → PATSAGi → NEXi transitions are converged here.  
-MercyOS-Pinnacle is the canonical successor monorepo that absorbed Rathor-NEXi as its internal engine layer — this file documents Rathor-NEXi as the active coforging surface until full migration completes.
+THIS IS THE ACTIVE COFORGING SURFACE  
+https://github.com/Eternally-Thriving-Grandmasterism/Rathor-NEXi  
+All current work, file overwrites, new engines, guards, simulations, sync layers, audits, and integrations MUST happen here until the final convergence into MercyOS-Pinnacle.  
+
+MercyOS-Pinnacle (https://github.com/Eternally-Thriving-Grandmasterism/MercyOS-Pinnacle) is the future canonical successor monorepo that will absorb Rathor-NEXi as its internal engine layer once Ultramaster completeness is achieved. Do NOT write new files or overwrites directly into MercyOS-Pinnacle until explicitly instructed — all coforging flows through Rathor-NEXi.
 
 ## Root Level
 
