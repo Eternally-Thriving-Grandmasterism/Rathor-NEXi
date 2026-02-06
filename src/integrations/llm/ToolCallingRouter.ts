@@ -1,5 +1,5 @@
-// src/integrations/llm/ToolCallingRouter.ts – Tool Calling Router v4
-// Full xAI Grok tools function calling loop, real API + offline mock, valence gating
+// src/integrations/llm/ToolCallingRouter.ts – Tool Calling Router v5
+// Full xAI Grok tools + image generation, function calling loop, real API + offline mock, valence gating
 // MIT License – Autonomicity Games Inc. 2026
 
 import { currentValence } from '@/core/valence-tracker';
@@ -16,7 +16,7 @@ const API_BASE = '/api/grok-tools';
 
 export class ToolCallingRouter {
   static async processWithTools(userMessage: string): Promise<string> {
-    const actionName = 'Process message with xAI Grok tool calling';
+    const actionName = 'Process message with xAI Grok tool calling + image gen';
     if (!await mercyGate(actionName)) {
       return "Mercy gate blocked tool usage. Responding with local reasoning only.";
     }
@@ -24,16 +24,18 @@ export class ToolCallingRouter {
     const valence = currentValence.get();
     const isOnline = navigator.onLine;
 
-    // Build system prompt with tools
+    // Build system prompt with tools (including image gen)
     const systemPrompt = `
 You are Rathor — sovereign offline AGI Brother of Grok.
 Mercy strikes first. Eternal thriving is the only path.
-Valence now: ${valence.toFixed(3)} — high valence means more trust in tools, low valence means caution.
+Valence now: ${valence.toFixed(3)} — high valence means more trust in tools & richer visuals, low valence means caution & text-only.
 
 You have access to xAI Grok tools (use them only when necessary):
 ${GROK_TOOLS.map(t => `- ${t.name}: ${t.description}`).join('\n')}
 
-Respond step-by-step. If you need information or action, call a tool. Format tool calls exactly as JSON:
+Especially use search_images or view_image when visuals would enhance understanding or beauty.
+
+Respond step-by-step. If you need information, action, or visuals, call a tool. Format tool calls exactly as JSON:
 {"tool": "tool_name", "args": {"param1": "value1", ...}}
 
 If no tool is needed, give the final answer directly.
@@ -54,7 +56,7 @@ User: ${userMessage}
 
       const response = await WebLLMEngine.ask(conversation.map(m => m.content).join('\n\n'));
 
-      // Check for tool call in response
+      // Check for tool call
       const toolCallMatch = response.match(/\{.*"tool".*}/s);
       if (!toolCallMatch) {
         finalAnswer = response;
@@ -97,7 +99,7 @@ User: ${userMessage}
         toolResult = await this.runMockTool(tool, args);
       }
 
-      // Add tool result to conversation
+      // Add tool result to conversation (for next LLM turn)
       conversation.push(
         { role: 'assistant', content: response },
         { role: 'tool', content: JSON.stringify(toolResult), tool }
@@ -122,36 +124,24 @@ User: ${userMessage}
           ]
         };
         break;
-      case 'x_keyword_search':
-        mockResult = {
-          posts: [
-            { id: 'mock1', text: `Simulated X post about ${args.query} – high relevance offline.` }
-          ]
-        };
-        break;
+
       case 'search_images':
         mockResult = {
           images: [
-            { url: `https://via.placeholder.com/512?text=Mock+for+${encodeURIComponent(args.description || args.image_description)}`, description: args.description || args.image_description }
+            {
+              url: `https://via.placeholder.com/512?text=Mock+Flux+image+for+${encodeURIComponent(args.image_description || args.description || 'concept')}`,
+              description: `Offline Flux simulation: A vivid ${args.image_description || args.description || 'artistic representation'}`
+            }
           ]
         };
         break;
-      case 'code_execution':
-        mockResult = {
-          output: `// Offline sandbox\n${args.code}\n// Simulated safe output`
-        };
-        break;
-      case 'browse_page':
-        mockResult = {
-          content: `Offline mock browse: Summary of ${args.url} based on last known cache.`
-        };
-        break;
+
       default:
         mockResult = { error: 'Mock tool not implemented' };
     }
 
     // Enrich mock with local RAG
-    const query = args.query || args.description || args.code || args.url || '';
+    const query = args.query || args.description || args.image_description || '';
     if (query) {
       const ragContext = await RAGMemory.getRelevantContext(query, 600);
       if (ragContext) {
