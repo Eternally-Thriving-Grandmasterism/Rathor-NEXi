@@ -1,0 +1,13 @@
+# Add this to your Prometheus config (prometheus.yml or via serviceMonitor)
+scrape_configs:
+  - job_name: 'nvidia-gpu-exporter'
+    scrape_interval: 15s
+    kubernetes_sd_configs:
+    - role: endpoints
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name]
+      action: keep
+      regex: monitoring;nvidia-gpu-exporter
+    - source_labels: [__address__]
+      target_label: __address__
+      replacement: $1:9400
