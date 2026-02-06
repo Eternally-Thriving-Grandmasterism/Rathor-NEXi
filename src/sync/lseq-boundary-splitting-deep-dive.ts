@@ -15,7 +15,7 @@ export const LSEQBoundarySplittingReference = {
   splittingProcess: [
     "1. Find longest common prefix length k between P_left and P_right",
     "2. If can increment (k+1)th digit → simple increment (no split)",
-    "3. If not → extend length by 1",
+    "3. Else → extend length by 1",
     "4. New left boundary: [prefix, 0]",
     "5. New right boundary: [prefix, B-1]",
     "6. New insert position: [prefix, floor((B-1)/2)]",
@@ -27,7 +27,7 @@ export const LSEQBoundarySplittingReference = {
 };
 
 /**
- * Valence-weighted tie-breaker for rare semantic conflicts during LSEQ insertion
+ * Valence-weighted tie-breaker for rare semantic conflicts during LSEQ boundary splitting
  */
 export function valenceLSEQTieBreaker(
   local: { position: number[]; valence: number; value: any },
