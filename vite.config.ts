@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/Rathor-NEXi/', // IMPORTANT: matches repo name for Pages
+  base: '/Rathor-NEXi/', // MUST match repo name for GitHub Pages
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
@@ -14,4 +14,7 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
+  preview: {
+    port: 4173,
+  }
 })
