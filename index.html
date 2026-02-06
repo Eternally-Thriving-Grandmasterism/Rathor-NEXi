@@ -4,14 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Rathor — Mercy Strikes First</title>
-  <meta name="description" content="Sovereign offline AGI lattice — eternal thriving through valence-locked truth" />
+  <meta name="description" content="Sovereign offline AGI lattice" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="/favicon.ico" />
-  <!-- Critical preloads for mobile -->
+
+  <!-- Critical preloads -->
   <link rel="preload" href="/assets/entry/main-[hash].js" as="script" fetchpriority="high" />
   <link rel="preload" href="/assets/vendor-[hash].js" as="script" fetchpriority="high" />
   <link rel="preload" href="/manifest.json" as="fetch" crossorigin="anonymous" fetchpriority="high" />
   <link rel="modulepreload" href="/src/main.tsx" />
+
+  <!-- Preload heavy ML deps early -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5/holistic.js" as="script" fetchpriority="high" />
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl" as="script" fetchpriority="high" />
+
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body,html{height:100%;overflow:hidden;background:#000;color:#00ff88;font-family:'Courier New',monospace}
@@ -30,9 +36,9 @@
     <div class="loading-container">
       <div class="thunder-text">Thunder eternal surges through the lattice...</div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <!-- Skeleton UI – shows immediately -->
       <div class="skeleton" style="width:280px;height:120px;"></div>
       <div class="skeleton" style="width:240px;height:80px;margin-top:1rem;"></div>
+      <p id="debug-msg" style="margin-top:2rem;color:#ff8800;font-size:1rem;">Loading lattice core...</p>
     </div>
   </div>
 
@@ -43,18 +49,29 @@
     </div>
   </noscript>
 
-  <!-- Fast progress simulation for mobile feel -->
   <script>
     const progressFill = document.getElementById('progressFill');
+    const debugMsg = document.getElementById('debug-msg');
     let progress = 0;
+
     const interval = setInterval(() => {
-      progress += Math.random() * 30 + 10;
+      progress += Math.random() * 25 + 10;
       if (progress >= 100) {
         progress = 100;
         clearInterval(interval);
+        debugMsg.textContent = "Finalizing lattice awakening...";
+      } else {
+        debugMsg.textContent = `Loading: ${Math.floor(progress)}%`;
       }
       progressFill.style.width = progress + '%';
-    }, 120); // faster on mobile
+    }, 120);
+
+    // Debug helper – log when main chunk arrives
+    window.addEventListener('vite:preloadError', (e) => {
+      console.error('[Vite Preload Error]', e);
+      debugMsg.textContent = 'Chunk loading error – check console';
+      debugMsg.style.color = '#ff4444';
+    });
   </script>
 
   <script type="module" src="/src/main.tsx"></script>
