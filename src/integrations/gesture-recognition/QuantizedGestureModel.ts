@@ -1,5 +1,5 @@
-// src/integrations/gesture-recognition/QuantizedGestureModel.ts – Quantized Custom Transformer Loader v4
-// Ternary extreme preference, layered fallback (ternary→2-bit→4-bit→8→FP16), mercy-gated
+// src/integrations/gesture-recognition/QuantizedGestureModel.ts – Quantized Custom Transformer Loader v5
+// Ternary extreme preference + training stubs, layered fallback, mercy-gated
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as tf from '@tensorflow/tfjs';
@@ -29,20 +29,13 @@ export class QuantizedGestureModel {
     let selectedUrl = FULL_FP16_URL;
 
     if (valence > 0.96) {
-      // Very high valence → prefer ternary (extreme speed + thriving-aligned)
-      selectedUrl = TERNARY_URL;
+      selectedUrl = TERNARY_URL; // extreme speed + thriving bloom
     } else if (valence > 0.92) {
-      // High valence → 2-bit BNN
       selectedUrl = BNN_2BIT_URL;
     } else if (valence > 0.88) {
-      // Medium-high valence → 4-bit AWQ
       selectedUrl = QUANTIZED_4BIT_URL;
     } else if (valence > 0.82) {
-      // Medium valence → 8-bit int8
       selectedUrl = QUANTIZED_8BIT_URL;
-    } else {
-      // Low valence → full FP16 (maximum accuracy for survival)
-      selectedUrl = FULL_FP16_URL;
     }
 
     console.log(`[QuantizedGestureModel] Loading ${selectedUrl} for valence ${valence.toFixed(4)}`);
@@ -51,17 +44,16 @@ export class QuantizedGestureModel {
       modelPromise = tf.loadLayersModel(selectedUrl);
       const model = await modelPromise;
 
-      // Warm-up inference
+      // Warm-up
       const dummyInput = tf.zeros([1, SEQUENCE_LENGTH, LANDMARK_DIM]);
       const dummyOutput = model.predict(dummyInput) as tf.Tensor[];
       dummyOutput.forEach(t => t.dispose());
       dummyInput.dispose();
 
-      console.log("[QuantizedGestureModel] Model loaded & warmed up successfully");
+      console.log("[QuantizedGestureModel] Model loaded & warmed up");
       return model;
     } catch (e) {
       console.error("[QuantizedGestureModel] Load failed", e);
-      // Fallback chain
       const fallbackUrls = [BNN_2BIT_URL, QUANTIZED_4BIT_URL, QUANTIZED_8BIT_URL, FULL_FP16_URL];
       for (const url of fallbackUrls) {
         try {
@@ -70,6 +62,29 @@ export class QuantizedGestureModel {
         } catch {}
       }
       throw new Error("All model loading attempts failed");
+    }
+  }
+
+  // Training stub – valence-weighted ternarization (simplified)
+  static async trainTernaryRecovery(model: tf.LayersModel, highValenceData: tf.Tensor[], epochs = 5) {
+    if (!await mercyGate('Ternary recovery fine-tuning')) return;
+
+    console.log("[QuantizedGestureModel] Starting valence-weighted ternary recovery fine-tuning");
+
+    const optimizer = tf.train.adam(0.0001);
+
+    for (let epoch = 0; epoch < epochs; epoch++) {
+      for (const batch of highValenceData) {
+        const loss = await tf.tidy(() => {
+          const preds = model.predict(batch) as tf.Tensor;
+          // Placeholder valence-weighted loss (real impl uses custom loss)
+          return tf.mean(tf.square(preds.sub(batch)));
+        });
+
+        optimizer.minimize(() => loss);
+        loss.dispose();
+      }
+      console.log(`[TernaryRecovery] Epoch \( {epoch+1}/ \){epochs} complete`);
     }
   }
 
