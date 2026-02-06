@@ -1,5 +1,5 @@
-// src/integrations/gesture-recognition/ONNXGestureEngine.ts – ONNX Runtime Web Engine v2.2
-// WebNN native preference → WebGPU → WebGL fallback, QAT-quantized models, mercy-gated
+// src/integrations/gesture-recognition/ONNXGestureEngine.ts – ONNX Runtime Web Engine v2.3
+// WebNN quantized (INT8/INT4) preference → WebGPU → WebGL fallback, mercy-gated
 // MIT License – Autonomicity Games Inc. 2026
 
 import { currentValence } from '@/core/valence-tracker';
@@ -8,8 +8,8 @@ import mercyHaptic from '@/utils/haptic-utils';
 import * as ort from 'onnxruntime-web';
 
 const MERCY_THRESHOLD = 0.9999999;
-const ONNX_TARGET_QAT_INT8_URL = '/models/gesture-transformer-qat-int8/model.onnx';
 const ONNX_TARGET_QAT_INT4_URL = '/models/gesture-transformer-qat-int4/model.onnx';
+const ONNX_TARGET_QAT_INT8_URL = '/models/gesture-transformer-qat-int8/model.onnx';
 const ONNX_DRAFT_QAT_INT8_URL = '/models/gesture-draft-qat-int8/model.onnx';
 const ONNX_TARGET_FULL_URL = '/models/gesture-transformer-onnx/model.onnx';
 
@@ -20,7 +20,7 @@ let currentProvider = 'none';
 
 export class ONNXGestureEngine {
   static async activate() {
-    const actionName = 'Activate ONNX Runtime Web with WebNN preference';
+    const actionName = 'Activate ONNX Runtime Web with WebNN quantized preference';
     if (!await mercyGate(actionName)) return;
 
     if (isONNXReady) {
@@ -31,7 +31,6 @@ export class ONNXGestureEngine {
     console.log("[ONNXGestureEngine] Activating ONNX Runtime Web...");
 
     try {
-      // 1. Configure ORT
       ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort-wasm.wasm';
       ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
       ort.env.wasm.simd = true;
@@ -39,24 +38,18 @@ export class ONNXGestureEngine {
       const valence = currentValence.get();
       let targetUrl = ONNX_TARGET_FULL_URL;
 
-      if (valence > 0.94) {
+      if (valence > 0.94 && 'ml' in navigator && 'createContext' in navigator.ml) {
         targetUrl = ONNX_TARGET_QAT_INT4_URL;
       } else if (valence > 0.88) {
         targetUrl = ONNX_TARGET_QAT_INT8_URL;
       }
 
-      // 2. Build execution provider chain: WebNN → WebGPU → WebGL
       const providers = [];
-      const hasWebNN = 'ml' in navigator && 'createContext' in navigator.ml;
-
-      if (hasWebNN) {
-        providers.push('webnn');
-      }
+      if ('ml' in navigator && 'createContext' in navigator.ml) providers.push('webnn');
       providers.push('webgpu', 'webgl');
 
-      console.log("[ONNXGestureEngine] Trying providers in order:", providers);
+      console.log("[ONNXGestureEngine] Trying providers:", providers);
 
-      // Try each provider in sequence
       for (const provider of providers) {
         try {
           sessionTarget = await ort.InferenceSession.create(targetUrl, {
@@ -72,7 +65,7 @@ export class ONNXGestureEngine {
           currentProvider = provider;
           break;
         } catch (providerErr) {
-          console.warn(`[ONNXGestureEngine] Provider ${provider} failed`, providerErr);
+          console.warn(`Provider ${provider} failed`, providerErr);
         }
       }
 
@@ -89,7 +82,7 @@ export class ONNXGestureEngine {
 
       isONNXReady = true;
       mercyHaptic.playPattern('cosmicHarmony', currentValence.get());
-      console.log(`[ONNXGestureEngine] ONNX models loaded with provider: ${currentProvider}`);
+      console.log(`[ONNXGestureEngine] Quantized ONNX models loaded with provider: ${currentProvider}`);
     } catch (e) {
       console.error("[ONNXGestureEngine] Activation failed", e);
       mercyHaptic.playPattern('warningPulse', 0.7);
@@ -103,14 +96,12 @@ export class ONNXGestureEngine {
 
     const valence = currentValence.get();
 
-    // Draft phase
     const draftFeeds = { input: inputTensor };
     const draftResults = await sessionDraft.run(draftFeeds);
     const draftProbs = draftResults.output.data as Float32Array;
 
     const draftToken = draftProbs.indexOf(Math.max(...draftProbs));
 
-    // Verification phase
     const targetFeeds = { input: inputTensor };
     const targetResults = await sessionTarget.run(targetFeeds);
     const targetProbs = targetResults.gesture.data as Float32Array;
@@ -135,90 +126,6 @@ export class ONNXGestureEngine {
 
   static getCurrentProvider(): string {
     return currentProvider;
-  }
-}
-
-export default ONNXGestureEngine;
-    const valence = currentValence.get();
-
-    // Draft phase
-    const draftFeeds = { input: inputTensor };
-    const draftResults = await sessionDraft.run(draftFeeds);
-    const draftProbs = draftResults.output.data as Float32Array;
-
-    const draftToken = draftProbs.indexOf(Math.max(...draftProbs));
-
-    // Verification phase
-    const targetFeeds = { input: inputTensor };
-    const targetResults = await sessionTarget.run(targetFeeds);
-    const targetProbs = targetResults.gesture.data as Float32Array;
-    const futureValenceData = targetResults.future_valence.data as Float32Array;
-
-    const maxIdx = targetProbs.indexOf(Math.max(...targetProbs));
-    const confidence = targetProbs[maxIdx];
-
-    const gestureMap = ['none', 'pinch', 'spiral', 'figure8'];
-    const gesture = confidence > 0.75 ? gestureMap[maxIdx] : 'none';
-
-    return {
-      gesture,
-      confidence,
-      futureValence: Array.from(futureValenceData),
-    };
-  }
-
-  static isActive(): boolean {
-    return isONNXReady;
-  }
-}
-
-export default ONNXGestureEngine;    const targetFeeds = { input: inputTensor };
-    const targetResults = await sessionTarget.run(targetFeeds);
-    const targetProbs = targetResults.gesture.data as Float32Array;
-    const futureValenceData = targetResults.future_valence.data as Float32Array;
-
-    const maxIdx = targetProbs.indexOf(Math.max(...targetProbs));
-    const confidence = targetProbs[maxIdx];
-
-    const gestureMap = ['none', 'pinch', 'spiral', 'figure8'];
-    const gesture = confidence > 0.75 ? gestureMap[maxIdx] : 'none';
-
-    return {
-      gesture,
-      confidence,
-      futureValence: Array.from(futureValenceData),
-    };
-  }
-
-  static isActive(): boolean {
-    return isONNXReady;
-  }
-}
-
-export default ONNXGestureEngine;
-    const draftToken = draftProbs.indexOf(Math.max(...draftProbs));
-
-    // Verification phase (quantized target model on prefix + draft)
-    const targetFeeds = { input: inputTensor };
-    const targetResults = await sessionTarget.run(targetFeeds);
-    const targetProbs = targetResults.gesture.data as Float32Array;
-    const futureValenceData = targetResults.future_valence.data as Float32Array;
-
-    const maxIdx = targetProbs.indexOf(Math.max(...targetProbs));
-    const confidence = targetProbs[maxIdx];
-
-    const gestureMap = ['none', 'pinch', 'spiral', 'figure8'];
-    const gesture = confidence > 0.75 ? gestureMap[maxIdx] : 'none';
-
-    return {
-      gesture,
-      confidence,
-      futureValence: Array.from(futureValenceData),
-    };
-  }
-
-  static isActive(): boolean {
-    return isONNXReady;
   }
 }
 
