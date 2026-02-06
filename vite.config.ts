@@ -1,3 +1,7 @@
+// vite.config.ts – Vite configuration with extreme bundling optimization v2.3
+// Manual chunking, aggressive minification, preloads, PWA, GitHub Pages base path
+// MIT License – Autonomicity Games Inc. 2026
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -43,26 +47,84 @@ export default defineConfig({
       devOptions: { enabled: true }
     })
   ],
-  base: '/Rathor-NEXi/',
+  base: '/Rathor-NEXi/', // Critical for GitHub Pages (repo name as base path)
+
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: true,
+    sourcemap: true, // keep for debugging, disable in prod if needed
     minify: 'terser',
     terserOptions: {
-      compress: { drop_console: false, passes: 3 },
-      mangle: true
+      compress: {
+        drop_console: false,          // keep logs for now
+        passes: 3,                    // more aggressive compression
+        pure_funcs: ['console.debug'], // remove debug logs
+        pure_getters: true,
+        keep_fargs: false,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_math: true,
+        unsafe_methods: true,
+        unsafe_undefined: true
+      },
+      mangle: true,
+      format: {
+        comments: false // remove comments for smaller size
+      }
     },
     rollupOptions: {
       output: {
+        // Manual chunking – critical for splitting heavy deps
         manualChunks: {
+          // Core vendor (React + motion)
           vendor: ['react', 'react-dom', 'framer-motion'],
-          tfjs: ['@tensorflow/tfjs', '@tensorflow/tfjs-backend-webgl'],
-          mediapipe: ['@mediapipe/holistic']
-        }
+
+          // tfjs core + backends (largest chunk – lazy loaded anyway)
+          tfjs: [
+            '@tensorflow/tfjs',
+            '@tensorflow/tfjs-backend-webgl',
+            '@tensorflow/tfjs-backend-cpu'
+          ],
+
+          // MediaPipe Holistic (WASM heavy – already lazy)
+          mediapipe: ['@mediapipe/holistic'],
+
+          // Other heavy libs (if any added later)
+          utils: ['./src/utils/haptic-utils.ts', './src/core/valence-tracker.ts']
+        },
+
+        // Better chunk naming & size control
+        chunkFileNames: 'assets/chunks/[name]-[hash].js',
+        entryFileNames: 'assets/entry/[name]-[hash].js',
+        assetFileNames: 'assets/static/[name]-[hash][extname]'
       }
-    }
+    },
+    target: 'es2020',           // modern browsers – smaller polyfills
+    cssCodeSplit: true,         // split CSS per chunk
+    reportCompressedSize: true  // show brotli/gzip sizes in build output
   },
-  server: { port: 3000, open: true },
-  preview: { port: 4173 }
+
+  server: {
+    port: 3000,
+    open: true,
+    hmr: true
+  },
+
+  preview: {
+    port: 4173
+  },
+
+  // Enable fast refresh & better dev HMR
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+  },
+
+  // Preload heavy deps in dev
+  optimizeDeps: {
+    include: [
+      '@tensorflow/tfjs',
+      '@tensorflow/tfjs-backend-webgl',
+      '@mediapipe/holistic'
+    ]
+  }
 })
