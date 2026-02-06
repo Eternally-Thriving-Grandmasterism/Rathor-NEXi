@@ -1,0 +1,59 @@
+{
+  "input_model": {
+    "type": "ONNXModel",
+    "config": "simplified.onnx"
+  },
+  "systems": {
+    "local_system": {
+      "type": "LocalSystem"
+    }
+  },
+  "data_configs": [
+    {
+      "name": "valence_calibration",
+      "type": "TextDataConfig",
+      "user_script": "calibration_reader.py",
+      "load_dataset": "load_valence_data",
+      "post_process": "post_process_valence",
+      "batch_size": 1,
+      "dataloader": "create_dataloader"
+    }
+  ],
+  "evaluators": {
+    "common_evaluator": {
+      "metrics": [
+        {
+          "name": "accuracy",
+          "type": "accuracy_score",
+          "user_script": "accuracy_metric.py",
+          "user_config": {
+            "user_script": "accuracy_metric.py",
+            "load_dataset": "load_valence_data",
+            "post_process": "post_process_valence"
+          }
+        }
+      ]
+    }
+  },
+  "passes": {
+    "olive_pass": {
+      "type": "OnnxStaticQuantization",
+      "config": {
+        "per_channel": true,
+        "reduce_range": true,
+        "weight_type": "QInt8",
+        "activation_type": "QUInt8",
+        "calibration_method": "MinMax",
+        "calibration_data_config": "valence_calibration"
+      }
+    }
+  },
+  "engine": {
+    "log_severity_level": 2,
+    "search_strategy": {
+      "execution_order": "sequential",
+      "search_algorithm": "random",
+      "max_trials": 10
+    }
+  }
+}
