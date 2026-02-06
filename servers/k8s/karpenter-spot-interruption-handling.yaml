@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karpenter-spot-interruption-config
+  namespace: karpenter
+data:
+  interruption-handling: |
+    # Karpenter interruption queue handling
+    queue:
+      enabled: true
+      queueName: rathor-spot-interrupt-queue
+      queueUrl: https://sqs.us-west-2.amazonaws.com/123456789012/rathor-spot-interrupt-queue
+    # Mercy gate – do not terminate high-valence pods
+    podEviction:
+      gracePeriodSeconds: 300
+      filter:
+        - labelSelector: mercy-priority=high
+          action: skip
