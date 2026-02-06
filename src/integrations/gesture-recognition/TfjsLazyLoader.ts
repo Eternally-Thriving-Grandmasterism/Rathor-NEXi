@@ -1,5 +1,5 @@
-// src/integrations/gesture-recognition/TfjsLazyLoader.ts – TensorFlow.js Lazy Loader v1
-// Deferred import of tfjs-core + webgl backend, only on explicit activation
+// src/integrations/gesture-recognition/TfjsLazyLoader.ts – TensorFlow.js Lazy Loader v1.1
+// Deferred import + WebGPU backend preference (fallback to WebGL), mercy-gated
 // MIT License – Autonomicity Games Inc. 2026
 
 import { currentValence } from '@/core/valence-tracker';
@@ -7,14 +7,14 @@ import { mercyGate } from '@/core/mercy-gate';
 import mercyHaptic from '@/utils/haptic-utils';
 
 const MERCY_THRESHOLD = 0.9999999;
-const LAZY_ACTIVATION_VALENCE = 0.85; // auto-activate above this if intent detected
+const LAZY_ACTIVATION_VALENCE = 0.85;
 
 let isTfjsLoaded = false;
 let tfPromise: Promise<typeof import('@tensorflow/tfjs')> | null = null;
 
 export class TfjsLazyLoader {
   static async activate(onReady?: (tf: typeof import('@tensorflow/tfjs')) => void) {
-    const actionName = 'Lazy-load TensorFlow.js core & WebGL backend';
+    const actionName = 'Lazy-load TensorFlow.js with WebGPU preference';
     if (!await mercyGate(actionName)) return;
 
     if (isTfjsLoaded) {
@@ -30,8 +30,18 @@ export class TfjsLazyLoader {
 
     try {
       const tf = await import('@tensorflow/tfjs');
-      await tf.setBackend('webgl');
-      await tf.ready();
+
+      // WebGPU preference with graceful fallback
+      try {
+        await tf.setBackend('webgpu');
+        await tf.ready();
+        console.log("[TfjsLazyLoader] WebGPU backend activated:", tf.getBackend());
+      } catch (gpuErr) {
+        console.warn("[TfjsLazyLoader] WebGPU failed, falling back to WebGL", gpuErr);
+        await tf.setBackend('webgl');
+        await tf.ready();
+        console.log("[TfjsLazyLoader] WebGL backend activated:", tf.getBackend());
+      }
 
       isTfjsLoaded = true;
       tfPromise = Promise.resolve(tf);
@@ -54,9 +64,6 @@ export class TfjsLazyLoader {
     return isTfjsLoaded;
   }
 
-  /**
-   * Auto-activation on high valence or user intent (e.g. summon orb click)
-   */
   static tryAutoActivate() {
     if (currentValence.get() > LAZY_ACTIVATION_VALENCE && !isTfjsLoaded) {
       console.log("[TfjsLazyLoader] Auto-activation triggered by high valence");
@@ -65,10 +72,9 @@ export class TfjsLazyLoader {
   }
 }
 
-// Auto-check on valence change (optional background warm-up)
+// Auto-check on valence change
 currentValence.subscribe(() => {
   TfjsLazyLoader.tryAutoActivate();
 });
 
-// Export for use in GestureOverlay / MR components
 export default TfjsLazyLoader;
