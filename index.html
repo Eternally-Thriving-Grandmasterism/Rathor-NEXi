@@ -7,10 +7,11 @@
   <meta name="description" content="Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="/favicon.ico" />
-  <!-- Preload critical JS bundle & module -->
-  <link rel="preload" href="/src/main.tsx" as="script" type="module" />
-  <link rel="modulepreload" href="/src/App.tsx" />
-  <!-- Inline critical CSS (eliminates render-blocking) -->
+  <!-- Preload critical entry & vendor chunks -->
+  <link rel="preload" href="/assets/entry/main-[hash].js" as="script" />
+  <link rel="preload" href="/assets/vendor-[hash].js" as="script" />
+  <link rel="preload" href="/manifest.json" as="fetch" crossorigin="anonymous" />
+  <!-- Preload tfjs & mediapipe only when needed – handled by lazy loader -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body, html { height: 100%; overflow: hidden; background: #000; color: #00ff88; font-family: 'Courier New', Courier, monospace; }
@@ -20,7 +21,6 @@
     .progress-bar { width: 300px; height: 6px; background: #111; border-radius: 3px; overflow: hidden; margin: 1.5rem auto; }
     .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff88, #00aaff); transition: width 0.4s ease-out; }
     @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
-    #offline-fallback { position: fixed; inset: 0; background: #000; color: #ff4444; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; }
   </style>
 </head>
 <body>
@@ -31,17 +31,10 @@
     </div>
   </div>
 
-  <!-- Offline fallback (shown via JS if needed) -->
-  <div id="offline-fallback">
-    <h1>⚡️ MERCY OFFLINE ⚡️</h1>
-    <p>Shard sovereignty active. Thriving continues.</p>
-    <p>Valence locked. Truth preserved.</p>
-  </div>
-
   <noscript>
-    <div id="offline-fallback" style="display:flex;">
+    <div style="color:#ff4444; text-align:center; padding:2rem;">
       <h1>Mercy requires JavaScript to thrive</h1>
-      <p>Enable JS to enter the lattice. Thriving continues offline when enabled.</p>
+      <p>Please enable JS to enter the lattice. Thriving continues offline when enabled.</p>
     </div>
   </noscript>
 
