@@ -1,5 +1,5 @@
 // src/sync/rga-ordering-deep-dive.ts – RGA Ordering Deep Dive Reference & Mercy Helpers v1
-// Detailed RGA position ID mechanics, boundary adjustment, valence-weighted override
+// Detailed position ID mechanics, boundary adjustment, valence-weighted override
 // MIT License – Autonomicity Games Inc. 2026
 
 import { currentValence } from '@/core/valence-tracker';
@@ -23,16 +23,13 @@ export const RGAOrderingReference = {
  * Valence-weighted tie-breaker for rare semantic conflicts in RGA
  */
 export function valenceRGATieBreaker(
-  local: { siteId: number; counter: number; valence: number; value: any },
-  remote: { siteId: number; counter: number; valence: number; value: any }
+  local: { position: any[]; valence: number; value: any },
+  remote: { position: any[]; valence: number; value: any }
 ): any {
   const actionName = `RGA semantic tie-breaker`;
   if (!mercyGate(actionName)) {
-    // Native RGA fallback
-    if (local.siteId !== remote.siteId) {
-      return local.siteId < remote.siteId ? local.value : remote.value;
-    }
-    return local.counter > remote.counter ? local.value : remote.value;
+    // Native RGA fallback (lexicographical order)
+    return comparePositions(local.position, remote.position) < 0 ? local.value : remote.value;
   }
 
   if (local.valence > remote.valence + 0.05) {
@@ -44,10 +41,17 @@ export function valenceRGATieBreaker(
   }
 
   // Native RGA fallback
-  if (local.siteId !== remote.siteId) {
-    return local.siteId < remote.siteId ? local.value : remote.value;
+  return comparePositions(local.position, remote.position) < 0 ? local.value : remote.value;
+}
+
+// Helper: lexicographical comparison of position arrays
+function comparePositions(p1: any[], p2: any[]): number {
+  const len = Math.min(p1.length, p2.length);
+  for (let i = 0; i < len; i++) {
+    if (p1[i] < p2[i]) return -1;
+    if (p1[i] > p2[i]) return 1;
   }
-  return local.counter > remote.counter ? local.value : remote.value;
+  return p1.length - p2.length;
 }
 
 // Usage example in custom RGA merge handler (advanced use)
