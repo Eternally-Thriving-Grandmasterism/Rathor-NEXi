@@ -1,0 +1,36 @@
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: rathor-gpu-ondemand-fallback
+  namespace: karpenter
+spec:
+  template:
+    metadata:
+      labels:
+        node-role: inference-gpu
+        karpenter.sh/capacity-type: on-demand
+        mercy-priority: high
+    spec:
+      nodeClassRef:
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["g", "p"]
+        - key: karpenter.k8s.aws/instance-gpu-count
+          operator: Gt
+          values: ["0"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+  limits:
+    cpu: 1000
+    memory: 4000Gi
+    nvidia.com/gpu: 100
+  disruption:
+    consolidationPolicy: WhenUnderutilized
+    consolidateAfter: 6h
+  weight: 10  # fallback – only used when spot is unavailable
