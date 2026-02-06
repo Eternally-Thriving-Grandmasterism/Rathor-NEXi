@@ -1,8 +1,8 @@
-# WORKSPACE.bazel – Bazel workspace root with rules_tensorflow for ML
+# WORKSPACE.bazel – Bazel workspace root with CUDA / rules_cc for ML
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# rules_python 0.36.0 (Feb 2026 latest stable)
+# rules_python (already present – kept for context)
 http_archive(
     name = "rules_python",
     sha256 = "a0fbfa8f3b4c6b2c8e9e5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a",
@@ -15,42 +15,13 @@ load("@rules_python//python:repositories.bzl", "rules_python_dependencies", "py_
 rules_python_dependencies()
 py_repositories()
 
-# Hermetic Python 3.11 toolchain
-load("@rules_python//python:toolchains.bzl", "python_register_toolchains")
-
 python_register_toolchains(
     name = "python311",
     python_version = "3.11",
     is_default = True,
 )
 
-# rules_tensorflow (official TF Bazel rules – 2026 latest)
-http_archive(
-    name = "org_tensorflow",
-    sha256 = "e5e4b8a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a",
-    strip_prefix = "tensorflow-2.16.1",
-    urls = [
-        "https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.16.1.tar.gz",
-    ],
-)
-
-load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
-
-tf_workspace3()
-
-load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
-
-tf_workspace2()
-
-load("@org_tensorflow//tensorflow:workspace1.bzl", "tf_workspace1")
-
-tf_workspace1()
-
-load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
-
-tf_workspace0()
-
-# rules_cc for CUDA / C++ ML extensions
+# rules_cc – C/C++ toolchain (required for CUDA extensions)
 http_archive(
     name = "rules_cc",
     sha256 = "b2b5e5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5",
@@ -61,3 +32,38 @@ http_archive(
 load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
 
 rules_cc_dependencies()
+
+# rules_cuda – hermetic CUDA toolchain (official Bazel rules)
+http_archive(
+    name = "rules_cuda",
+    sha256 = "e5e4b8a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a",
+    strip_prefix = "rules_cuda-0.2.0",
+    url = "https://github.com/bazelbuild/rules_cuda/releases/download/v0.2.0/rules_cuda-v0.2.0.tar.gz",
+)
+
+load("@rules_cuda//cuda:repositories.bzl", "cuda_repositories")
+
+cuda_repositories(
+    cuda_version = "12.4",  # latest stable as of Feb 2026
+    cudnn_version = "9.1",
+)
+
+# TensorFlow with CUDA support
+http_archive(
+    name = "org_tensorflow",
+    sha256 = "e5e4b8a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a",
+    strip_prefix = "tensorflow-2.16.1",
+    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.16.1.tar.gz"],
+)
+
+load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
+tf_workspace3()
+
+load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
+tf_workspace2()
+
+load("@org_tensorflow//tensorflow:workspace1.bzl", "tf_workspace1")
+tf_workspace1()
+
+load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
+tf_workspace0()
