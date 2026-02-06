@@ -1,8 +1,8 @@
-# WORKSPACE.bazel – Bazel workspace root with CUDA / rules_cc for ML
+# WORKSPACE.bazel – Bazel workspace root with PyTorch CUDA support
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# rules_python (already present – kept for context)
+# rules_python 0.36.0 (Feb 2026 latest stable)
 http_archive(
     name = "rules_python",
     sha256 = "a0fbfa8f3b4c6b2c8e9e5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a",
@@ -48,22 +48,14 @@ cuda_repositories(
     cudnn_version = "9.1",
 )
 
-# TensorFlow with CUDA support
-http_archive(
-    name = "org_tensorflow",
-    sha256 = "e5e4b8a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a5f5a",
-    strip_prefix = "tensorflow-2.16.1",
-    urls = ["https://github.com/tensorflow/tensorflow/archive/refs/tags/v2.16.1.tar.gz"],
+# PyTorch with CUDA support (via pip_parse – hermetic Python packages)
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+    name = "pip",
+    requirements_lock = "//:requirements_lock.txt",
 )
 
-load("@org_tensorflow//tensorflow:workspace3.bzl", "tf_workspace3")
-tf_workspace3()
+load("@pip//:requirements.bzl", "install_deps")
 
-load("@org_tensorflow//tensorflow:workspace2.bzl", "tf_workspace2")
-tf_workspace2()
-
-load("@org_tensorflow//tensorflow:workspace1.bzl", "tf_workspace1")
-tf_workspace1()
-
-load("@org_tensorflow//tensorflow:workspace0.bzl", "tf_workspace0")
-tf_workspace0()
+install_deps()
