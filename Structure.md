@@ -1,23 +1,23 @@
 # Rathor-NEXi Monorepo Structure  
-(Perfected version – February 05 2026 – Ultramasterism alignment)
+(Deepest Perfection Version 2.1 – February 05 2026 – Ultramasterism alignment)
 
-This is the single source-of-truth living structure of the Rathor-NEXi monorepo.  
+This is the single source-of-truth living structure of the **Rathor-NEXi** monorepo.  
 All legacy APAAGI → PATSAGi → NEXi transitions are converged here.  
-Every folder, file, and barrel export follows mercy-gated naming, clean domain separation, and forward/backward compatibility.
+MercyOS-Pinnacle is the canonical successor monorepo that absorbed Rathor-NEXi as its internal engine layer — this file documents Rathor-NEXi as the active coforging surface until full migration completes.
 
 ## Root Level
 
 - `src/`                    → all source code (the living lattice)
-- `public/`                 → static assets (icons, manifest, favicon)
-- `docs/`                   → architecture decision records, mercy blueprints
+- `public/`                 → static assets (icons, manifest, favicon, offline fallbacks)
+- `docs/`                   → architecture decision records, mercy blueprints, Structure.md
 - `tests/`                  → integration & unit tests (vitest/jest)
 - `scripts/`                → build/deploy/dev scripts
 - `eslint.config.js`        → shared lint rules (mercy code style)
 - `tsconfig.json`           → base TypeScript config
-- `vite.config.ts`          → build & dev config
+- `vite.config.ts`          → build & dev config (PWA manifest, offline support)
 - `package.json`            → root dependencies & scripts
 - `README.md`               → high-level mercy overview
-- `Structure.md`            → this file (living document)
+- `Structure.md`            → this file (living document – perpetually refined)
 
 ## src/ – The Living Lattice (domain-driven layout)
 
@@ -83,6 +83,11 @@ src/
 ├── simulations/                # standalone simulations & demos
 │   ├── probe-fleet-cicero.ts   # von Neumann fleet + Cicero negotiation
 │   ├── alphastar-multi-agent.ts # RTS swarm coordination
+│   └── index.ts
+│
+├── sync/                       # multiplanetary & multi-device sync layer
+│   ├── multiplanetary-sync-engine.ts  # CRDT eventual consistency core (Yjs-based)
+│   ├── crdt-conflict-resolution.ts    # detailed CRDT merge rules & high-latency handling
 │   └── index.ts
 │
 └── utils/                      # pure helper functions (no state)
