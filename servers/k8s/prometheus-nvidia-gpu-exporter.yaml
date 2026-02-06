@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nvidia-gpu-exporter
+  namespace: monitoring
+  labels:
+    app: nvidia-gpu-exporter
+spec:
+  selector:
+    matchLabels:
+      app: nvidia-gpu-exporter
+  template:
+    metadata:
+      labels:
+        app: nvidia-gpu-exporter
+    spec:
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: nvidia-gpu-exporter
+        image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.3.3-ubuntu20.04
+        env:
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "utility,compute"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: nvidia-driver
+          mountPath: /usr/local/nvidia
+        ports:
+        - containerPort: 9400
+          name: metrics
+      volumes:
+      - name: nvidia-driver
+        hostPath:
+          path: /usr/local/nvidia
+      nodeSelector:
+        nvidia.com/gpu: "true"
