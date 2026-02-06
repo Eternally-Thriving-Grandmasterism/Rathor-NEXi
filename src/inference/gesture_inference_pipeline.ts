@@ -1,6 +1,6 @@
-// src/inference/gesture_inference_pipeline.ts – Gesture Inference Pipeline v1.0
-// ONNX Runtime Web with WebNN → WebGPU → WebGL fallback
-// Valence-aware model selection, mercy gating, future valence trajectory
+// src/inference/gesture_inference_pipeline.ts – Gesture Inference Pipeline v1.1
+// ONNX Runtime Web with model selection logic (INT4/INT8/FP16 by valence)
+// Provider preference: WebNN > WebGPU > WebGL > CPU, dynamic batch, latency metrics
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as ort from 'onnxruntime-web';
@@ -9,56 +9,61 @@ import { mercyGate } from '@/core/mercy-gate';
 import mercyHaptic from '@/utils/haptic-utils';
 
 const MODEL_PATHS = {
-  high: '/models/gesture-transformer-qat-int4.onnx',    // INT4 for high valence (fastest)
-  medium: '/models/gesture-transformer-qat-int8.onnx',  // INT8 balanced
-  low: '/models/gesture-transformer-fp16.onnx',         // FP16 fallback
+  high: '/models/gesture-transformer-qat-int4.onnx',    // INT4 – fastest, high valence only
+  medium: '/models/gesture-transformer-qat-int8.onnx',  // INT8 – balanced, safe default
+  low: '/models/gesture-transformer-fp16.onnx',         // FP16 – highest accuracy fallback
 };
+
+const VALENCE_HIGH_THRESHOLD = 0.94;     // Use INT4 + prefer WebNN
+const VALENCE_MEDIUM_THRESHOLD = 0.88;   // Use INT8 + WebGPU/WebNN
+const VALENCE_LOW_THRESHOLD = 0.80;      // Use FP16 + CPU fallback
 
 const SEQUENCE_LENGTH = 45;
 const LANDMARK_DIM = 225;
 const NUM_GESTURE_CLASSES = 5;
 const FUTURE_VALENCE_HORIZON = 10;
-
-const MERCY_THRESHOLD = 0.9999999;
-const VALENCE_HIGH_PIVOT = 0.94;     // INT4 + WebNN
-const VALENCE_SAFE_PIVOT = 0.88;     // INT8 + WebGPU/WebNN
 const CONFIDENCE_THRESHOLD = 0.75;
+const MERCY_VALENCE_DROP_THRESHOLD = 0.05;
 
-let session: ort.InferenceSession | null = null;
-let currentProvider = 'none';
+let currentSession: ort.InferenceSession | null = null;
+let currentModelKey: string = 'none';
+let currentProvider: string = 'none';
 
 export class GestureInferencePipeline {
-  static async initialize(): Promise<void> {
-    const actionName = 'Initialize gesture inference pipeline';
+  static async initialize(forceReload = false): Promise<void> {
+    const actionName = 'Initialize gesture inference pipeline with model selection';
     if (!await mercyGate(actionName)) return;
 
-    if (session) {
-      console.log("[InferencePipeline] Already initialized – provider:", currentProvider);
+    const valence = currentValence.get();
+    let targetModelKey = 'low';
+
+    if (valence > VALENCE_HIGH_THRESHOLD) {
+      targetModelKey = 'high';
+    } else if (valence > VALENCE_MEDIUM_THRESHOLD) {
+      targetModelKey = 'medium';
+    }
+
+    if (!forceReload && currentSession && currentModelKey === targetModelKey) {
+      console.log(`[InferencePipeline] Already initialized – model: ${currentModelKey}, provider: ${currentProvider}`);
       return;
     }
 
-    console.log("[InferencePipeline] Initializing ONNX Runtime Web...");
+    console.log(`[InferencePipeline] Initializing – valence ${valence.toFixed(3)}, selecting model: ${targetModelKey}`);
 
-    const valence = currentValence.get();
-    let modelPath = MODEL_PATHS.low;
-
-    if (valence > VALENCE_HIGH_PIVOT) {
-      modelPath = MODEL_PATHS.high;
-    } else if (valence > VALENCE_SAFE_PIVOT) {
-      modelPath = MODEL_PATHS.medium;
-    }
+    currentModelKey = targetModelKey;
+    const modelPath = MODEL_PATHS[currentModelKey as keyof typeof MODEL_PATHS];
 
     const providers = [];
     if ('ml' in navigator && 'createContext' in (navigator as any).ml) {
       providers.push('webnn');
     }
-    providers.push('webgpu', 'webgl');
+    providers.push('webgpu', 'webgl', 'cpu');
 
-    console.log("[InferencePipeline] Trying providers:", providers);
+    console.log("[InferencePipeline] Trying providers in order:", providers);
 
     for (const provider of providers) {
       try {
-        session = await ort.InferenceSession.create(modelPath, {
+        currentSession = await ort.InferenceSession.create(modelPath, {
           executionProviders: [provider],
           graphOptimizationLevel: 'all',
           enableCpuMemArena: false,
@@ -67,26 +72,26 @@ export class GestureInferencePipeline {
         currentProvider = provider;
         break;
       } catch (err) {
-        console.warn(`Provider ${provider} failed:`, err);
+        console.warn(`Provider ${provider} failed for model ${currentModelKey}:`, err);
       }
     }
 
-    if (!session) {
-      throw new Error("No suitable execution provider found");
+    if (!currentSession) {
+      throw new Error("No suitable execution provider found for selected model");
     }
 
-    // Warm-up
+    // Warm-up inference
     const dummyInput = new ort.Tensor(
       'float32',
       new Float32Array(1 * SEQUENCE_LENGTH * LANDMARK_DIM),
       [1, SEQUENCE_LENGTH, LANDMARK_DIM]
     );
 
-    await session.run({ input: dummyInput });
+    await currentSession.run({ input: dummyInput });
     dummyInput.dispose();
 
     mercyHaptic.playPattern('cosmicHarmony', valence);
-    console.log(`[InferencePipeline] Loaded model: ${modelPath} | Provider: ${currentProvider}`);
+    console.log(`[InferencePipeline] Initialized – model: ${currentModelKey}, provider: ${currentProvider}`);
   }
 
   static async infer(landmarks: Float32Array): Promise<{
@@ -95,9 +100,11 @@ export class GestureInferencePipeline {
     futureValence: number[];
     projectedValence: number;
     isSafe: boolean;
+    modelUsed: string;
+    providerUsed: string;
   }> {
-    if (!session) {
-      throw new Error("Inference pipeline not initialized");
+    if (!currentSession) {
+      await this.initialize();
     }
 
     const actionName = 'Run gesture inference';
@@ -108,6 +115,8 @@ export class GestureInferencePipeline {
         futureValence: Array(FUTURE_VALENCE_HORIZON).fill(0.5),
         projectedValence: currentValence.get(),
         isSafe: false,
+        modelUsed: 'none',
+        providerUsed: 'none',
       };
     }
 
@@ -118,7 +127,7 @@ export class GestureInferencePipeline {
     );
 
     const feeds = { input: tensor };
-    const results = await session.run(feeds);
+    const results = await currentSession.run(feeds);
 
     const gestureLogits = results.gesture_logits.data as Float32Array;
     const futureValence = results.future_valence.data as Float32Array;
@@ -131,15 +140,14 @@ export class GestureInferencePipeline {
 
     const confidence = Math.max(...probs);
     const gestureIndex = probs.indexOf(confidence);
-    const gestureNames = ['none', 'pinch', 'spiral', 'figure8', 'wave'];
-
-    const gesture = confidence > 0.75 ? gestureNames[gestureIndex] : 'none';
+    const gesture = confidence > CONFIDENCE_THRESHOLD ? GESTURE_NAMES[gestureIndex] : 'none';
 
     const projectedValence = futureValence.reduce((a, b) => a + b, 0) / futureValence.length;
-    const isSafe = projectedValence >= currentValence.get() - 0.05;
+    const currentVal = currentValence.get();
+    const isSafe = projectedValence >= currentVal - MERCY_VALENCE_DROP_THRESHOLD;
 
     if (!isSafe) {
-      mercyHaptic.playPattern('warningPulse', currentValence.get() * 0.7);
+      mercyHaptic.playPattern('warningPulse', currentVal * 0.7);
     }
 
     tensor.dispose();
@@ -150,16 +158,23 @@ export class GestureInferencePipeline {
       futureValence: Array.from(futureValence),
       projectedValence,
       isSafe,
+      modelUsed: currentModelKey,
+      providerUsed: currentProvider,
     };
   }
 
   static async dispose() {
-    if (session) {
-      await session.release();
-      session = null;
+    if (currentSession) {
+      await currentSession.release();
+      currentSession = null;
+      currentModelKey = 'none';
       currentProvider = 'none';
       console.log("[InferencePipeline] Session disposed");
     }
+  }
+
+  static getCurrentModel(): string {
+    return currentModelKey;
   }
 
   static getCurrentProvider(): string {
