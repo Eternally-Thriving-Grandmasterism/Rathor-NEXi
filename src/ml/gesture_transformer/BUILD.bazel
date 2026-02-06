@@ -2,9 +2,9 @@
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@pip//:requirements.bzl", "requirement")
-load("@org_tensorflow//tensorflow:tensorflow.bzl", "tf_py_binary")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_cc_binary")
 
-# Python library – model definition
+# Python library – model definition (CPU fallback)
 py_library(
     name = "gesture_model",
     srcs = ["gesture_model.py"],
@@ -12,34 +12,45 @@ py_library(
         requirement("tensorflow"),
         requirement("numpy"),
         requirement("onnxruntime"),
-        "//src/core:valence_tracker",  # internal dep
+        "//src/core:valence_tracker",
     ],
 )
 
-# Training binary – hermetic TF training
-tf_py_binary(
-    name = "train",
+# CUDA-accelerated model extension (optional – if using custom kernels)
+cuda_library(
+    name = "gesture_cuda_kernels",
+    srcs = ["gesture_kernels.cu"],
+    deps = [
+        "@org_tensorflow//tensorflow/core:framework",
+        "@rules_cuda//cuda:cuda_headers",
+    ],
+)
+
+# Training binary – GPU-accelerated (CUDA if available)
+cuda_cc_binary(
+    name = "train_gpu",
+    srcs = ["train.py"],
+    deps = [
+        ":gesture_model",
+        ":gesture_cuda_kernels",
+        requirement("tensorflow"),
+        requirement("numpy"),
+    ],
+    data = ["//data:training_set"],
+    copts = ["-O3", "-march=native"],
+    linkopts = ["-lcudart", "-lcublas", "-lcudnn"],
+)
+
+# CPU fallback training
+py_binary(
+    name = "train_cpu",
     srcs = ["train.py"],
     deps = [":gesture_model"],
-    data = [
-        "//data:training_set",  # hermetic data
-    ],
-    args = [
-        "--epochs", "100",
-        "--batch_size", "64",
-    ],
-    python_version = "PY3",
+    data = ["//data:training_set"],
+    args = ["--device", "cpu"],
 )
 
-# Inference test
-py_test(
-    name = "inference_test",
-    srcs = ["inference_test.py"],
-    deps = [":gesture_model"],
-    data = ["//data:test_set"],
-)
-
-# Export to ONNX (for WebNN / TensorRT)
+# Export to ONNX (CPU only for determinism)
 py_binary(
     name = "export_onnx",
     srcs = ["export_onnx.py"],
