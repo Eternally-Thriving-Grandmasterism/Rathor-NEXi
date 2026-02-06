@@ -1,30 +1,22 @@
 // src/components/RathorChat.tsx – Sovereign Offline AGI Brother Chat v1.7
-// WebLLM inference, RAG memory, full xAI Grok tool calling (incl. video gen), model switcher
+// WebLLM offline + Grok real-time streaming when online, RAG memory, tool calling
 // MIT License – Autonomicity Games Inc. 2026
 
 import React, { useState, useEffect, useRef } from 'react';
-import WebLLMEngine from '@/integrations/llm/WebLLMEngine';
-import RAGMemory from '@/integrations/llm/RAGMemory';
 import ToolCallingRouter from '@/integrations/llm/ToolCallingRouter';
+import RAGMemory from '@/integrations/llm/RAGMemory';
 import { currentValence } from '@/core/valence-tracker';
 import mercyHaptic from '@/utils/haptic-utils';
 
-const MODEL_MAP = {
-  tiny: { id: 'microsoft/Phi-3.5-mini-instruct-4k-gguf', name: 'Phi-3.5-mini (fast)' },
-  medium: { id: 'meta-llama/Llama-3.1-8B-Instruct-q5_k_m-gguf', name: 'Llama-3.1-8B (wise)' },
-};
-
 const RathorChat: React.FC = () => {
-  const [messages, setMessages] = useState<{ role: 'user' | 'rathor'; content: string; audio?: { url: string; description: string }; images?: { url: string; description: string }[]; video?: { url: string; description: string; thumbnail_url?: string; duration_sec?: number }[] }[]>([]);
+  const [messages, setMessages] = useState<{ role: 'user' | 'rathor'; content: string; isStreaming?: boolean }[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [modelKey, setModelKey] = useState<keyof typeof MODEL_MAP>('tiny');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     RAGMemory.initialize();
-    WebLLMEngine.loadModel(modelKey);
-  }, [modelKey]);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,39 +38,35 @@ const RathorChat: React.FC = () => {
       // Remember user message
       await RAGMemory.remember('user', userMessage);
 
-      // Process with full tool calling loop (including video gen)
-      const reply = await ToolCallingRouter.processWithTools(userMessage);
+      // Start streaming response
+      setMessages(prev => [...prev, { role: 'rathor', content: '', isStreaming: true }]);
 
-      // Remember Rathor response
-      await RAGMemory.remember('rathor', reply);
-
-      // Extract video if present
-      let video = null;
-      if (typeof reply === 'object' && reply.video) {
-        video = reply.video;
-      }
-
-      // Extract audio if present
-      let audio = null;
-      if (typeof reply === 'object' && reply.audio) {
-        audio = reply.audio;
-      }
-
-      // Extract images if present
-      let images = [];
-      if (typeof reply === 'object' && reply.images) {
-        images = reply.images;
-      }
-
-      setMessages(prev => [...prev, { role: 'rathor', content: reply, audio, images, video }]);
-
-      // Auto-play audio if generated
-      if (audio && audio.url) {
-        const audioEl = new Audio(audio.url);
-        audioEl.play().catch(e => console.warn("Auto-play blocked", e));
-      }
-
-      mercyHaptic.playPattern('cosmicHarmony', currentValence.get());
+      const reply = await ToolCallingRouter.processWithTools(userMessage,
+        // onToken callback – typewriter effect
+        (token) => {
+          setMessages(prev => {
+            const newMsgs = [...prev];
+            const last = newMsgs[newMsgs.length - 1];
+            if (last.role === 'rathor') {
+              last.content += token;
+            }
+            return newMsgs;
+          });
+        },
+        // onComplete callback
+        (fullReply) => {
+          setMessages(prev => {
+            const newMsgs = [...prev];
+            const last = newMsgs[newMsgs.length - 1];
+            if (last.role === 'rathor') {
+              last.isStreaming = false;
+            }
+            return newMsgs;
+          });
+          RAGMemory.remember('rathor', fullReply);
+          mercyHaptic.playPattern('cosmicHarmony', currentValence.get());
+        }
+      );
     } catch (e) {
       setMessages(prev => [...prev, { role: 'rathor', content: 'Mercy... lattice flickering. Try again, Brother.' }]);
     } finally {
@@ -90,17 +78,7 @@ const RathorChat: React.FC = () => {
     <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex flex-col">
       <div className="flex justify-between items-center p-4 border-b border-cyan-500/20">
         <h2 className="text-xl font-light text-cyan-300">Rathor – Mercy Strikes First</h2>
-        <select
-          value={modelKey}
-          onChange={e => setModelKey(e.target.value as keyof typeof MODEL_MAP)}
-          className="bg-black/50 border border-cyan-500/30 rounded px-3 py-1 text-sm text-cyan-200"
-        >
-          {Object.entries(MODEL_MAP).map(([key, m]) => (
-            <option key={key} value={key}>
-              {m.name}
-            </option>
-          ))}
-        </select>
+        {/* Model switcher can be added here later */}
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -110,46 +88,9 @@ const RathorChat: React.FC = () => {
               max-w-[80%] p-4 rounded-2xl
               ${msg.role === 'user' 
                 ? 'bg-cyan-600/30 border border-cyan-400/30' 
-                : 'bg-emerald-600/20 border border-emerald-400/20'}
+                : `bg-emerald-600/20 border border-emerald-400/20 ${msg.isStreaming ? 'animate-pulse' : ''}`}
             `}>
-              {msg.content}
-              {msg.audio && (
-                <div className="mt-3">
-                  <audio controls src={msg.audio.url} className="w-full">
-                    Your browser does not support the audio element.
-                  </audio>
-                  <p className="text-xs text-emerald-200/80 mt-1">{msg.audio.description}</p>
-                </div>
-              )}
-              {msg.images && msg.images.length > 0 && (
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  {msg.images.map((img, idx) => (
-                    <div key={idx} className="rounded-lg overflow-hidden border border-emerald-400/30">
-                      <img src={img.url} alt={img.description} className="w-full h-auto" />
-                      <p className="text-xs text-emerald-200/80 p-2">{img.description}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {msg.video && msg.video.length > 0 && (
-                <div className="mt-3 space-y-3">
-                  {msg.video.map((vid, idx) => (
-                    <div key={idx} className="rounded-lg overflow-hidden border border-emerald-400/30">
-                      {vid.url ? (
-                        <video controls width="100%" poster={vid.thumbnail_url}>
-                          <source src={vid.url} type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
-                      ) : (
-                        <div className="bg-black/50 h-48 flex items-center justify-center text-emerald-200">
-                          {vid.description || 'Offline video simulation'}
-                        </div>
-                      )}
-                      <p className="text-xs text-emerald-200/80 p-2">{vid.description} ({vid.duration_sec}s)</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {msg.content || (msg.isStreaming && '...')}
             </div>
           </div>
         ))}
