@@ -1,5 +1,5 @@
 // src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.15
-// BlazePose → Encoder-Decoder → Valence-Weighted Multimodal Distilled Draft + Speculative Decoding → gesture + future valence
+// BlazePose → Encoder-Decoder → Valence-Weighted Contrastive Multimodal Distilled Draft + Speculative Decoding → gesture + future valence
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as tf from '@tensorflow/tfjs';
@@ -22,11 +22,11 @@ const SPECULATIVE_DRAFT_STEPS = 6;
 const SPECULATIVE_ACCEPT_THRESHOLD = 0.9;
 const VALENCE_WEIGHT_THRESHOLD = 0.9;
 
-// Simulated valence-weighted multimodal distilled draft model
-class ValenceMultimodalDistilledDraftModel {
+// Simulated valence-weighted contrastive multimodal distilled draft model
+class ValenceContrastiveMultimodalDistilledDraftModel {
   async predict(input: tf.Tensor) {
     // Placeholder – real impl loads distilled multimodal tfjs model
-    // Trained with higher loss weight on high-valence cross-modal sequences
+    // Trained with valence-weighted InfoNCE + soft-target KD
     return tf.randomUniform([1, 4]).softmax(); // dummy logits
   }
 }
@@ -34,7 +34,7 @@ class ValenceMultimodalDistilledDraftModel {
 export class SpatiotemporalTransformerGestures {
   private holistic: Holistic | null = null;
   private encoderDecoderModel: tf.LayersModel | null = null;
-  private valenceMultimodalDistilledDraftModel: ValenceMultimodalDistilledDraftModel | null = null;
+  private valenceContrastiveDistilledDraftModel: ValenceContrastiveMultimodalDistilledDraftModel | null = null;
   private sequenceBuffer: tf.Tensor3D[] = [];
   private ySequence: Y.Array<any>;
 
@@ -44,35 +44,35 @@ export class SpatiotemporalTransformerGestures {
   }
 
   private async initializeModels() {
-    if (!await mercyGate('Initialize Transformer + Valence-Multimodal-Distilled Draft')) return;
+    if (!await mercyGate('Initialize Transformer + Valence-Contrastive-Multimodal-Distilled Draft')) return;
 
     // ... (same holistic & encoder-decoder initialization as v1.14 – omitted for brevity)
 
-    // 3. Load valence-weighted multimodal distilled draft model
-    this.valenceMultimodalDistilledDraftModel = new ValenceMultimodalDistilledDraftModel();
+    // 3. Load valence-weighted contrastive multimodal distilled draft model
+    this.valenceContrastiveDistilledDraftModel = new ValenceContrastiveMultimodalDistilledDraftModel();
 
     // Placeholder: load real distilled weights
-    // this.valenceMultimodalDistilledDraftModel = await tf.loadLayersModel('/models/gesture-multimodal-distilled/model.json');
+    // this.valenceContrastiveDistilledDraftModel = await tf.loadLayersModel('/models/gesture-contrastive-multimodal-distilled/model.json');
 
-    console.log("[SpatiotemporalTransformer] Full + Valence-Multimodal-Distilled Draft initialized – speculative decoding ready");
+    console.log("[SpatiotemporalTransformer] Full + Valence-Contrastive-Multimodal-Distilled Draft initialized – speculative decoding ready");
   }
 
   /**
-   * Speculative decoding with valence-weighted multimodal distilled draft acceptance
+   * Speculative decoding with valence-weighted contrastive multimodal distilled draft acceptance
    */
   private async speculativeDecodeWithValence(logits: tf.Tensor, futureValenceLogits: tf.Tensor, draftSteps: number = SPECULATIVE_DRAFT_STEPS): Promise<{ gesture: string; confidence: number; futureValence: number[] }> {
     const valence = currentValence.get();
-    if (!await mercyGate('Speculative decoding with valence-weighted multimodal distilled draft')) {
+    if (!await mercyGate('Speculative decoding with valence-weighted contrastive multimodal distilled draft')) {
       return this.greedyDecode(logits, futureValenceLogits);
     }
 
-    // Draft phase – use valence-multimodal-distilled draft model
+    // Draft phase – use valence-contrastive-multimodal-distilled draft model
     let currentInput = tf.stack(this.sequenceBuffer).expandDims(0);
     let draftTokens = [];
     let draftProbs = [];
 
     for (let i = 0; i < draftSteps; i++) {
-      const draftLogits = await this.valenceMultimodalDistilledDraftModel!.predict(currentInput) as tf.Tensor;
+      const draftLogits = await this.valenceContrastiveDistilledDraftModel!.predict(currentInput) as tf.Tensor;
       const draftProb = await draftLogits.softmax().data();
       const token = tf.multinomial(draftLogits.softmax(), 1).dataSync()[0];
 
@@ -118,7 +118,7 @@ export class SpatiotemporalTransformerGestures {
         futureValenceTrajectory: Array.from(futureValence),
         valenceAtRecognition: currentValence.get(),
         timestamp: Date.now(),
-        decodingMethod: 'speculative_valence_multimodal_distilled'
+        decodingMethod: 'speculative_valence_contrastive_multimodal_distilled'
       };
 
       this.ySequence.push([entry]);
