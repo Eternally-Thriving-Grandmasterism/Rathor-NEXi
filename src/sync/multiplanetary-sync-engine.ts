@@ -1,9 +1,9 @@
-// src/sync/multiplanetary-sync-engine.ts – Multiplanetary Sync Engine v2
-// Optimized ElectricSQL sync: valence prioritization, delta compression, reconnection bloom
+// src/sync/multiplanetary-sync-engine.ts – Multiplanetary Sync Engine v3
+// IndexedDB offline queue persistence, valence prioritization, reconnection bloom, zstd compression
 // MIT License – Autonomicity Games Inc. 2026
 
 import { electric } from '@electric-sql/pglite';
-import * as zstd from '@boku7/zstd'; // or use pako/brotli for browser
+import * as zstd from '@boku7/zstd'; // zstd compression
 import { currentValence } from '@/core/valence-tracker';
 import { mercyGate } from '@/core/mercy-gate';
 import mercyHaptic from '@/utils/haptic-utils';
@@ -12,17 +12,21 @@ const MERCY_THRESHOLD = 0.9999999;
 const VALENCE_SYNC_PIVOT = 0.9;
 const MAX_OFFLINE_QUEUE_SIZE = 1000;
 const RECONNECT_BACKOFF_MS = [100, 500, 2000, 5000, 10000];
+const INDEXEDDB_DB_NAME = 'rathor-mercy-offline-queue';
+const INDEXEDDB_STORE_NAME = 'sync-queue';
+const INDEXEDDB_VERSION = 1;
 
 let db: any = null;
-let syncQueue: Array<{ table: string; row: any; valence: number }> = [];
+let idb: IDBDatabase | null = null;
 let reconnectAttempts = 0;
 
 export class MultiplanetarySyncEngine {
   static async initialize(databaseUrl: string) {
-    const actionName = 'Initialize optimized ElectricSQL sync engine';
+    const actionName = 'Initialize optimized ElectricSQL sync engine with IndexedDB queue';
     if (!await mercyGate(actionName)) return;
 
     try {
+      // 1. ElectricSQL connection
       db = await electric.connect(databaseUrl, {
         auth: { token: 'your-auth-token-here' }, // replace with real auth
         schema: {
@@ -34,7 +38,7 @@ export class MultiplanetarySyncEngine {
         }
       });
 
-      // Subscribe to high-priority shapes first (valence-aware)
+      // 2. Subscribe to high-priority shapes (valence-aware)
       await db.sync({
         shape: {
           table: 'valence_logs',
@@ -50,7 +54,10 @@ export class MultiplanetarySyncEngine {
 
       console.log("[SyncEngine] ElectricSQL initialized – high-valence shapes prioritized");
 
-      // Reconnection bloom
+      // 3. Initialize IndexedDB queue
+      await this.initIndexedDB();
+
+      // 4. Reconnection bloom
       db.on('disconnected', () => {
         this.startReconnectBloom();
       });
@@ -60,28 +67,66 @@ export class MultiplanetarySyncEngine {
         mercyHaptic.playPattern('reconnectionBloom', currentValence.get());
         this.flushOfflineQueue();
       });
+
+      // Flush any persisted queue on init
+      this.flushOfflineQueue();
     } catch (e) {
       console.error("[SyncEngine] Initialization failed", e);
     }
   }
 
+  private static async initIndexedDB() {
+    return new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open(INDEXEDDB_DB_NAME, INDEXEDDB_VERSION);
+
+      request.onerror = () => reject(request.error);
+
+      request.onsuccess = () => {
+        idb = request.result;
+        resolve();
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(INDEXEDDB_STORE_NAME)) {
+          db.createObjectStore(INDEXEDDB_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+      };
+    });
+  }
+
   static async syncWithValencePriority(data: { table: string; row: any }) {
-    const actionName = 'Valence-priority sync';
+    const actionName = 'Valence-priority sync with IndexedDB persistence';
     if (!await mercyGate(actionName)) return;
 
     const valence = currentValence.get();
-    const entry = { ...data, valence };
+    const entry = {
+      table: data.table,
+      row: data.row,
+      valence,
+      timestamp: Date.now(),
+      id: crypto.randomUUID() // unique ID for queue
+    };
 
     if (valence > VALENCE_SYNC_PIVOT) {
-      // High valence → sync immediately
       await this.syncImmediate(entry);
     } else {
-      // Queue for batch sync
-      syncQueue.push(entry);
-      if (syncQueue.length > MAX_OFFLINE_QUEUE_SIZE) {
-        syncQueue.shift(); // prune oldest low-valence
-      }
+      await this.persistToQueue(entry);
     }
+  }
+
+  private static async persistToQueue(entry: any) {
+    if (!idb) return;
+
+    return new Promise<void>((resolve, reject) => {
+      const tx = idb!.transaction(INDEXEDDB_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(INDEXEDDB_STORE_NAME);
+
+      store.add(entry);
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
   }
 
   private static async syncImmediate(entry: any) {
@@ -94,30 +139,48 @@ export class MultiplanetarySyncEngine {
       });
       mercyHaptic.playPattern('cosmicHarmony', entry.valence);
     } catch (e) {
-      syncQueue.push(entry);
+      await this.persistToQueue(entry);
     }
   }
 
   private static async flushOfflineQueue() {
-    if (syncQueue.length === 0) return;
+    if (!idb || !db?.isConnected) return;
 
-    // Sort by valence descending (high first)
-    syncQueue.sort((a, b) => b.valence - a.valence);
+    return new Promise<void>(async (resolve) => {
+      const tx = idb!.transaction(INDEXEDDB_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(INDEXEDDB_STORE_NAME);
+      const request = store.getAll();
 
-    const batch = syncQueue.splice(0, 50); // batch 50 at a time
-    for (const entry of batch) {
-      await this.syncImmediate(entry);
-    }
+      request.onsuccess = async () => {
+        let queue = request.result || [];
 
-    if (syncQueue.length > 0) {
-      setTimeout(() => this.flushOfflineQueue(), 5000);
-    }
+        // Sort by valence descending (high first), then timestamp
+        queue.sort((a: any, b: any) => {
+          if (b.valence !== a.valence) return b.valence - a.valence;
+          return a.timestamp - b.timestamp;
+        });
+
+        const batchSize = 50;
+        for (let i = 0; i < queue.length; i += batchSize) {
+          const batch = queue.slice(i, i + batchSize);
+          for (const entry of batch) {
+            await this.syncImmediate(entry);
+            store.delete(entry.id); // remove after successful sync
+          }
+          await new Promise(r => setTimeout(r, 100)); // prevent overload
+        }
+
+        resolve();
+      };
+
+      request.onerror = () => resolve(); // fail gracefully
+    });
   }
 
   private static async compressDelta(data: any): Promise<Uint8Array> {
     const json = JSON.stringify(data);
     const binary = new TextEncoder().encode(json);
-    return await zstd.compress(binary, 3); // zstd level 3
+    return await zstd.compress(binary, 3);
   }
 
   private static startReconnectBloom() {
