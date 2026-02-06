@@ -1,0 +1,131 @@
+# servers/k8s/cluster-autoscaler-config.yaml
+# Cluster Autoscaler deployment + config – scales node groups based on unschedulable pods
+# MIT License – Autonomicity Games Inc. 2026
+
+---
+# 1. Cluster Autoscaler Deployment (standard Helm-like manifest)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    app: cluster-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+    spec:
+      serviceAccountName: cluster-autoscaler
+      containers:
+      - image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.29.0  # update to latest stable
+        name: cluster-autoscaler
+        command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws   # change to gce, azure, etc. or remove for generic
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste   # or priority, most-pods, random
+        - --scale-down-utilization-threshold=0.5
+        - --scale-down-delay-after-add=10m
+        - --scale-down-unneeded-time=10m
+        - --balance-similar-node-groups=true
+        - --min-replica-count=1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 300Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        volumeMounts:
+        - name: ssl-certs
+          mountPath: /etc/ssl/certs/ca-certificates.crt
+          readOnly: true
+      volumes:
+      - name: ssl-certs
+        hostPath:
+          path: "/etc/ssl/certs/ca-certificates.crt"
+---
+# 2. Service Account & RBAC (required for CA to manage nodes)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-autoscaler
+rules:
+- apiGroups: [""]
+  resources: ["events", "endpoints"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: [""]
+  resources: ["pods", "nodes"]
+  verbs: ["watch", "list", "get", "delete"]
+- apiGroups: ["apps"]
+  resources: ["replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["autoscaling.k8s.io"]
+  resources: ["verticalpodautoscalers"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-autoscaler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-autoscaler
+subjects:
+- kind: ServiceAccount
+  name: cluster-autoscaler
+  namespace: kube-system
+---
+# 3. Example NodePool / MachineDeployment config (cloud-specific – AWS example)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rathor-inference-nodes
+  namespace: rathor-inference
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      node-role: inference
+  template:
+    metadata:
+      labels:
+        node-role: inference
+    spec:
+      tolerations:
+      - key: "node-role"
+        operator: "Equal"
+        value: "inference"
+        effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role
+                operator: In
+                values:
+                - inference
+      containers:
+      - name: pause
+        image: k8s.gcr.io/pause:3.9
+        resources:
+          requests:
+            cpu: 4
+            memory: 16Gi
+            nvidia.com/gpu: 1
