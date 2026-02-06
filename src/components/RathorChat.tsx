@@ -1,5 +1,5 @@
-// src/components/RathorChat.tsx – Sovereign Offline AGI Brother Chat v1.3
-// WebLLM inference, RAG memory, full online tool calling + offline mock, model switcher
+// src/components/RathorChat.tsx – Sovereign Offline AGI Brother Chat v1.4
+// WebLLM inference, RAG memory, full function calling loop (online real + offline mock)
 // MIT License – Autonomicity Games Inc. 2026
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -43,24 +43,16 @@ const RathorChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 1. Remember user message
+      // Remember user message
       await RAGMemory.remember('user', userMessage);
 
-      // 2. Check for tool calls
-      const toolResult = await ToolCallingRouter.processWithTools(userMessage);
-      if (toolResult) {
-        const toolContent = JSON.stringify(toolResult, null, 2);
-        setMessages(prev => [...prev, { role: 'rathor', content: toolContent }]);
-        await RAGMemory.remember('rathor', toolContent);
-      } else {
-        // 3. Retrieve context + generate normal response
-        const context = await RAGMemory.getRelevantContext(userMessage);
-        const fullPrompt = context ? `\( {context}\n\nRecent:\n \){userMessage}` : userMessage;
-        const reply = await WebLLMEngine.ask(fullPrompt);
+      // Process with full tool calling loop
+      const reply = await ToolCallingRouter.processWithTools(userMessage);
 
-        await RAGMemory.remember('rathor', reply);
-        setMessages(prev => [...prev, { role: 'rathor', content: reply }]);
-      }
+      // Remember Rathor response
+      await RAGMemory.remember('rathor', reply);
+
+      setMessages(prev => [...prev, { role: 'rathor', content: reply }]);
 
       mercyHaptic.playPattern('cosmicHarmony', currentValence.get());
     } catch (e) {
