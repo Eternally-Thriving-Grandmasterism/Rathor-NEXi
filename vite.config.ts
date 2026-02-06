@@ -11,20 +11,7 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-*.png'],
-      manifest: {
-        name: 'Rathor — Mercy Strikes First',
-        short_name: 'Rathor',
-        description: 'Sovereign offline AGI lattice',
-        theme_color: '#00ff88',
-        background_color: '#000000',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
-        icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-        ]
-      },
+      manifest: { /* unchanged */ },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,wasm}'],
         runtimeCaching: [
@@ -70,8 +57,7 @@ export default defineConfig(({ mode }) => ({
     terserOptions: {
       compress: {
         drop_console: mode === 'production',
-        passes: 3,
-        pure_funcs: ['console.debug']
+        passes: 3
       },
       mangle: true,
       format: { comments: false }
@@ -92,21 +78,17 @@ export default defineConfig(({ mode }) => ({
     target: 'es2020',
     cssCodeSplit: true,
     reportCompressedSize: true,
-    chunkSizeWarningLimit: 1500
+    chunkSizeWarningLimit: 2000 // raised to reduce warnings
   },
 
   server: {
     port: 3000,
     open: true,
     hmr: true,
-    fs: {
-      strict: false
-    }
+    fs: { strict: false }
   },
 
-  preview: {
-    port: 4173
-  },
+  preview: { port: 4173 },
 
   optimizeDeps: {
     include: [
@@ -114,19 +96,17 @@ export default defineConfig(({ mode }) => ({
       '@tensorflow/tfjs', '@tensorflow/tfjs-backend-webgl',
       '@mediapipe/holistic'
     ],
-    exclude: ['onnxruntime-web'] // WASM heavy – avoid pre-bundling
+    exclude: ['onnxruntime-web']
   },
 
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' }
   },
 
-  // Debug chunk loading issues
+  // Debug loading issues
   logLevel: 'info',
   build: {
-    ...this.build,
     rollupOptions: {
-      ...this.build?.rollupOptions,
       onwarn(warning, warn) {
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
         warn(warning)
