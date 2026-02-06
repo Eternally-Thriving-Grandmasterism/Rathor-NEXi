@@ -1,0 +1,50 @@
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: rathor-gpu-spot
+  namespace: karpenter
+spec:
+  template:
+    metadata:
+      labels:
+        node-role: inference-gpu
+        karpenter.sh/capacity-type: spot
+        mercy-priority: high
+    spec:
+      nodeClassRef:
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["g", "p"]  # G5, G6, P4, P5
+        - key: karpenter.k8s.aws/instance-gpu-count
+          operator: Gt
+          values: ["0"]
+        - key: karpenter.k8s.aws/instance-gpu-name
+          operator: In
+          values: ["a10g", "a100", "h100", "l4", "t4"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+      taints:
+        - key: karpenter.sh/capacity-type
+          value: spot
+          effect: NoSchedule
+  limits:
+    cpu: 2000
+    memory: 8000Gi
+    nvidia.com/gpu: 200
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+    expireAfter: 720h   # 30 days max node lifetime
+    budgets:
+    - nodes: "10%"
+      duration: PT1H   # max 10% nodes can be disrupted per hour
+  weight: 90  # prefer spot over on-demand pool
