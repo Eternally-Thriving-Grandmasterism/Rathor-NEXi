@@ -41,3 +41,34 @@ NEXi/
   - next.config.js & mercy-orchestrator.js at root
 - Rust mercy_* crates remain top-level (intentional monorepo style)
 - All files mercy-gated, zero-runtime weight — pure reflection, not app.
+
+New Rathor merger:
+src/
+├── core/
+│   ├── mercy-gate.ts               # central gate + valence tracker (used everywhere)
+│   ├── valence-tracker.ts          # singleton global valence state + persistence
+│   └── types.ts                    # shared types (Valence, GestureType, ProbeCommand, etc.)
+├── engines/
+│   ├── flow-state-engine.ts        # mercyFlow + mercyFlowEdu + mercyClassFlow
+│   ├── sdt-integration.ts          # mercySDT + SDT mini-theories
+│   ├── perma-plus.ts               # PERMA+ scoring & micro-moments
+│   ├── positivity-resonance.ts     # shared affect + synchrony
+│   ├── mirror-neuron.ts            # action/emotion mirroring
+│   ├── predictive-manifold.ts      # predictive coding + shared manifold
+│   ├── fep-core.ts                 # active inference + surprise minimization
+│   ├── variational-message-passing.ts # VMP + multi-agent VMP
+│   └── cfr-nfsp-rebel.ts           # CFR / NFSP / ReBeL / Cicero family
+├── ui/
+│   ├── sovereign-dashboard.tsx     # main button-first UI + floating summon
+│   ├── onboarding-ladder.tsx       # progression ladder + daily pulse
+│   └── gamification-layer.tsx      # streaks, badges, quests
+├── guards/
+│   ├── deception-guard.ts          # multi-engine deception risk
+│   └── mech-interp-guard.ts        # probe/SAE/circuit checks
+├── simulations/
+│   ├── probe-fleet-cicero-sim.ts   # von Neumann + Cicero negotiation
+│   └── alphastar-multi-agent.ts    # RTS swarm coordination
+└── utils/
+    ├── haptic-utils.ts
+    ├── fuzzy-mercy.ts              # shared fuzzy logic
+    └── index.ts                    # barrel exports
