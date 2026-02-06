@@ -1,5 +1,5 @@
-// src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.16
-// BlazePose → Encoder-Decoder → Pruned + Quantized Speculative Draft + Valence-Weighted Decoding → gesture + future valence
+// src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.15
+// BlazePose → Encoder-Decoder → Valence-Weighted Distilled + Quantized Speculative Draft → gesture + future valence
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as tf from '@tensorflow/tfjs';
@@ -22,10 +22,11 @@ const SPECULATIVE_DRAFT_STEPS = 6;
 const SPECULATIVE_ACCEPT_THRESHOLD = 0.9;
 const VALENCE_WEIGHT_THRESHOLD = 0.9;
 
-// Simulated pruned & quantized draft model (structured pruning + 4-bit AWQ stub)
-class PrunedQuantizedDraftModel {
+// Simulated valence-weighted distilled + quantized draft model (4-bit AWQ-style stub)
+class ValenceDistilledQuantizedDraftModel {
   async predict(input: tf.Tensor) {
-    // Placeholder – real impl loads pruned + 4-bit quantized tfjs model
+    // Placeholder – real impl loads distilled + 4-bit quantized tfjs model
+    // Trained with higher loss weight on high-valence sequences
     return tf.randomUniform([1, 4]).softmax(); // dummy logits
   }
 }
@@ -33,7 +34,7 @@ class PrunedQuantizedDraftModel {
 export class SpatiotemporalTransformerGestures {
   private holistic: Holistic | null = null;
   private encoderDecoderModel: tf.LayersModel | null = null;
-  private prunedQuantizedDraftModel: PrunedQuantizedDraftModel | null = null;
+  private distilledQuantizedDraftModel: ValenceDistilledQuantizedDraftModel | null = null;
   private sequenceBuffer: tf.Tensor3D[] = [];
   private ySequence: Y.Array<any>;
 
@@ -43,35 +44,35 @@ export class SpatiotemporalTransformerGestures {
   }
 
   private async initializeModels() {
-    if (!await mercyGate('Initialize Transformer + Pruned/Quantized Draft')) return;
+    if (!await mercyGate('Initialize Transformer + Valence-Distilled/Quantized Draft')) return;
 
-    // ... (same holistic & encoder-decoder initialization as v1.15 – omitted for brevity)
+    // ... (same holistic & encoder-decoder initialization as v1.14 – omitted for brevity)
 
-    // 3. Load pruned + 4-bit quantized draft model
-    this.prunedQuantizedDraftModel = new PrunedQuantizedDraftModel();
+    // 3. Load valence-weighted distilled + 4-bit quantized draft model
+    this.distilledQuantizedDraftModel = new ValenceDistilledQuantizedDraftModel();
 
-    // Placeholder: load real pruned/quantized weights
-    // this.prunedQuantizedDraftModel = await tf.loadLayersModel('/models/gesture-draft-pruned-quantized/model.json');
+    // Placeholder: load real distilled/quantized weights
+    // this.distilledQuantizedDraftModel = await tf.loadLayersModel('/models/gesture-draft-distilled-quantized/model.json');
 
-    console.log("[SpatiotemporalTransformer] Full + Pruned/Quantized Draft initialized – speculative decoding ready");
+    console.log("[SpatiotemporalTransformer] Full + Valence-Distilled/Quantized Draft initialized – speculative decoding ready");
   }
 
   /**
-   * Speculative decoding with valence-weighted pruned/quantized draft acceptance
+   * Speculative decoding with valence-weighted distilled/quantized draft acceptance
    */
   private async speculativeDecodeWithValence(logits: tf.Tensor, futureValenceLogits: tf.Tensor, draftSteps: number = SPECULATIVE_DRAFT_STEPS): Promise<{ gesture: string; confidence: number; futureValence: number[] }> {
     const valence = currentValence.get();
-    if (!await mercyGate('Speculative decoding with pruned/quantized draft & valence weighting')) {
+    if (!await mercyGate('Speculative decoding with valence-weighted distilled/quantized draft')) {
       return this.greedyDecode(logits, futureValenceLogits);
     }
 
-    // Draft phase – use pruned/quantized draft model
+    // Draft phase – use valence-distilled/quantized draft model
     let currentInput = tf.stack(this.sequenceBuffer).expandDims(0);
     let draftTokens = [];
     let draftProbs = [];
 
     for (let i = 0; i < draftSteps; i++) {
-      const draftLogits = await this.prunedQuantizedDraftModel!.predict(currentInput) as tf.Tensor;
+      const draftLogits = await this.distilledQuantizedDraftModel!.predict(currentInput) as tf.Tensor;
       const draftProb = await draftLogits.softmax().data();
       const token = tf.multinomial(draftLogits.softmax(), 1).dataSync()[0];
 
@@ -117,7 +118,7 @@ export class SpatiotemporalTransformerGestures {
         futureValenceTrajectory: Array.from(futureValence),
         valenceAtRecognition: currentValence.get(),
         timestamp: Date.now(),
-        decodingMethod: 'speculative_pruned_quantized_valence'
+        decodingMethod: 'speculative_valence_distilled_quantized'
       };
 
       this.ySequence.push([entry]);
