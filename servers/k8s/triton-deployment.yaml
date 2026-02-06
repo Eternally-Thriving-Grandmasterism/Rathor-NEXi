@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: triton-inference
+  namespace: rathor-inference
+  labels:
+    app: triton
+    component: inference
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: triton
+  template:
+    metadata:
+      labels:
+        app: triton
+    spec:
+      containers:
+      - name: triton
+        image: nvcr.io/nvidia/tritonserver:24.08-py3
+        args: [
+          "tritonserver",
+          "--model-repository=/models",
+          "--api-timeout=30000",
+          "--log-verbose=1",
+          "--model-control-mode=explicit",
+          "--dynamic-batching=true"
+        ]
+        ports:
+        - containerPort: 8000  # HTTP
+        - containerPort: 8001  # gRPC
+        - containerPort: 8002  # Metrics
+        volumeMounts:
+        - name: model-repository
+          mountPath: /models
+        resources:
+          requests:
+            cpu: "4"
+            memory: "16Gi"
+            nvidia.com/gpu: "1"   # adjust per node
+          limits:
+            cpu: "8"
+            memory: "32Gi"
+            nvidia.com/gpu: "1"
+        readinessProbe:
+          httpGet:
+            path: /v2/health/ready
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /v2/health/live
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: model-repository
+        persistentVolumeClaim:
+          claimName: triton-model-repo-pvc
