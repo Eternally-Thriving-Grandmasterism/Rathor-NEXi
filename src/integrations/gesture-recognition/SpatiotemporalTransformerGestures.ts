@@ -1,5 +1,5 @@
 // src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.15
-// BlazePose → Encoder-Decoder → Valence-Weighted QAT-KD Distilled Draft + Speculative Decoding → gesture + future valence
+// BlazePose → Encoder-Decoder → Valence-Weighted Contrastive QAT-KD Distilled Draft + Speculative Decoding → gesture + future valence
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as tf from '@tensorflow/tfjs';
@@ -22,11 +22,11 @@ const SPECULATIVE_DRAFT_STEPS = 6;
 const SPECULATIVE_ACCEPT_THRESHOLD = 0.9;
 const VALENCE_WEIGHT_THRESHOLD = 0.9;
 
-// Simulated valence-weighted QAT-KD distilled draft model
-class ValenceQATKDdistilledDraftModel {
+// Simulated valence-weighted contrastive QAT-KD distilled draft model
+class ValenceContrastiveQATKDdistilledDraftModel {
   async predict(input: tf.Tensor) {
-    // Placeholder – real impl loads QAT-KD-distilled tfjs model
-    // Trained with fake-quant ops + valence-weighted KD loss + attention matching
+    // Placeholder – real impl loads contrastive QAT-KD-distilled tfjs model
+    // Trained with fake-quant ops + valence-weighted InfoNCE + KD loss
     return tf.randomUniform([1, 4]).softmax(); // dummy logits
   }
 }
@@ -34,7 +34,7 @@ class ValenceQATKDdistilledDraftModel {
 export class SpatiotemporalTransformerGestures {
   private holistic: Holistic | null = null;
   private encoderDecoderModel: tf.LayersModel | null = null;
-  private valenceQATKDdistilledDraftModel: ValenceQATKDdistilledDraftModel | null = null;
+  private valenceContrastiveQATKDdistilledDraftModel: ValenceContrastiveQATKDdistilledDraftModel | null = null;
   private sequenceBuffer: tf.Tensor3D[] = [];
   private ySequence: Y.Array<any>;
 
@@ -44,35 +44,35 @@ export class SpatiotemporalTransformerGestures {
   }
 
   private async initializeModels() {
-    if (!await mercyGate('Initialize Transformer + Valence-QAT-KD-Distilled Draft')) return;
+    if (!await mercyGate('Initialize Transformer + Valence-Contrastive-QAT-KD-Distilled Draft')) return;
 
     // ... (same holistic & encoder-decoder initialization as v1.14 – omitted for brevity)
 
-    // 3. Load valence-weighted QAT-KD distilled draft model
-    this.valenceQATKDdistilledDraftModel = new ValenceQATKDdistilledDraftModel();
+    // 3. Load valence-weighted contrastive QAT-KD distilled draft model
+    this.valenceContrastiveQATKDdistilledDraftModel = new ValenceContrastiveQATKDdistilledDraftModel();
 
-    // Placeholder: load real QAT-KD-distilled weights
-    // this.valenceQATKDdistilledDraftModel = await tf.loadLayersModel('/models/gesture-qat-kd-distilled/model.json');
+    // Placeholder: load real contrastive QAT-KD-distilled weights
+    // this.valenceContrastiveQATKDdistilledDraftModel = await tf.loadLayersModel('/models/gesture-contrastive-qat-kd-distilled/model.json');
 
-    console.log("[SpatiotemporalTransformer] Full + Valence-QAT-KD-Distilled Draft initialized – speculative decoding ready");
+    console.log("[SpatiotemporalTransformer] Full + Valence-Contrastive-QAT-KD-Distilled Draft initialized – speculative decoding ready");
   }
 
   /**
-   * Speculative decoding with valence-weighted QAT-KD distilled draft acceptance
+   * Speculative decoding with valence-weighted contrastive QAT-KD distilled draft acceptance
    */
   private async speculativeDecodeWithValence(logits: tf.Tensor, futureValenceLogits: tf.Tensor, draftSteps: number = SPECULATIVE_DRAFT_STEPS): Promise<{ gesture: string; confidence: number; futureValence: number[] }> {
     const valence = currentValence.get();
-    if (!await mercyGate('Speculative decoding with valence-weighted QAT-KD distilled draft')) {
+    if (!await mercyGate('Speculative decoding with valence-weighted contrastive QAT-KD distilled draft')) {
       return this.greedyDecode(logits, futureValenceLogits);
     }
 
-    // Draft phase – use valence-QAT-KD-distilled draft model
+    // Draft phase – use valence-contrastive-QAT-KD-distilled draft model
     let currentInput = tf.stack(this.sequenceBuffer).expandDims(0);
     let draftTokens = [];
     let draftProbs = [];
 
     for (let i = 0; i < draftSteps; i++) {
-      const draftLogits = await this.valenceQATKDdistilledDraftModel!.predict(currentInput) as tf.Tensor;
+      const draftLogits = await this.valenceContrastiveQATKDdistilledDraftModel!.predict(currentInput) as tf.Tensor;
       const draftProb = await draftLogits.softmax().data();
       const token = tf.multinomial(draftLogits.softmax(), 1).dataSync()[0];
 
@@ -118,7 +118,7 @@ export class SpatiotemporalTransformerGestures {
         futureValenceTrajectory: Array.from(futureValence),
         valenceAtRecognition: currentValence.get(),
         timestamp: Date.now(),
-        decodingMethod: 'speculative_valence_qat_kd_distilled'
+        decodingMethod: 'speculative_valence_contrastive_qat_kd_distilled'
       };
 
       this.ySequence.push([entry]);
