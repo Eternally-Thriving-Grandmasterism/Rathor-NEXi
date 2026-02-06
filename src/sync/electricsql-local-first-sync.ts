@@ -182,4 +182,101 @@ export class ElectricSQLLocalFirstSync {
   }
 }
 
+export default ElectricSQLLocalFirstSync;      await electricDb.sync({
+        shape: {
+          table: 'valence_logs',
+          where: 'valence > $1',
+          params: [VALENCE_SHAPE_PIVOT]
+        }
+      });
+
+      // Then core tables
+      await electricDb.sync({ shape: { table: 'users' } });
+      await electricDb.sync({ shape: { table: 'progress_ladders' } });
+      await electricDb.sync({ shape: { table: 'habitats' } });
+      await electricDb.sync({ shape: { table: 'probes' } });
+
+      console.log("[ElectricSync] ElectricSQL initialized – high-valence shapes prioritized");
+
+      // 4. Reconnection bloom
+      electricDb.on('disconnected', () => {
+        this.startReconnectBloom();
+      });
+
+      electricDb.on('connected', () => {
+        reconnectAttempts = 0;
+        mercyHaptic.playPattern('reconnectionBloom', currentValence.get());
+        console.log("[ElectricSync] Reconnected – syncing pending changes");
+      });
+    } catch (e) {
+      console.error("[ElectricSync] Initialization failed", e);
+      mercyHaptic.playPattern('warningPulse', 0.7);
+    }
+  }
+
+  static async queryWithValencePriority(table: keyof typeof schema, filter: any = {}) {
+    const actionName = 'Valence-priority ElectricSQL query';
+    if (!await mercyGate(actionName) || !electricDb) return [];
+
+    const valence = currentValence.get();
+
+    let query = electricDb[table];
+
+    // Prioritize high-valence records
+    if (valence > VALENCE_SHAPE_PIVOT && table === 'valence_logs') {
+      query = query.where('valence > ?', [VALENCE_SHAPE_PIVOT]);
+    }
+
+    // Apply additional filter
+    if (filter) {
+      for (const [field, value] of Object.entries(filter)) {
+        query = query.where(`${field} = ?`, [value]);
+      }
+    }
+
+    return await query.fetch();
+  }
+
+  static async insertWithValence(table: keyof typeof schema, data: any) {
+    const actionName = 'Valence-aware ElectricSQL insert';
+    if (!await mercyGate(actionName) || !electricDb) return;
+
+    const valence = currentValence.get();
+    const entry = {
+      ...data,
+      updated_at: new Date(),
+      valence: valence
+    };
+
+    await electricDb[table].create(entry);
+
+    if (valence > VALENCE_SHAPE_PIVOT) {
+      mercyHaptic.playPattern('cosmicHarmony', valence);
+    }
+  }
+
+  private static startReconnectBloom() {
+    const delay = RECONNECT_BACKOFF_MS[Math.min(reconnectAttempts, RECONNECT_BACKOFF_MS.length - 1)];
+    reconnectAttempts++;
+    setTimeout(() => {
+      electricDb?.reconnect();
+    }, delay);
+  }
+
+  static getSyncStatus() {
+    return {
+      isConnected: electricDb?.isConnected || false,
+      reconnectAttempts,
+      lastValenceSync: currentValence.get()
+    };
+  }
+
+  static async destroy() {
+    if (electricDb) {
+      await electricDb.disconnect();
+      electricDb = null;
+    }
+  }
+}
+
 export default ElectricSQLLocalFirstSync;
