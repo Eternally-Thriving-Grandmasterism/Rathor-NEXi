@@ -176,4 +176,99 @@ if __name__ == "__main__":
     parser.add_argument("--future_horizon", type=int, default=10)
     parser.add_argument("--output", type=str, default="gesture_transformer_qat.onnx")
     args = parser.parse_args()
+    main(args)        p_gaussian_noise=0.6
+    ).to(device)
+
+    # ─── Model ───────────────────────────────────────────────────────
+    model = GestureTransformer(
+        seq_len=args.seq_len,
+        landmark_dim=args.landmark_dim,
+        num_gesture_classes=args.num_classes,
+        future_valence_horizon=args.future_horizon
+    ).to(device)
+
+    # Load pre-trained FP32 if exists
+    checkpoint_path = "checkpoints/gesture_transformer_best.pt"
+    if os.path.exists(checkpoint_path):
+        model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+        print(f"[QAT] Loaded FP32 checkpoint: {checkpoint_path}")
+    else:
+        print("[QAT] Starting from scratch")
+
+    fuse_model(model)  # fuse before QAT
+
+    criterion_gesture = nn.CrossEntropyLoss()
+    criterion_valence = nn.MSELoss()
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+
+    best_val_loss = float('inf')
+    best_epoch = 0
+
+    for epoch in range(args.epochs):
+        # Progressive QAT activation
+        model = apply_qat_progressive(model, epoch, args.epochs)
+
+        model.train()
+        total_loss = 0
+
+        for x, y_gesture, y_valence in train_loader:
+            x, y_gesture, y_valence = x.to(device), y_gesture.to(device), y_valence.to(device)
+
+            x = aug(x, valence=current_valence())
+
+            optimizer.zero_grad()
+            gesture_logits, future_valence = model(x)
+
+            loss_g = criterion_gesture(gesture_logits, y_gesture)
+            loss_v = criterion_valence(future_valence, y_valence)
+            loss = loss_g + loss_v
+
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+
+        scheduler.step()
+
+        avg_loss = total_loss / len(train_loader)
+
+        # Validation projection check
+        proj_valence = compute_valence_projection(model, val_loader, device)
+        is_safe = proj_valence >= current_valence() - 0.05
+
+        if not is_safe:
+            print(f"[Mercy Gate] Epoch {epoch+1} – Projected valence drop too high ({proj_valence:.3f}) – skipping checkpoint")
+            continue
+
+        if avg_loss < best_val_loss:
+            best_val_loss = avg_loss
+            best_epoch = epoch
+            torch.save(model.state_dict(), f"checkpoints/gesture_transformer_qat_best.pt")
+            print(f"[QAT Checkpoint] New best at epoch {epoch+1} – loss {avg_loss:.4f}")
+
+        print(f"Epoch {epoch+1}/{args.epochs} | Loss: {avg_loss:.4f} | Proj V: {proj_valence:.3f}")
+
+    # Final conversion to quantized model
+    model.eval()
+    quantized_model = convert(model, inplace=False)
+
+    # Export quantized ONNX
+    dummy_input = torch.randn(1, args.seq_len, args.landmark_dim).to(device)
+    quantized_model.export_to_onnx(dummy_input, args.output)
+
+    print(f"[QAT] Training complete – quantized model exported to {args.output}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Quantization-Aware Training for Gesture Transformer")
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--seq_len", type=int, default=45)
+    parser.add_argument("--landmark_dim", type=int, default=225)
+    parser.add_argument("--num_classes", type=int, default=5)
+    parser.add_argument("--future_horizon", type=int, default=10)
+    parser.add_argument("--output", type=str, default="gesture_transformer_qat.onnx")
+    args = parser.parse_args()
     main(args)
