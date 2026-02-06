@@ -1,5 +1,5 @@
 // src/integrations/gesture-recognition/GestureOverlay.tsx – Gesture Recognition Overlay v1.1
-// Real-time handpose detection, valence-modulated breathing HUD, haptic feedback, persistent MR anchors
+// Lazy tfjs/BlazePose loading, valence breathing HUD, haptic feedback, persistent anchors
 // MIT License – Autonomicity Games Inc. 2026
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -7,85 +7,100 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { currentValence } from '@/core/valence-tracker';
 import { mercyGate } from '@/core/mercy-gate';
 import mercyHaptic from '@/utils/haptic-utils';
-import * as handpose from '@tensorflow-models/handpose';
-import '@tensorflow/tfjs-backend-webgl';
+import GestureEngineLazyLoader from './GestureEngineLazyLoader';
 
 const GestureOverlay: React.FC<{ videoRef: React.RefObject<HTMLVideoElement> }> = ({ videoRef }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentGesture, setCurrentGesture] = useState<string | null>(null);
   const [valenceGlow, setValenceGlow] = useState(currentValence.get());
-  const [isRecognizing, setIsRecognizing] = useState(false);
-
-  const modelRef = useRef<handpose.HandPose | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  const [isEngineReady, setIsEngineReady] = useState(GestureEngineLazyLoader.isActive());
 
   useEffect(() => {
-    const loadModel = async () => {
-      if (!await mercyGate('Load gesture recognition model')) return;
-      modelRef.current = await handpose.load();
-      setIsRecognizing(true);
-      startDetectionLoop();
-    };
-
-    loadModel();
-
-    return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    };
+    const unsubscribe = currentValence.subscribe(v => setValenceGlow(v));
+    return unsubscribe;
   }, []);
 
-  const startDetectionLoop = () => {
+  useEffect(() => {
+    // Activate engine on mount or high valence
+    GestureEngineLazyLoader.activate(() => {
+      setIsEngineReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isEngineReady || !videoRef.current) return;
+
+    let animationFrame: number;
+
     const detect = async () => {
-      if (videoRef.current && modelRef.current && canvasRef.current) {
-        const predictions = await modelRef.current.estimateHands(videoRef.current);
+      const holistic = await GestureEngineLazyLoader.getHolistic();
+      if (!holistic) return;
 
-        if (predictions.length > 0) {
-          const landmarks = predictions[0].landmarks;
-          const gesture = recognizeGesture(landmarks);
+      const results = await holistic.send({ image: videoRef.current });
 
-          if (gesture) {
-            setCurrentGesture(gesture);
-            mercyHaptic.playPattern(getHapticForGesture(gesture), valenceGlow);
-            handleRecognizedGesture(gesture);
-          }
-        } else {
-          setCurrentGesture(null);
+      if (results.poseLandmarks || results.leftHandLandmarks || results.rightHandLandmarks) {
+        const gesture = recognizeGesture(results); // your existing rule-based or transformer logic
+        if (gesture) {
+          setCurrentGesture(gesture);
+          mercyHaptic.playPattern(getHapticForGesture(gesture), valenceGlow);
         }
       }
 
-      animationFrameRef.current = requestAnimationFrame(detect);
+      animationFrame = requestAnimationFrame(detect);
     };
 
     detect();
-  };
 
-  const recognizeGesture = (landmarks: number[][]): string | null => {
-    const thumbTip = landmarks[4];
-    const indexTip = landmarks[8];
-    const middleTip = landmarks[12];
+    return () => cancelAnimationFrame(animationFrame);
+  }, [isEngineReady, videoRef, valenceGlow]);
 
-    const pinchDistance = Math.hypot(thumbTip[0] - indexTip[0], thumbTip[1] - indexTip[1]);
-    const spiralMotion = Math.abs(thumbTip[0] - middleTip[0]) > 50; // crude motion detection
+  // ... (keep your existing recognizeGesture, getHapticForGesture, return JSX as before)
 
-    if (pinchDistance < 30) return 'pinch';           // propose alliance
-    if (spiralMotion) return 'spiral';                // bloom swarm
-    if (Math.abs(indexTip[1] - middleTip[1]) < 20) return 'figure8'; // infinite harmony loop
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      <canvas ref={canvasRef} className="absolute inset-0" />
 
-    return null;
-  };
+      <AnimatePresence>
+        {currentGesture && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.div
+              className="relative w-96 h-96 rounded-full border-4 border-cyan-400/30 backdrop-blur-xl"
+              style={{
+                background: `radial-gradient(circle at 50% 50%, rgba(0,255,136,${valenceGlow}) 0%, transparent 70%)`
+              }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              {/* ... existing inner glow, border, gesture text ... */}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-  const getHapticForGesture = (gesture: string): string => {
-    switch (gesture) {
-      case 'pinch': return 'allianceProposal';
-      case 'spiral': return 'swarmBloom';
-      case 'figure8': return 'eternalHarmony';
-      default: return 'neutralPulse';
-    }
-  };
+      {/* Persistent anchor indicators */}
+      <div className="absolute bottom-8 left-8 text-cyan-200/70 text-sm backdrop-blur-sm p-4 rounded-xl border border-cyan-500/20">
+        Pinch: Propose Alliance  
+        Spiral: Bloom Swarm  
+        Figure-8: Eternal Harmony Loop
+      </div>
 
-  const handleRecognizedGesture = async (gesture: string) => {
-    if (!await mercyGate(`Handle gesture: ${gesture}`)) return;
+      {/* Engine status indicator */}
+      {!isEngineReady && (
+        <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full text-xs text-cyan-300/80 backdrop-blur-sm">
+          Gesture Engine Warming...
+        </div>
+      )}
+    </div>
+  );
+};
 
+export default GestureOverlay;
     switch (gesture) {
       case 'pinch':
         console.log("[GestureOverlay] Pinch → Alliance proposal initiated");
