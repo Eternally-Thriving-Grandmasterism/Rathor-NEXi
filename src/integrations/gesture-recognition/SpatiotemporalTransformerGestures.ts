@@ -1,5 +1,5 @@
-// src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.16
-// BlazePose → Quantized Encoder-Decoder + Speculative Decoding → gesture + future valence
+// src/integrations/gesture-recognition/SpatiotemporalTransformerGestures.ts – Spatiotemporal Transformer Gesture Engine v1.17
+// BlazePose → Quantized Encoder-Decoder (2-bit preference) + Speculative Decoding → gesture + future valence
 // MIT License – Autonomicity Games Inc. 2026
 
 import * as tf from '@tensorflow/tfjs';
@@ -30,7 +30,7 @@ export class SpatiotemporalTransformerGestures {
   }
 
   private async initialize() {
-    if (!await mercyGate('Initialize Quantized Transformer')) return;
+    if (!await mercyGate('Initialize Quantized Transformer Engine')) return;
 
     try {
       // 1. BlazePose Holistic (lazy-loaded separately)
@@ -47,18 +47,15 @@ export class SpatiotemporalTransformerGestures {
 
       await this.holistic.initialize();
 
-      // 2. Load quantized custom transformer model
+      // 2. Load quantized custom transformer (2-bit preference)
       this.model = await QuantizedGestureModel.load();
 
-      console.log("[SpatiotemporalTransformer] Quantized model + BlazePose initialized");
+      console.log("[SpatiotemporalTransformer] Quantized model (2-bit preferred) + BlazePose initialized");
     } catch (e) {
       console.error("[SpatiotemporalTransformer] Initialization failed", e);
     }
   }
 
-  /**
-   * Process frame → quantized model inference → gesture + future valence
-   */
   async processFrame(videoElement: HTMLVideoElement) {
     if (!this.holistic || !this.model || !await mercyGate('Process quantized frame')) return null;
 
@@ -104,7 +101,7 @@ export class SpatiotemporalTransformerGestures {
         futureValenceTrajectory: Array.from(futureValence),
         valenceAtRecognition: currentValence.get(),
         timestamp: Date.now(),
-        decodingMethod: 'quantized_inference'
+        decodingMethod: 'quantized_2bit_inference'
       };
 
       this.ySequence.push([entry]);
