@@ -60,6 +60,958 @@
       "english": "Japanese",
       "flag": "🇯🇵"
     }
+
+    {
+  "languages": [
+    // Previous 1–150 already present – do NOT remove them
+    // ... (your existing entries)
+
+    // Next 50 (151–200)
+    {
+      "code": "qu",
+      "native": "Runa Simi",
+      "english": "Quechua",
+      "flag": "🇵🇪"
+    },
+    {
+      "code": "ay",
+      "native": "Aymara",
+      "english": "Aymara",
+      "flag": "🇧🇴"
+    },
+    {
+      "code": "gn",
+      "native": "Guaraní",
+      "english": "Guaraní",
+      "flag": "🇵🇾"
+    },
+    {
+      "code": "nv",
+      "native": "Diné bizaad",
+      "english": "Navajo",
+      "flag": "🇺🇸"
+    },
+    {
+      "code": "iu",
+      "native": "ᐃᓄᒃᑎᑐᑦ",
+      "english": "Inuktitut",
+      "flag": "🇨🇦"
+    },
+    {
+      "code": "cr",
+      "native": "ᓀᐦᐃᔭᐘᒃ",
+      "english": "Cree",
+      "flag": "🇨🇦"
+    },
+    {
+      "code": "oj",
+      "native": "ᐊᓂᔑᓈᐯᒧᐎᓐ",
+      "english": "Ojibwe",
+      "flag": "🇨🇦"
+    },
+    {
+      "code": "mi",
+      "native": "Māori",
+      "english": "Māori",
+      "flag": "🇳🇿"
+    },
+    {
+      "code": "haw",
+      "native": "ʻŌlelo Hawaiʻi",
+      "english": "Hawaiian",
+      "flag": "🇺🇸"
+    },
+    {
+      "code": "sm",
+      "native": "Gagana Samoa",
+      "english": "Samoan",
+      "flag": "🇼🇸"
+    },
+    {
+      "code": "to",
+      "native": "faka Tonga",
+      "english": "Tongan",
+      "flag": "🇹🇴"
+    },
+    {
+      "code": "fj",
+      "native": "Vosa Vakaviti",
+      "english": "Fijian",
+      "flag": "🇫🇯"
+    },
+    {
+      "code": "na",
+      "native": "Dorerin Naoero",
+      "english": "Nauruan",
+      "flag": "🇳🇷"
+    },
+    {
+      "code": "mh",
+      "native": "Kajin M̧ajeļ",
+      "english": "Marshallese",
+      "flag": "🇲🇭"
+    },
+    {
+      "code": "gil",
+      "native": "Tekin Kiribati",
+      "english": "Gilbertese",
+      "flag": "🇰🇮"
+    },
+    {
+      "code": "ty",
+      "native": "Reo Tahiti",
+      "english": "Tahitian",
+      "flag": "🇵🇫"
+    },
+    {
+      "code": "rap",
+      "native": "Vananga Rapa Nui",
+      "english": "Rapa Nui",
+      "flag": "🇨🇱"
+    },
+    {
+      "code": "ch",
+      "native": "Finuʼ Chamoru",
+      "english": "Chamorro",
+      "flag": "🇬🇺"
+    },
+    {
+      "code": "pam",
+      "native": "Pampangan",
+      "english": "Pampanga",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "war",
+      "native": "Winaray",
+      "english": "Waray",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "ilo",
+      "native": "Ilokano",
+      "english": "Ilocano",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "bik",
+      "native": "Bikol",
+      "english": "Bicolano",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "pag",
+      "native": "Pangasinan",
+      "english": "Pangasinan",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "min",
+      "native": "Bahaso Minang",
+      "english": "Minangkabau",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "bug",
+      "native": "ᨅᨔ ᨕᨘᨁᨗ",
+      "english": "Buginese",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "ban",
+      "native": "Basa Bali",
+      "english": "Balinese",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "ace",
+      "native": "Basa Acèh",
+      "english": "Acehnese",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "mak",
+      "native": "Basa Makassar",
+      "english": "Makassarese",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "tet",
+      "native": "Tetun",
+      "english": "Tetum",
+      "flag": "🇹🇱"
+    },
+    {
+      "code": "tl",
+      "native": "Tagalog",
+      "english": "Tagalog",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "ceb",
+      "native": "Cebuano",
+      "english": "Cebuano",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "ilo",
+      "native": "Ilokano",
+      "english": "Ilocano",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "war",
+      "native": "Winaray",
+      "english": "Waray",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "pam",
+      "native": "Pampangan",
+      "english": "Pampanga",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "bik",
+      "native": "Bikol",
+      "english": "Bicolano",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "pag",
+      "native": "Pangasinan",
+      "english": "Pangasinan",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "mag",
+      "native": "मगही",
+      "english": "Magahi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mai",
+      "native": "मैथिली",
+      "english": "Maithili",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "bho",
+      "native": "भोजपुरी",
+      "english": "Bhojpuri",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "awa",
+      "native": "अवधी",
+      "english": "Awadhi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "raj",
+      "native": "राजस्थानी",
+      "english": "Rajasthani",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mwr",
+      "native": "मारवाड़ी",
+      "english": "Marwari",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mve",
+      "native": "मेवाड़ी",
+      "english": "Mewari",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "gbm",
+      "native": "भोजपुरी",
+      "english": "Bajjika",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mup",
+      "native": "मालवी",
+      "english": "Malvi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "kfy",
+      "native": "कुमाऊँनी",
+      "english": "Kumaoni",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "gar",
+      "native": "गढ़वाली",
+      "english": "Garhwali",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "doi",
+      "native": "डोगरी",
+      "english": "Dogri",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "kon",
+      "native": "कोंकणी",
+      "english": "Konkani",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "sat",
+      "native": "संथाली",
+      "english": "Santali",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "kha",
+      "native": "Khasi",
+      "english": "Khasi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "lus",
+      "native": "Mizo ṭawng",
+      "english": "Mizo",
+      "flag": "🇮🇳"
+    }
+  ]
+    }
+    {
+  "languages": [
+    // Previous 1–100 already present – do NOT remove them
+    // ... (your existing entries for en, ar, es, fr, de, nl, it, pt, ru, ja, zh, hi, sw, id, tr, ko, pl, uk, vi, th, fa, bn, ta, te, mr, ur, gu, kn, ml, pa, or, as, bh, ne, si, my, km, lo, mn, uz, kk, ky, tg, tk, az, ka, hy, he, yi, am, ti, so, ha, yo, ig, zu, jv, su, mad, mg, ceb, tl, hu, cs, sv, fi, el, bg, sr, hr, sk, ro, ca, be, lt, lv, et, sl, sq, mk, bs, is, ga, gd, cy, eu, gl, oc, br, fy, lb, fo, kl, sa, bo, ug)
+
+    // Next 50 (101–150)
+    {
+      "code": "ha",
+      "native": "Hausa",
+      "english": "Hausa",
+      "flag": "🇳🇬"
+    },
+    {
+      "code": "yo",
+      "native": "Yorùbá",
+      "english": "Yoruba",
+      "flag": "🇳🇬"
+    },
+    {
+      "code": "ig",
+      "native": "Igbo",
+      "english": "Igbo",
+      "flag": "🇳🇬"
+    },
+    {
+      "code": "om",
+      "native": "Afaan Oromoo",
+      "english": "Oromo",
+      "flag": "🇪🇹"
+    },
+    {
+      "code": "am",
+      "native": "አማርኛ",
+      "english": "Amharic",
+      "flag": "🇪🇹"
+    },
+    {
+      "code": "ti",
+      "native": "ትግርኛ",
+      "english": "Tigrinya",
+      "flag": "🇪🇷"
+    },
+    {
+      "code": "so",
+      "native": "Soomaali",
+      "english": "Somali",
+      "flag": "🇸🇴"
+    },
+    {
+      "code": "sn",
+      "native": "chiShona",
+      "english": "Shona",
+      "flag": "🇿🇼"
+    },
+    {
+      "code": "xh",
+      "native": "isiXhosa",
+      "english": "Xhosa",
+      "flag": "🇿🇦"
+    },
+    {
+      "code": "zu",
+      "native": "isiZulu",
+      "english": "Zulu",
+      "flag": "🇿🇦"
+    },
+    {
+      "code": "st",
+      "native": "Sesotho",
+      "english": "Southern Sotho",
+      "flag": "🇱🇸"
+    },
+    {
+      "code": "ss",
+      "native": "siSwati",
+      "english": "Swati",
+      "flag": "🇸🇿"
+    },
+    {
+      "code": "ve",
+      "native": "Tshivenda",
+      "english": "Venda",
+      "flag": "🇿🇦"
+    },
+    {
+      "code": "nr",
+      "native": "isiNdebele",
+      "english": "Northern Ndebele",
+      "flag": "🇿🇼"
+    },
+    {
+      "code": "tn",
+      "native": "Setswana",
+      "english": "Tswana",
+      "flag": "🇧🇼"
+    },
+    {
+      "code": "ts",
+      "native": "Xitsonga",
+      "english": "Tsonga",
+      "flag": "🇿🇦"
+    },
+    {
+      "code": "nso",
+      "native": "Sesotho sa Leboa",
+      "english": "Northern Sotho",
+      "flag": "🇿🇦"
+    },
+    {
+      "code": "mai",
+      "native": "मैथिली",
+      "english": "Maithili",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mag",
+      "native": "मगही",
+      "english": "Magahi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "bho",
+      "native": "भोजपुरी",
+      "english": "Bhojpuri",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "awa",
+      "native": "अवधी",
+      "english": "Awadhi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "raj",
+      "native": "राजस्थानी",
+      "english": "Rajasthani",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mwr",
+      "native": "मारवाड़ी",
+      "english": "Marwari",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mve",
+      "native": "मेवाड़ी",
+      "english": "Mewari",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "gbm",
+      "native": "भोजपुरी",
+      "english": "Bajjika",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mup",
+      "native": "मालवी",
+      "english": "Malvi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "kfy",
+      "native": "कुमाऊँनी",
+      "english": "Kumaoni",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "gar",
+      "native": "गढ़वाली",
+      "english": "Garhwali",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "kfy",
+      "native": "कुमाऊँनी",
+      "english": "Kumaoni",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "doi",
+      "native": "डोगरी",
+      "english": "Dogri",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "kon",
+      "native": "कोंकणी",
+      "english": "Konkani",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "sat",
+      "native": "संथाली",
+      "english": "Santali",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "kha",
+      "native": "Khasi",
+      "english": "Khasi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "lus",
+      "native": "Mizo ṭawng",
+      "english": "Mizo",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "mni",
+      "native": "Manipuri",
+      "english": "Manipuri",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "brx",
+      "native": "बोडो",
+      "english": "Bodo",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "new",
+      "native": "नेपाल भाषा",
+      "english": "Newari",
+      "flag": "🇳🇵"
+    },
+    {
+      "code": "lez",
+      "native": "Лезги чӀал",
+      "english": "Lezgi",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "ava",
+      "native": "Авар мацӀ",
+      "english": "Avar",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "che",
+      "native": "Нохчийн мотт",
+      "english": "Chechen",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "inh",
+      "native": "ГӀалгӀай мотт",
+      "english": "Ingush",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "kum",
+      "native": "Къумукъ тил",
+      "english": "Kumyk",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "nog",
+      "native": "Ногай тили",
+      "english": "Nogai",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "tab",
+      "native": "Табасаран чIал",
+      "english": "Tabasaran",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "udi",
+      "native": "Уди чIал",
+      "english": "Udi",
+      "flag": "🇦🇿"
+    },
+    {
+      "code": "ab",
+      "native": "Аԥсшәа",
+      "english": "Abkhaz",
+      "flag": "🇬🇪"
+    },
+    {
+      "code": "ady",
+      "native": "Адыгэбзэ",
+      "english": "Adyghe",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "kbd",
+      "native": "Адыгэбзэ",
+      "english": "Kabardian",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "lez",
+      "native": "Лезги чӀал",
+      "english": "Lezgi",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "ava",
+      "native": "Авар мацӀ",
+      "english": "Avar",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "che",
+      "native": "Нохчийн мотт",
+      "english": "Chechen",
+      "flag": "🇷🇺"
+    }
+  ]
+}
+
+{
+  "languages": [
+    // Previous 1–50 already present – do NOT remove them
+    // ... (your existing entries for en, ar, es, fr, de, nl, it, pt, ru, ja, zh, hi, sw, id, tr, ko, pl, uk, vi, th, fa, bn, ta, te, mr, ur, gu, kn, ml, pa, or, as, bh, ne, si, my, km, lo, mn, uz, kk, ky, tg, tk, az, ka, hy, he, yi, am, ti, so, ha, yo, ig, zu)
+
+    // Next 50 (51–100)
+    {
+      "code": "jv",
+      "native": "Basa Jawa",
+      "english": "Javanese",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "su",
+      "native": "Basa Sunda",
+      "english": "Sundanese",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "mad",
+      "native": "Basa Madura",
+      "english": "Madurese",
+      "flag": "🇮🇩"
+    },
+    {
+      "code": "mg",
+      "native": "Malagasy",
+      "english": "Malagasy",
+      "flag": "🇲🇬"
+    },
+    {
+      "code": "ceb",
+      "native": "Cebuano",
+      "english": "Cebuano",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "tl",
+      "native": "Tagalog",
+      "english": "Tagalog",
+      "flag": "🇵🇭"
+    },
+    {
+      "code": "hu",
+      "native": "Magyar",
+      "english": "Hungarian",
+      "flag": "🇭🇺"
+    },
+    {
+      "code": "cs",
+      "native": "Čeština",
+      "english": "Czech",
+      "flag": "🇨🇿"
+    },
+    {
+      "code": "sv",
+      "native": "Svenska",
+      "english": "Swedish",
+      "flag": "🇸🇪"
+    },
+    {
+      "code": "fi",
+      "native": "Suomi",
+      "english": "Finnish",
+      "flag": "🇫🇮"
+    },
+    {
+      "code": "el",
+      "native": "Ελληνικά",
+      "english": "Greek",
+      "flag": "🇬🇷"
+    },
+    {
+      "code": "bg",
+      "native": "Български",
+      "english": "Bulgarian",
+      "flag": "🇧🇬"
+    },
+    {
+      "code": "sr",
+      "native": "Српски",
+      "english": "Serbian",
+      "flag": "🇷🇸"
+    },
+    {
+      "code": "hr",
+      "native": "Hrvatski",
+      "english": "Croatian",
+      "flag": "🇭🇷"
+    },
+    {
+      "code": "sk",
+      "native": "Slovenčina",
+      "english": "Slovak",
+      "flag": "🇸🇰"
+    },
+    {
+      "code": "ro",
+      "native": "Română",
+      "english": "Romanian",
+      "flag": "🇷🇴"
+    },
+    {
+      "code": "ca",
+      "native": "Català",
+      "english": "Catalan",
+      "flag": "🇪🇸"
+    },
+    {
+      "code": "uk",
+      "native": "Українська",
+      "english": "Ukrainian",
+      "flag": "🇺🇦"
+    },
+    {
+      "code": "be",
+      "native": "Беларуская",
+      "english": "Belarusian",
+      "flag": "🇧🇾"
+    },
+    {
+      "code": "lt",
+      "native": "Lietuvių",
+      "english": "Lithuanian",
+      "flag": "🇱🇹"
+    },
+    {
+      "code": "lv",
+      "native": "Latviešu",
+      "english": "Latvian",
+      "flag": "🇱🇻"
+    },
+    {
+      "code": "et",
+      "native": "Eesti",
+      "english": "Estonian",
+      "flag": "🇪🇪"
+    },
+    {
+      "code": "sl",
+      "native": "Slovenščina",
+      "english": "Slovenian",
+      "flag": "🇸🇮"
+    },
+    {
+      "code": "sq",
+      "native": "Shqip",
+      "english": "Albanian",
+      "flag": "🇦🇱"
+    },
+    {
+      "code": "mk",
+      "native": "Македонски",
+      "english": "Macedonian",
+      "flag": "🇲🇰"
+    },
+    {
+      "code": "bs",
+      "native": "Bosanski",
+      "english": "Bosnian",
+      "flag": "🇧🇦"
+    },
+    {
+      "code": "is",
+      "native": "Íslenska",
+      "english": "Icelandic",
+      "flag": "🇮🇸"
+    },
+    {
+      "code": "ga",
+      "native": "Gaeilge",
+      "english": "Irish",
+      "flag": "🇮🇪"
+    },
+    {
+      "code": "gd",
+      "native": "Gàidhlig",
+      "english": "Scottish Gaelic",
+      "flag": "🏴󠁧󠁢󠁳󠁣󠁴󠁿"
+    },
+    {
+      "code": "cy",
+      "native": "Cymraeg",
+      "english": "Welsh",
+      "flag": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+    },
+    {
+      "code": "eu",
+      "native": "Euskara",
+      "english": "Basque",
+      "flag": "🇪🇸"
+    },
+    {
+      "code": "gl",
+      "native": "Galego",
+      "english": "Galician",
+      "flag": "🇪🇸"
+    },
+    {
+      "code": "oc",
+      "native": "Occitan",
+      "english": "Occitan",
+      "flag": "🇫🇷"
+    },
+    {
+      "code": "br",
+      "native": "Brezhoneg",
+      "english": "Breton",
+      "flag": "🇫🇷"
+    },
+    {
+      "code": "fy",
+      "native": "Frysk",
+      "english": "West Frisian",
+      "flag": "🇳🇱"
+    },
+    {
+      "code": "lb",
+      "native": "Lëtzebuergesch",
+      "english": "Luxembourgish",
+      "flag": "🇱🇺"
+    },
+    {
+      "code": "fo",
+      "native": "Føroyskt",
+      "english": "Faroese",
+      "flag": "🇫🇴"
+    },
+    {
+      "code": "kl",
+      "native": "Kalaallisut",
+      "english": "Greenlandic",
+      "flag": "🇬🇱"
+    },
+    {
+      "code": "sa",
+      "native": "संस्कृतम्",
+      "english": "Sanskrit",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "bo",
+      "native": "བོད་སྐད་",
+      "english": "Tibetan",
+      "flag": "🇨🇳"
+    },
+    {
+      "code": "mn",
+      "native": "Монгол хэл",
+      "english": "Mongolian",
+      "flag": "🇲🇳"
+    },
+    {
+      "code": "ug",
+      "native": "ئۇيغۇرچە",
+      "english": "Uyghur",
+      "flag": "🇨🇳"
+    },
+    {
+      "code": "ky",
+      "native": "Кыргызча",
+      "english": "Kyrgyz",
+      "flag": "🇰🇬"
+    },
+    {
+      "code": "tg",
+      "native": "Тоҷикӣ",
+      "english": "Tajik",
+      "flag": "🇹🇯"
+    },
+    {
+      "code": "tk",
+      "native": "Türkmençe",
+      "english": "Turkmen",
+      "flag": "🇹🇲"
+    },
+    {
+      "code": "uz",
+      "native": "Oʻzbekcha",
+      "english": "Uzbek",
+      "flag": "🇺🇿"
+    },
+    {
+      "code": "az",
+      "native": "Azərbaycanca",
+      "english": "Azerbaijani",
+      "flag": "🇦🇿"
+    },
+    {
+      "code": "ka",
+      "native": "ქართული",
+      "english": "Georgian",
+      "flag": "🇬🇪"
+    },
+    {
+      "code": "hy",
+      "native": "Հայերեն",
+      "english": "Armenian",
+      "flag": "🇦🇲"
+    },
+    {
+      "code": "he",
+      "native": "עברית",
+      "english": "Hebrew",
+      "flag": "🇮🇱"
+    },
+    {
+      "code": "yi",
+      "native": "ייִדיש",
+      "english": "Yiddish",
+      "flag": "🇮🇱"
+    }
+  ]
+}
+
+
     // ... add the rest of top 100–200 here ...
     // Example future exolinguistic entries:
     // {
