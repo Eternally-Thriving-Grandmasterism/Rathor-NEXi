@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Periodic RTT Probes + Packet Loss + Retransmission Handling
+// js/chat.js — Rathor Lattice Core with Modal Close Protection for Crisis Modes
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -12,25 +12,16 @@ const translateToggle = document.getElementById('translate-chat');
 const translateLangSelect = document.getElementById('translate-lang');
 const translateStats = document.getElementById('translate-stats');
 
-// Connectivity state
-let isOffline = false;
-let isHighLatency = false;
-let isHighJitter = false;
-let isHighPacketLoss = false;
-let isVeryUnstable = false;
-let rttHistory = [];           // last 5 successful RTTs (ms)
-let packetLossHistory = [];    // last 5 loss ratios (0–1)
-const PROBE_COUNT = 5;         // packets per cycle
-const PROBE_INTERVAL = 12000;  // 12 seconds
-const RETRY_COUNT = 2;         // max retries per packet
-const RETRY_BACKOFF = [200, 600]; // ms
-const HIGH_LATENCY_RTT_THRESHOLD = 150;
-const HIGH_JITTER_THRESHOLD = 50;
-const HIGH_PACKET_LOSS_THRESHOLD = 0.10; // 10%
-const HIGH_VARIANCE_THRESHOLD = 40;
-const VERY_UNSTABLE_LOSS_THRESHOLD = 0.30; // 30% → ultra mode
-
-const PING_ENDPOINT = '/ping'; // lightweight endpoint (or external CDN/1.1.1.1)
+let currentSessionId = localStorage.getItem('rathor_current_session') || 'default';
+let allSessions = [];
+let tagFrequency = new Map();
+let isListening = false, isRecording = false;
+let ttsEnabled = localStorage.getItem('rathor_tts_enabled') !== 'false';
+let isVoiceOutputEnabled = localStorage.getItem('rathor_voice_output') !== 'false';
+let feedbackSoundsEnabled = localStorage.getItem('rathor_feedback_sounds') !== 'false';
+let voicePitchValue = parseFloat(localStorage.getItem('rathor_pitch')) || 1.0;
+let voiceRateValue = parseFloat(localStorage.getItem('rathor_rate')) || 1.0;
+let voiceVolumeValue = parseFloat(localStorage.getItem('rathor_volume')) || 1.0;
 
 await rathorDB.open();
 await refreshSessionList();
@@ -38,149 +29,75 @@ await loadChatHistory();
 updateTranslationStats();
 await updateTagFrequency();
 
-// ... existing event listeners ...
+voiceBtn.addEventListener('click', () => isListening ? stopListening() : startListening());
+recordBtn.addEventListener('mousedown', () => setTimeout(() => startVoiceRecording(currentSessionId), 400));
+recordBtn.addEventListener('mouseup', stopVoiceRecording);
+sendBtn.addEventListener('click', sendMessage);
+translateToggle.addEventListener('change', e => {
+  localStorage.setItem('rathor_translate_enabled', e.target.checked);
+  if (e.target.checked) translateChat();
+});
+translateLangSelect.addEventListener('change', e => {
+  localStorage.setItem('rathor_translate_to', e.target.value);
+  if (translateToggle.checked) translateChat();
+});
+sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Periodic Multi-Packet RTT + Loss Probes with Retransmission
+// Modal Close Protection for Crisis Modes
 // ────────────────────────────────────────────────
 
-async function probeSinglePacket() {
-  let attempts = 0;
-  let rtt = null;
+const PROTECTED_MODES = ['crisis', 'mental', 'ptsd', 'cptsd', 'ifs'];
 
-  while (attempts <= RETRY_COUNT) {
-    const start = performance.now();
-    try {
-      await fetch(`\( {PING_ENDPOINT}?t= \){Date.now() + attempts}`, { 
-        cache: 'no-store', 
-        mode: 'no-cors',
-        keepalive: true,
-        signal: AbortSignal.timeout(2000 + attempts * 1000) // longer timeout on retry
-      });
-      rtt = performance.now() - start;
-      return { success: true, rtt };
-    } catch (e) {
-      attempts++;
-      if (attempts <= RETRY_COUNT) {
-        await new Promise(r => setTimeout(r, RETRY_BACKOFF[attempts-1] || 1000));
+function protectCrisisModalClose(modal, mode) {
+  if (!PROTECTED_MODES.includes(mode)) return;
+
+  const originalRemove = modal.remove;
+  modal.remove = function() {
+    if (confirm("Parts may still need attention. Close anyway?")) {
+      originalRemove.call(modal);
+    }
+    // else do nothing — modal stays open
+  };
+
+  // Also protect close via backdrop click
+  modal.addEventListener('click', e => {
+    if (e.target === modal) {
+      e.stopPropagation();
+      if (confirm("Parts may still need attention. Close anyway?")) {
+        originalRemove.call(modal);
       }
     }
-  }
-
-  return { success: false, rtt: null };
+  });
 }
 
-async function probeConnectivity() {
-  if (document.hidden) return;
+// Update trigger function to add protection
+function triggerEmergencyAssistant(mode) {
+  const assistant = emergencyAssistants[mode];
+  if (!assistant) return;
 
-  let successes = 0;
-  let totalRtt = 0;
-  const probeResults = [];
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content emergency-modal">
+      <h2 style="color: #ff4444;">${assistant.title}</h2>
+      <p style="color: #ff6666; font-weight: bold; margin-bottom: 1em;">${assistant.disclaimer}</p>
+      <div style="max-height: 60vh; overflow-y: auto; padding-right: 12px;">
+        ${assistant.templates.map(t => `
+          <h3 style="margin: 1.5em 0 0.5em; color: #ffaa00;">${t.name}</h3>
+          <p style="white-space: pre-wrap; line-height: 1.6;">${t.content}</p>
+        `).join('')}
+      </div>
+      <div class="modal-buttons" style="margin-top: 1.5em;">
+        <button onclick="this.closest('.modal-overlay').remove()">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.style.display = 'flex';
 
-  for (let i = 0; i < PROBE_COUNT; i++) {
-    const result = await probeSinglePacket();
-    probeResults.push(result);
-    if (result.success) {
-      successes++;
-      totalRtt += result.rtt;
-    }
-    await new Promise(r => setTimeout(r, 200)); // spacing
-  }
-
-  const lossRatio = (PROBE_COUNT - successes) / PROBE_COUNT;
-
-  if (successes > 0) {
-    const avgRtt = totalRtt / successes;
-    rttHistory.push(avgRtt);
-    if (rttHistory.length > 5) rttHistory.shift();
-
-    packetLossHistory.push(lossRatio);
-    if (packetLossHistory.length > 5) packetLossHistory.shift();
-
-    // Median RTT
-    const sortedRtt = [...rttHistory].sort((a,b)=>a-b);
-    const medianRtt = sortedRtt[Math.floor(sortedRtt.length/2)];
-
-    // Jitter (std dev)
-    const meanRtt = rttHistory.reduce((a,b)=>a+b,0) / rttHistory.length;
-    const variance = rttHistory.reduce((a,b)=>a + Math.pow(b-meanRtt,2),0) / rttHistory.length;
-    const jitter = Math.sqrt(variance);
-
-    // Median loss
-    const medianLoss = [...packetLossHistory].sort((a,b)=>a-b)[Math.floor(packetLossHistory.length/2)];
-
-    isHighLatency = medianRtt > HIGH_LATENCY_RTT_THRESHOLD;
-    isHighJitter = jitter > HIGH_JITTER_THRESHOLD;
-    isHighPacketLoss = medianLoss > HIGH_PACKET_LOSS_THRESHOLD;
-    isVeryUnstable = medianLoss > VERY_UNSTABLE_LOSS_THRESHOLD;
-
-    if (navigator.connection) {
-      isOffline = navigator.connection.type === 'none' || navigator.connection.rtt > 10000;
-      isHighLatency = isHighLatency || navigator.connection.downlinkMax < 10;
-    }
-  } else {
-    isOffline = true;
-    isVeryUnstable = true;
-  }
-
-  updateConnectivityUI();
+  // Apply protection
+  protectCrisisModalClose(modal, mode);
 }
 
-function updateConnectivityUI() {
-  let status = '';
-  let level = 'normal';
-
-  if (isOffline) {
-    status = 'Offline — queued actions will sync later ⚡️';
-    level = 'offline';
-  } else if (isVeryUnstable) {
-    status = 'Very unstable (Starlink obstruction?) — ultra-batch & max compression ⚠️';
-    level = 'critical';
-  } else if (isHighPacketLoss) {
-    status = 'High packet loss — increasing retries & batch size ⚠️';
-    level = 'warning';
-  } else if (isHighJitter) {
-    status = 'High jitter — batching & compressing ⚡️';
-    level = 'warning';
-  } else if (isHighLatency) {
-    status = 'High latency (Starlink mode?) — batching & compressing ⚡️';
-    level = 'info';
-  } else {
-    status = 'Strong connection — lattice fully online ⚡️';
-    level = 'success';
-  }
-
-  showToast(status, level);
-}
-
-// Probe loop
-let probeInterval;
-function startProbes() {
-  probeInterval = setInterval(probeConnectivity, PROBE_INTERVAL);
-  probeConnectivity();
-}
-
-function stopProbes() {
-  if (probeInterval) clearInterval(probeInterval);
-}
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) stopProbes();
-  else startProbes();
-});
-
-// Initial start
-startProbes();
-
-// Adaptive voice recording queue
-async function startVoiceRecording(sessionId, isEmergency = false) {
-  // ... existing recording logic ...
-  if (isOffline || isVeryUnstable || isHighPacketLoss || isHighJitter || isHighLatency) {
-    await rathorDB.saveQueuedAction('voice-note', { sessionId, blob, timestamp, isEmergency });
-    showToast('Voice note queued — unstable connection ⚡️');
-  } else {
-    await rathorDB.saveVoiceNote(sessionId, blob, timestamp, isEmergency);
-  }
-}
-
-// ... rest of chat.js functions (sendMessage, speak, recognition, emergency assistants, session search with tags, import/export, etc.) remain as previously expanded ...
+// ... rest of chat.js functions (sendMessage, speak, recognition, recording, session search with tags, import/export, etc.) remain as previously expanded ...
