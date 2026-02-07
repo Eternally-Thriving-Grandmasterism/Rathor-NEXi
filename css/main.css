@@ -1,0 +1,33 @@
+:root {
+  --thunder-gold: #ffaa00;
+  --thunder-light: #ffdd44;
+  --bg-dark: #0a0015;
+  --bg-darker: #001020;
+  --text-light: #e0d0ff;
+  --accent-purple: #2a0040;
+  --error-red: #ff6666;
+  --status-online: #88ffdd;
+  --status-offline: #ff6666;
+  --status-never: #aaa;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-light);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.6;
+  direction: ltr;
+  text-align: left;
+}
+
+body.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ... move ALL styles from previous <style> block here ... */
