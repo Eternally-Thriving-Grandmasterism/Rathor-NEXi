@@ -1,30 +1,40 @@
-// js/common.js — Shared across all pages
+// js/common.js — Shared utilities & i18n across all Rathor-NEXi pages
 
 const registryUrl = '/locales/languages.json';
 
-async function loadLanguageRegistry() {
-  const res = await fetch(registryUrl);
-  return await res.json();
-}
+// ────────────────────────────────────────────────
+// i18n Initialization & Language Management
+// ────────────────────────────────────────────────
 
 async function initI18n() {
   await i18next.init({
     lng: localStorage.getItem('rathor_lang') || getBestLanguage(),
     fallbackLng: 'en',
-    debug: false
+    debug: false,
+    ns: 'translation',
+    defaultNS: 'translation',
+    interpolation: { escapeValue: false }
   });
 
-  const registry = await loadLanguageRegistry();
+  // Load language registry once
+  const registryResp = await fetch(registryUrl);
+  const registry = await registryResp.json();
+
+  // Add empty bundles for all languages (actual content loaded on demand)
   registry.languages.forEach(lang => {
     i18next.addResourceBundle(lang.code, 'translation', {}, true, true);
   });
 
+  // Load initial language content
   await loadLanguage(i18next.language);
   updateContent();
+  applyRTL(i18next.language);
 }
 
+// Load specific language JSON dynamically + cache it
 async function loadLanguage(lng) {
-  if (i18next.services.resourceStore.hasResourceBundle(lng, 'translation') && Object.keys(i18next.services.resourceStore.data[lng].translation || {}).length > 0) {
+  if (i18next.services.resourceStore.hasResourceBundle(lng, 'translation') && 
+      Object.keys(i18next.services.resourceStore.data[lng]?.translation || {}).length > 0) {
     return;
   }
 
@@ -39,10 +49,10 @@ async function loadLanguage(lng) {
 
   try {
     const response = await fetch(`/locales/${lng}.json`);
-    if (!response.ok) throw new Error('Locale not found');
+    if (!response.ok) throw new Error(`Locale not found: ${lng}`);
     const json = await response.json();
 
-    cache.put(`/locales/${lng}.json`, new Response(JSON.stringify(json), {
+    await cache.put(`/locales/${lng}.json`, new Response(JSON.stringify(json), {
       headers: { 'Content-Type': 'application/json' }
     }));
 
@@ -53,6 +63,7 @@ async function loadLanguage(lng) {
   }
 }
 
+// Change language + update UI + RTL + toast
 async function changeLanguage(lng) {
   await loadLanguage(lng);
   i18next.changeLanguage(lng, () => {
@@ -63,6 +74,7 @@ async function changeLanguage(lng) {
   });
 }
 
+// Apply RTL layout for right-to-left languages
 function applyRTL(lng) {
   const rtlLanguages = ['ar', 'he', 'fa', 'ur'];
   const isRTL = rtlLanguages.includes(lng);
@@ -70,21 +82,30 @@ function applyRTL(lng) {
   document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
 }
 
+// Update all translatable elements on page
 function updateContent() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     el.innerHTML = i18next.t(key);
   });
 
-  document.getElementById('chat-input').placeholder = i18next.t('placeholders.chatInput');
-  document.getElementById('session-search').placeholder = i18next.t('placeholders.sessionSearch');
-  document.getElementById('voice-output-btn').title = i18next.t('actions.voiceOutputToggle');
-  // ... update more dynamic content ...
+  // Dynamic placeholders
+  const chatInput = document.getElementById('chat-input');
+  if (chatInput) chatInput.placeholder = i18next.t('placeholders.chatInput');
+
+  const sessionSearch = document.getElementById('session-search');
+  if (sessionSearch) sessionSearch.placeholder = i18next.t('placeholders.sessionSearch');
+
+  const langSearch = document.getElementById('lang-search-input');
+  if (langSearch) langSearch.placeholder = i18next.t('placeholders.languageSearch');
+
+  // ... add more dynamic updates as needed ...
 }
 
+// Best initial language from browser preferences
 function getBestLanguage() {
   const preferred = navigator.languages || [navigator.language];
-  const supported = ['en','ar','es','fr','de','nl','it','pt','ru','ja','zh','hi','sw','id','tr','ko'];
+  const supported = ['en','ar','es','fr','de','nl','it','pt','ru','ja','zh','hi','sw','id','tr','ko' /* extend later */];
   for (const lang of preferred) {
     const short = lang.split('-')[0].toLowerCase();
     if (supported.includes(short)) return short;
@@ -92,20 +113,27 @@ function getBestLanguage() {
   return 'en';
 }
 
+// Shared toast utility
 function showToast(message) {
   const toast = document.createElement('div');
-  toast.style.position = 'fixed';
-  toast.style.bottom = '80px';
-  toast.style.left = '50%';
-  toast.style.transform = 'translateX(-50%)';
-  toast.style.background = 'var(--thunder-gold)';
-  toast.style.color = '#000';
-  toast.style.padding = '12px 24px';
-  toast.style.borderRadius = '8px';
-  toast.style.boxShadow = '0 4px 20px rgba(255,170,0,0.4)';
-  toast.style.zIndex = '4000';
-  toast.style.fontWeight = '600';
   toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--thunder-gold); color: #000; padding: 12px 24px;
+    border-radius: 8px; box-shadow: 0 4px 20px rgba(255,170,0,0.4);
+    z-index: 4000; font-weight: 600; white-space: pre-wrap; max-width: 90%;
+  `;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  setTimeout(() => toast.remove(), 4000);
 }
+
+// Export shared utilities
+window.rathorCommon = {
+  initI18n,
+  loadLanguage,
+  changeLanguage,
+  applyRTL,
+  updateContent,
+  getBestLanguage,
+  showToast
+};
