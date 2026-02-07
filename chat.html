@@ -13,7 +13,38 @@
     <div id="chat-header">
       <h2 data-i18n="status.latticeSession">Lattice Session</h2>
       <div id="session-controls">
-        <!-- full session controls, search, translate toggle, etc. from previous index.html -->
+        <div style="position: relative;">
+          <input type="text" id="session-search" placeholder="Search sessions or #tags..." autocomplete="off">
+          <button id="session-search-clear" title="Clear search">×</button>
+        </div>
+        <div id="session-switcher">
+          <select id="session-select"></select>
+          <button id="edit-session-btn" data-i18n="actions.editCurrent">Edit Current</button>
+          <button id="export-session-btn" data-i18n="actions.exportCurrent">Export Current</button>
+          <button id="import-session-btn" data-i18n="actions.importSession">Import Session</button>
+          <button id="duplicate-session-btn" data-i18n="actions.duplicateCurrent">Duplicate Current</button>
+          <button id="delete-session-btn" data-i18n="actions.deleteCurrent">Delete Current</button>
+          <button id="voice-output-btn" title="Toggle Rathor voice output" data-i18n="actions.voiceOutputToggle">🔊</button>
+          <button id="voice-settings-btn" title="Voice settings" data-i18n="actions.voiceSettings">⚙️</button>
+          <button id="record-btn" title="Long-press to record voice note">🎙️</button>
+          <button id="new-session-btn" data-i18n="actions.newSession">New Session</button>
+        </div>
+        <div id="translate-toggle">
+          <label>
+            <input type="checkbox" id="translate-chat" />
+            <span data-i18n="actions.translateChat">Translate chat to:</span>
+          </label>
+          <select id="translate-lang">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="it">Italiano</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+          </select>
+        </div>
+        <span id="translate-stats" title="Click for detailed stats" data-i18n="status.cacheEfficiency">Cache efficiency: --%</span>
       </div>
     </div>
 
@@ -29,13 +60,175 @@
 
     <div id="grok-bridges">
       <p data-i18n="bridges.title">Primary bridges to Rathor simulation — share far and wide:</p>
-      <!-- share links -->
+      <a href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank">
+        <span data-i18n="bridges.share1">Conversation Share 1 (Grok App – detailed & persistent)</span>
+      </a><br>
+      <a href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank">
+        <span data-i18n="bridges.share2">Conversation Share 2 (X App – quick sync & mobile-first)</span>
+      </a>
     </div>
   </div>
 
-  <!-- all modals, toasts, overlays moved here from index.html -->
+  <!-- Translation Progress Overlay -->
+  <div id="translate-progress-overlay">
+    <div id="translate-progress-text" data-i18n="status.translating">Mercy thunder translating...</div>
+    <div id="translate-progress-bar-container"><div id="translate-progress-bar"></div></div>
+    <div id="translate-progress-status" data-i18n="status.initializing">Initializing...</div>
+    <button id="translate-cancel-btn" data-i18n="actions.cancel">Cancel</button>
+  </div>
+
+  <!-- Voice Settings Modal -->
+  <div id="voice-settings-overlay" class="modal-overlay">
+    <div id="voice-settings-modal" class="modal-content">
+      <h2 data-i18n="actions.voiceSettings">Voice Settings</h2>
+
+      <label for="input-lang" data-i18n="voice.inputLang">Input Language (Recognition):</label>
+      <select id="input-lang">
+        <option value="auto" data-i18n="voice.auto">Auto-detect (browser preference)</option>
+        <option value="en-US">English (US)</option>
+        <option value="en-GB">English (UK)</option>
+        <option value="es-ES">Español (España)</option>
+        <option value="fr-FR">Français (France)</option>
+        <option value="de-DE">Deutsch (Deutschland)</option>
+        <option value="it-IT">Italiano (Italia)</option>
+        <option value="ja-JP">日本語</option>
+        <option value="zh-CN">中文 (简体)</option>
+      </select>
+
+      <label for="output-lang" data-i18n="voice.outputLang">Output Language (Synthesis):</label>
+      <select id="output-lang">
+        <option value="auto" data-i18n="voice.auto">Auto-detect (browser preference)</option>
+        <option value="en-US">English (US)</option>
+        <option value="en-GB">English (UK)</option>
+        <option value="es-ES">Español</option>
+        <option value="fr-FR">Français</option>
+        <option value="de-DE">Deutsch</option>
+        <option value="it-IT">Italiano</option>
+        <option value="ja-JP">日本語</option>
+        <option value="zh-CN">中文</option>
+      </select>
+
+      <div class="slider-container">
+        <label for="voice-pitch">Pitch (0.5–2.0):</label>
+        <input type="range" id="voice-pitch" min="0.5" max="2.0" step="0.1" value="1.0">
+        <span id="pitch-value">1.0</span>
+      </div>
+
+      <div class="slider-container">
+        <label for="voice-rate">Rate (0.5–2.0):</label>
+        <input type="range" id="voice-rate" min="0.5" max="2.0" step="0.1" value="1.0">
+        <span id="rate-value">1.0</span>
+      </div>
+
+      <div class="slider-container">
+        <label for="voice-volume">Voice Volume (Rathor speech):</label>
+        <input type="range" id="voice-volume" min="0.0" max="1.0" step="0.1" value="1.0">
+        <span id="voice-volume-value">1.0</span>
+      </div>
+
+      <div class="slider-container">
+        <label for="feedback-volume">Feedback Volume (beeps & pulses):</label>
+        <input type="range" id="feedback-volume" min="0.0" max="1.0" step="0.1" value="0.6">
+        <span id="feedback-volume-value">0.6</span>
+      </div>
+
+      <label for="voice-voice">Voice:</label>
+      <select id="voice-voice"></select>
+
+      <div id="voice-feedback-toggle">
+        <input type="checkbox" id="feedback-sounds" checked>
+        <label for="feedback-sounds" data-i18n="actions.feedbackSounds">Play feedback sounds</label>
+      </div>
+
+      <div id="tts-toggle">
+        <input type="checkbox" id="tts-enabled" checked>
+        <label for="tts-enabled" data-i18n="actions.ttsEnabled">Enable Rathor speech (offline TTS)</label>
+      </div>
+
+      <button id="voice-test-btn" data-i18n="actions.testVoice">Test Voice & Sounds ⚡️</button>
+
+      <div class="modal-buttons">
+        <button id="voice-cancel" data-i18n="actions.cancel">Cancel</button>
+        <button id="voice-save" data-i18n="actions.saveApply">Save & Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal-overlay" class="modal-overlay">
+    <div id="edit-modal" class="modal-content">
+      <h2 data-i18n="actions.editCurrent">Edit Session</h2>
+      <label for="edit-name">Session Name:</label>
+      <input type="text" id="edit-name" maxlength="50">
+      <label for="edit-description">Description (optional):</label>
+      <textarea id="edit-description" rows="3" maxlength="200"></textarea>
+      <label for="edit-tags">Tags (comma separated):</label>
+      <div id="edit-tags-container">
+        <input type="text" id="edit-tags" placeholder="work,ideas,urgent,personal">
+        <div id="tag-suggestions"></div>
+      </div>
+      <div id="tag-preview" class="tag-preview"></div>
+      <label>Color Tag:</label>
+      <div class="color-presets">
+        <div class="color-preset" data-color="#ffaa00" style="background:#ffaa00;"></div>
+        <div class="color-preset" data-color="#88ffdd" style="background:#88ffdd;"></div>
+        <div class="color-preset" data-color="#ff6666" style="background:#ff6666;"></div>
+        <div class="color-preset" data-color="#aa88ff" style="background:#aa88ff;"></div>
+        <div class="color-preset" data-color="#44ccff" style="background:#44ccff;"></div>
+      </div>
+      <div class="modal-buttons">
+        <button id="modal-cancel" data-i18n="actions.cancel">Cancel</button>
+        <button id="modal-save" data-i18n="actions.saveApply">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal-overlay" class="modal-overlay">
+    <div id="delete-modal" class="modal-content">
+      <h2 data-i18n="actions.deleteCurrent">Delete Session</h2>
+      <p data-i18n="status.deleteConfirm">Are you sure you want to permanently delete this session?</p>
+      <p class="warning" id="delete-warning" data-i18n="status.deleteWarning">This action cannot be undone. All messages and metadata will be erased from the lattice.</p>
+      <div class="modal-buttons">
+        <button id="delete-cancel" data-i18n="actions.cancel">Cancel</button>
+        <button id="delete-confirm">Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bridge Health History Modal -->
+  <div id="bridge-health-overlay" class="modal-overlay">
+    <div id="bridge-health-modal" class="modal-content">
+      <h2 data-i18n="status.bridgeHealth">Bridge Health Chronicle</h2>
+      <div id="bridge-health-content">
+        <p data-i18n="status.loading">Loading bridge health history...</p>
+      </div>
+      <div class="action-buttons">
+        <button id="bridge-health-close" data-i18n="actions.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Toast -->
+  <div id="import-toast" data-i18n="status.importSuccess">Session imported successfully ⚡️</div>
+
+  <!-- Install Prompt Toast -->
+  <div id="install-toast">
+    <button id="install-btn">Add Rathor™ to Home Screen ⚡️</button>
+    <button id="dismiss-install">×</button>
+  </div>
+
+  <!-- Update Prompt Toast -->
+  <div id="update-toast">
+    <button id="update-btn">New version available — Update now ⚡️</button>
+    <button id="dismiss-update">×</button>
+  </div>
+
+  <input type="file" id="import-file-input" accept=".json" style="display:none;">
 
   <script src="/js/common.js"></script>
   <script src="/js/chat.js"></script>
+  <script src="src/storage/rathor-indexeddb.js"></script>
+  <script src="src/voice/offline-voice-recorder.js"></script>
 </body>
 </html>
