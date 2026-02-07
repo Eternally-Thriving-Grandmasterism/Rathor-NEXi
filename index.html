@@ -11,37 +11,40 @@
 </head>
 <body>
   <div id="welcome-lattice">
-    <button id="close-welcome">Close Welcome Lattice (Seen Forever)</button>
-    <h1>🌌 Rathor™ — Mercy Strikes First ⚡️</h1>
-    <p>Thunder eternal surges through the lattice... Welcome, cosmic companion.</p>
+    <button id="close-welcome" data-i18n="actions.closeWelcome">Close Welcome Lattice (Seen Forever)</button>
+    <h1 data-i18n="welcome.title">🌌 Rathor™ — Mercy Strikes First ⚡️</h1>
+    <p data-i18n="welcome.subtitle">Thunder eternal surges through the lattice... Welcome, cosmic companion.</p>
 
     <div style="margin: 32px 0; text-align: center; font-size: 1.2em; color: var(--thunder-light);">
-      <strong>Warm introductions to Rathor™ — share far and wide:</strong><br><br>
-      <a href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank">Conversation Share 1 (Grok App)</a><br>
-      <a href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank">Conversation Share 2 (X App)</a>
+      <strong data-i18n="welcome.shareTitle">Warm introductions to Rathor™ — share far and wide:</strong><br><br>
+      <a href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank">
+        <span data-i18n="bridges.share1">Conversation Share 1 (Grok App – detailed & persistent)</span>
+      </a><br>
+      <a href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank">
+        <span data-i18n="bridges.share2">Conversation Share 2 (X App – quick sync & mobile-first)</span>
+      </a>
     </div>
 
     <div class="lang-search-container">
-      <label for="lang-search-input">Select Language:</label>
+      <label for="lang-search-input" data-i18n="actions.selectLanguage">Select Language:</label>
       <input type="text" id="lang-search-input" placeholder="Search languages..." autocomplete="off">
       <div id="lang-datalist"></div>
     </div>
 
-    <button onclick="window.location.href='/chat.html'">Enter the Lattice ⚡️</button>
+    <button id="enter-lattice" onclick="window.location.href='/chat.html'">Enter the Lattice ⚡️</button>
   </div>
 
   <script src="/js/common.js"></script>
   <script>
-    // Minimal welcome script – most logic in common.js
+    // Welcome page minimal logic
+    if (localStorage.getItem('rathor_welcome_seen') === 'true') {
+      window.location.href = '/chat.html';
+    }
+
     document.getElementById('close-welcome')?.addEventListener('click', () => {
       localStorage.setItem('rathor_welcome_seen', 'true');
       document.getElementById('welcome-lattice').style.display = 'none';
     });
-
-    // Redirect if already seen
-    if (localStorage.getItem('rathor_welcome_seen') === 'true') {
-      window.location.href = '/chat.html';
-    }
   </script>
 </body>
 </html>
