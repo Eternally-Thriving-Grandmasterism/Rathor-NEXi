@@ -1,0 +1,60 @@
+name: Docker Security Scan (Trivy)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build multi-platform image (Bazel)
+        run: |
+          bazelisk build //:rathor_multiarch_tarball --platforms=@platforms//os:linux,@platforms//cpu:x86_64,@platforms//cpu:arm64
+
+      - name: Load image into Docker
+        run: |
+          docker load -i bazel-bin/rathor_multiarch_tarball.tar
+
+      - name: Scan image with Trivy (critical/high only)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'rathor-nexi:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'  # fail on critical/high
+          hide-progress: false
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Mercy gate – notify on failure
+        if: failure()
+        run: |
+          echo "Critical/high vulnerabilities found – mercy gate blocked deployment"
+          exit 1
+
+      - name: Push secure image (only on main, after scan passes)
+        if: github.ref == 'refs/heads/main' && success()
+        run: |
+          docker tag rathor-nexi:latest ghcr.io/eternally-thriving-grandmasterism/rathor-nexi:latest
+          echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u eternally-thriving-grandmasterism --password-stdin
+          docker push ghcr.io/eternally-thriving-grandmasterism/rathor-nexi:latest
