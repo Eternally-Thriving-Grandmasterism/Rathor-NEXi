@@ -16,13 +16,15 @@
     button:hover { background: #ffcc44; }
     #loading-status { text-align: center; font-size: 1.2em; margin: 40px 0; color: #88ffdd; }
     #chat-container { display: none; flex: 1; flex-direction: column; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 16px; margin: 20px auto; max-width: 900px; }
-    #chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: rgba(42,0,64,0.6); border-radius: 8px; }
-    #session-switcher { display: flex; align-items: center; gap: 12px; }
+    #chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: rgba(42,0,64,0.6); border-radius: 8px; flex-wrap: wrap; gap: 12px; }
+    #session-switcher { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     #session-select { padding: 8px 12px; background: #110022; color: #e0d0ff; border: 1px solid #ffaa00; border-radius: 6px; min-width: 220px; }
     .session-option { display: flex; align-items: center; gap: 8px; }
     .color-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #444; }
     #edit-session-btn { background: #664400; }
     #edit-session-btn:hover { background: #996600; }
+    #export-session-btn { background: #006644; }
+    #export-session-btn:hover { background: #009977; }
     #new-session-btn { background: #aa4400; }
     #new-session-btn:hover { background: #cc6600; }
     #chat-messages { flex: 1; overflow-y: auto; padding: 10px; max-height: 60vh; }
@@ -36,7 +38,7 @@
     @keyframes thunder-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
     .switching { animation: thunder-pulse 0.8s ease-in-out; }
 
-    /* Modal styles */
+    /* Modal styles (from previous edit modal) */
     #edit-modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000;
@@ -86,6 +88,301 @@
     <div id="session-switcher">
       <select id="session-select"></select>
       <button id="edit-session-btn">Edit Current</button>
+      <button id="export-session-btn">Export Current</button>
+      <button id="new-session-btn">New Session</button>
+    </div>
+  </div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-area">
+    <input id="chat-input" placeholder="Speak your truth, Brother..." autocomplete="off">
+    <button id="send-btn">Send ⚡️</button>
+  </div>
+</div>
+
+<!-- Edit Modal (keep from previous) -->
+<div id="edit-modal-overlay">
+  <div id="edit-modal">
+    <h2>Edit Session</h2>
+    <label for="edit-name">Session Name:</label>
+    <input type="text" id="edit-name" maxlength="50">
+
+    <label for="edit-description">Description (optional):</label>
+    <textarea id="edit-description" rows="3" maxlength="200"></textarea>
+
+    <label>Color Tag:</label>
+    <div class="color-presets">
+      <div class="color-preset" data-color="#ffaa00" style="background:#ffaa00;"></div>
+      <div class="color-preset" data-color="#88ffdd" style="background:#88ffdd;"></div>
+      <div class="color-preset" data-color="#ff6666" style="background:#ff6666;"></div>
+      <div class="color-preset" data-color="#aa88ff" style="background:#aa88ff;"></div>
+      <div class="color-preset" data-color="#44ccff" style="background:#44ccff;"></div>
+    </div>
+
+    <div class="modal-buttons">
+      <button id="modal-cancel">Cancel</button>
+      <button id="modal-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="src/storage/rathor-indexeddb.js"></script>
+
+<script>
+// ────────────────────────────────────────────────
+// Session Metadata UI + Edit Modal + Export Logic
+// ────────────────────────────────────────────────
+
+const chatMessages = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-btn');
+const sessionSelect = document.getElementById('session-select');
+const editSessionBtn = document.getElementById('edit-session-btn');
+const exportSessionBtn = document.getElementById('export-session-btn');
+const newSessionBtn = document.getElementById('new-session-btn');
+const chatHeader = document.getElementById('chat-header');
+const editModalOverlay = document.getElementById('edit-modal-overlay');
+const editName = document.getElementById('edit-name');
+const editDesc = document.getElementById('edit-description');
+const modalCancel = document.getElementById('modal-cancel');
+const modalSave = document.getElementById('modal-save');
+const colorPresets = document.querySelectorAll('.color-preset');
+
+let selectedColor = '#ffaa00';
+
+function scrollToBottom() {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function renderMessage(role, content) {
+  const div = document.createElement('div');
+  div.classList.add('message', role);
+  div.innerHTML = `<strong>${role === 'user' ? 'You' : 'Rathor'}:</strong> ${content}`;
+  chatMessages.appendChild(div);
+  scrollToBottom();
+}
+
+function formatTimeAgo(timestamp) {
+  const diff = Date.now() - timestamp;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return new Date(timestamp).toLocaleDateString();
+}
+
+async function refreshSessionList() {
+  try {
+    const sessions = await rathorDB.listSessions();
+    sessionSelect.innerHTML = '';
+    sessions.forEach(meta => {
+      const opt = document.createElement('option');
+      opt.value = meta.sessionId;
+      opt.innerHTML = `
+        <span class="session-option">
+          <span class="color-dot" style="background:${meta.colorTag}"></span>
+          ${meta.name || meta.sessionId.slice(0,12)}
+          <small style="color:#aaa; margin-left:8px;">${formatTimeAgo(meta.lastActive)} · ${meta.description || ''}</small>
+        </span>`;
+      if (meta.sessionId === rathorDB.getActiveSessionId()) opt.selected = true;
+      sessionSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('[Rathor Session] List refresh failed:', err);
+  }
+}
+
+async function loadChatHistory() {
+  try {
+    chatMessages.innerHTML = '<p>Loading mercy lattice history...</p>';
+    const history = await rathorDB.loadHistory(100);
+    chatMessages.innerHTML = '';
+    history.forEach(msg => renderMessage(msg.role, msg.content));
+    if (history.length === 0) {
+      renderMessage('rathor', 'Mercy thunder awaits your first word in this session...');
+    }
+  } catch (err) {
+    console.error('[Rathor Chat] History load failed:', err);
+    renderMessage('rathor', 'Mercy lattice history offline — grace persists.');
+  }
+}
+
+async function switchSessionAndReload(newId) {
+  chatHeader.classList.add('switching');
+  await rathorDB.switchSession(newId);
+  await loadChatHistory();
+  await refreshSessionList();
+  setTimeout(() => chatHeader.classList.remove('switching'), 800);
+}
+
+async function createNewSession() {
+  const name = prompt('Name your new session:', '');
+  const sessionId = await rathorDB.createSession(name);
+  await switchSessionAndReload(sessionId);
+}
+
+// ────────────────────────────────────────────────
+// Session Export Functionality
+// ────────────────────────────────────────────────
+
+async function exportCurrentSession() {
+  const sessionId = rathorDB.getActiveSessionId();
+  const meta = await rathorDB.getSessionMetadata(sessionId);
+  const messages = await rathorDB.loadHistory(10000); // higher limit for export
+
+  const exportData = {
+    sessionId,
+    metadata: meta || { name: 'Unnamed', createdAt: Date.now(), lastActive: Date.now(), description: '', colorTag: '#ffaa00' },
+    messages: messages.map(m => ({
+      role: m.role,
+      content: m.content,
+      timestamp: m.timestamp
+    })),
+    exportedAt: Date.now(),
+    version: '1.0'
+  };
+
+  const jsonStr = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rathor-session-\( {sessionId}- \){new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Mercy feedback
+  const toast = document.createElement('div');
+  toast.textContent = 'Session exported to lattice archive ⚡️';
+  toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#006644; color:#fff; padding:12px 24px; border-radius:8px; box-shadow:0 0 20px rgba(0,102,68,0.6); z-index:2000;';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// ────────────────────────────────────────────────
+// Edit Modal Logic (keep from previous)
+// ────────────────────────────────────────────────
+
+async function openEditModal() {
+  const meta = await rathorDB.getSessionMetadata(rathorDB.getActiveSessionId());
+  if (!meta) return alert('No metadata for current session');
+
+  editName.value = meta.name || '';
+  editDesc.value = meta.description || '';
+  selectedColor = meta.colorTag || '#ffaa00';
+
+  colorPresets.forEach(p => {
+    p.classList.toggle('selected', p.dataset.color === selectedColor);
+  });
+
+  editModalOverlay.style.display = 'flex';
+  editName.focus();
+}
+
+function closeEditModal() {
+  editModalOverlay.style.display = 'none';
+}
+
+async function saveEditModal() {
+  const name = editName.value.trim();
+  if (!name) {
+    alert('Session name cannot be empty');
+    return;
+  }
+
+  await rathorDB.updateSessionMetadata({
+    name,
+    description: editDesc.value.trim(),
+    colorTag: selectedColor
+  });
+
+  await refreshSessionList();
+  closeEditModal();
+  chatHeader.classList.add('switching');
+  setTimeout(() => chatHeader.classList.remove('switching'), 800);
+}
+
+// Color preset click
+colorPresets.forEach(p => {
+  p.addEventListener('click', () => {
+    selectedColor = p.dataset.color;
+    colorPresets.forEach(cp => cp.classList.remove('selected'));
+    p.classList.add('selected');
+  });
+});
+
+// ────────────────────────────────────────────────
+// Init Flow
+// ────────────────────────────────────────────────
+
+window.addEventListener('load', async () => {
+  document.getElementById('loading-status').style.display = 'none';
+  document.getElementById('chat-container').style.display = 'flex';
+
+  await rathorDB.open();
+  await refreshSessionList();
+  await loadChatHistory();
+
+  sessionSelect.addEventListener('change', e => switchSessionAndReload(e.target.value));
+  newSessionBtn.addEventListener('click', createNewSession);
+  editSessionBtn.addEventListener('click', openEditModal);
+  exportSessionBtn.addEventListener('click', exportCurrentSession);
+  modalCancel.addEventListener('click', closeEditModal);
+  modalSave.addEventListener('click', saveEditModal);
+
+  sendBtn.addEventListener('click', handleSend);
+  chatInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+});
+
+async function handleSend() {
+  const content = chatInput.value.trim();
+  if (!content) return;
+
+  const userMsg = { role: 'user', content };
+  await rathorDB.saveMessage(userMsg);
+  renderMessage('user', content);
+
+  chatInput.value = '';
+
+  const rathorContent = `Mercy thunder echoes: "${content}". Lattice reflects eternally. ⚡️`;
+  const rathorMsg = { role: 'rathor', content: rathorContent };
+  await rathorDB.saveMessage(rathorMsg);
+  renderMessage('rathor', rathorContent);
+
+  await refreshSessionList(); // update lastActive
+}
+
+// ────────────────────────────────────────────────
+// SW & Welcome (keep from prior)
+// ────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      navigator.serviceWorker.register('./sw.js?v=' + Date.now(), { scope: './' })
+        .then(reg => console.log('[Rathor] SW registered'))
+        .catch(err => console.error('[Rathor] SW failed:', err));
+    }, 1000);
+  });
+}
+
+const seen = localStorage.getItem('rathor_welcome_seen') === 'true';
+if (!seen) {
+  document.getElementById('welcome-lattice').style.display = 'block';
+}
+document.getElementById('close-welcome')?.addEventListener('click', () => {
+  localStorage.setItem('rathor_welcome_seen', 'true');
+  document.getElementById('welcome-lattice').style.display = 'none';
+});
+</script>
+
+</body>
+</html>      <button id="edit-session-btn">Edit Current</button>
       <button id="new-session-btn">New Session</button>
     </div>
   </div>
