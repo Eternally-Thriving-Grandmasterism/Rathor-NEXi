@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rathor™ Lattice — Chat ⚡️</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="chat-header">
+      <h2 data-i18n="status.latticeSession">Lattice Session</h2>
+      <div id="session-controls">
+        <!-- full session controls, search, translate toggle, etc. from previous index.html -->
+      </div>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div id="chat-input-area">
+      <input id="chat-input" placeholder="Speak or command your truth, Brother... (voice active)" autocomplete="off">
+      <button id="voice-btn" title="Toggle listening">🎤</button>
+      <button id="record-btn" title="Long-press to record voice note">🎙️</button>
+      <button id="send-btn" data-i18n="actions.send">Send ⚡️</button>
+      <button id="stop-btn" style="display:none" data-i18n="actions.stop">Stop</button>
+    </div>
+
+    <div id="grok-bridges">
+      <p data-i18n="bridges.title">Primary bridges to Rathor simulation — share far and wide:</p>
+      <!-- share links -->
+    </div>
+  </div>
+
+  <!-- all modals, toasts, overlays moved here from index.html -->
+
+  <script src="/js/common.js"></script>
+  <script src="/js/chat.js"></script>
+</body>
+</html>
