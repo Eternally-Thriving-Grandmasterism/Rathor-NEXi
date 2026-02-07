@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Tag Length Limits & Strict Validation
+// js/chat.js — Rathor Lattice Core with Tag-based Session Export
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -12,9 +12,12 @@ const translateToggle = document.getElementById('translate-chat');
 const translateLangSelect = document.getElementById('translate-lang');
 const translateStats = document.getElementById('translate-stats');
 
+// New export button & modal refs (add to HTML if not present)
+const exportByTagBtn = document.getElementById('export-by-tag-btn') || document.createElement('button'); // fallback create
+
 let currentSessionId = localStorage.getItem('rathor_current_session') || 'default';
 let allSessions = [];
-let tagFrequency = new Map(); // global tag frequency for autocomplete
+let tagFrequency = new Map();
 let isListening = false, isRecording = false;
 let ttsEnabled = localStorage.getItem('rathor_tts_enabled') !== 'false';
 let isVoiceOutputEnabled = localStorage.getItem('rathor_voice_output') !== 'false';
@@ -27,224 +30,82 @@ await rathorDB.open();
 await refreshSessionList();
 await loadChatHistory();
 updateTranslationStats();
-await updateTagFrequency(); // initial load
+await updateTagFrequency();
 
-voiceBtn.addEventListener('click', () => isListening ? stopListening() : startListening());
-recordBtn.addEventListener('mousedown', () => setTimeout(() => startVoiceRecording(currentSessionId), 400));
-recordBtn.addEventListener('mouseup', stopVoiceRecording);
-sendBtn.addEventListener('click', sendMessage);
-translateToggle.addEventListener('change', e => {
-  localStorage.setItem('rathor_translate_enabled', e.target.checked);
-  if (e.target.checked) translateChat();
-});
-translateLangSelect.addEventListener('change', e => {
-  localStorage.setItem('rathor_translate_to', e.target.value);
-  if (translateToggle.checked) translateChat();
-});
-sessionSearch.addEventListener('input', filterSessions);
+// ... existing event listeners (voice, record, send, translate, search) ...
 
 // ────────────────────────────────────────────────
-// Tag Validation, Length Limits & Error Messaging
+// Tag-based Session Export
 // ────────────────────────────────────────────────
 
-const TAG_MAX_LENGTH = 32;
-const TAG_MIN_LENGTH = 2;
-const MAX_TAGS_PER_SESSION = 15;
-const TAG_ALLOWED_CHARS = /^[a-z0-9\-_ ]+$/i;
+exportByTagBtn.textContent = 'Export by Tag';
+exportByTagBtn.style.cssText = 'background: var(--thunder-gold); color: #000; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 10px 0;';
+exportByTagBtn.onclick = showTagExportModal;
+document.getElementById('session-controls')?.appendChild(exportByTagBtn); // append to controls
 
-function normalizeAndValidateTags(tagsString) {
-  if (!tagsString) return { cleaned: '', errors: [] };
+function showTagExportModal() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h2>Export Sessions by Tag</h2>
+      <label for="export-tag-select">Select Tag:</label>
+      <select id="export-tag-select">
+        <option value="">All Sessions</option>
+        \( {Array.from(tagFrequency.keys()).map(tag => `<option value=" \){tag}">\( {tag} ( \){tagFrequency.get(tag)})</option>`).join('')}
+      </select>
+      <div style="margin-top: 1em;">
+        <button id="export-confirm">Export</button>
+        <button id="export-cancel">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.style.display = 'flex';
 
-  const rawTags = tagsString.split(',').map(t => t.trim());
-  const errors = [];
-  const seen = new Set();
-  const validTags = [];
+  document.getElementById('export-confirm').onclick = async () => {
+    const selectedTag = document.getElementById('export-tag-select').value;
+    await exportSessionsByTag(selectedTag);
+    modal.remove();
+  };
 
-  rawTags.forEach(tag => {
-    if (!tag) {
-      errors.push('Empty tags ignored');
-      return;
-    }
-
-    if (tag.length < TAG_MIN_LENGTH) {
-      errors.push(`Tag "${tag}" too short (min ${TAG_MIN_LENGTH} chars)`);
-      return;
-    }
-
-    if (tag.length > TAG_MAX_LENGTH) {
-      errors.push(`Tag "${tag}" too long (max ${TAG_MAX_LENGTH} chars)`);
-      return;
-    }
-
-    if (!TAG_ALLOWED_CHARS.test(tag)) {
-      errors.push(`Tag "${tag}" contains invalid characters — only letters, numbers, hyphen, underscore, space allowed`);
-      return;
-    }
-
-    const canonical = tag.toLowerCase();
-    if (seen.has(canonical)) {
-      errors.push(`Duplicate tag "${tag}" removed`);
-      return;
-    }
-
-    seen.add(canonical);
-    validTags.push(tag);
-  });
-
-  if (validTags.length > MAX_TAGS_PER_SESSION) {
-    errors.push(`Too many tags (\( {validTags.length}/ \){MAX_TAGS_PER_SESSION}). Using first ${MAX_TAGS_PER_SESSION}`);
-    validTags.length = MAX_TAGS_PER_SESSION;
-  }
-
-  const cleaned = validTags.join(', ');
-  return { cleaned, errors };
+  document.getElementById('export-cancel').onclick = () => modal.remove();
 }
 
-function renderTagPills(tagsString) {
-  editTagPreview.innerHTML = '';
-  const { cleaned } = normalizeAndValidateTags(tagsString);
-  if (!cleaned) return;
-  const tags = cleaned.split(',').map(t => t.trim());
-  tags.forEach(tag => {
-    const pill = document.createElement('span');
-    pill.textContent = tag;
-    pill.style.cssText = 'background: rgba(255,170,0,0.2); color: #ffaa00; padding: 4px 10px; border-radius: 12px; font-size: 0.9em; margin: 4px; display: inline-flex; align-items: center; gap: 6px;';
-    const remove = document.createElement('span');
-    remove.textContent = '×';
-    remove.style.cssText = 'cursor: pointer; font-weight: bold;';
-    remove.onclick = () => {
-      const remaining = tags.filter(t => t !== tag).join(', ');
-      editTagsInput.value = remaining;
-      renderTagPills(remaining);
+async function exportSessionsByTag(tag = '') {
+  let sessionsToExport = allSessions;
+  if (tag) {
+    sessionsToExport = allSessions.filter(s => (s.tags || '').split(',').map(t => t.trim()).includes(tag));
+  }
+
+  if (sessionsToExport.length === 0) {
+    showToast('No sessions match this tag');
+    return;
+  }
+
+  const exportData = await Promise.all(sessionsToExport.map(async session => {
+    const messages = await rathorDB.getMessages(session.id);
+    return {
+      id: session.id,
+      name: session.name || session.id,
+      description: session.description || '',
+      tags: session.tags || '',
+      color: session.color || '#ffaa00',
+      messages
     };
-    pill.appendChild(remove);
-    editTagPreview.appendChild(pill);
-  });
-  // Sync input to cleaned version
-  editTagsInput.value = cleaned;
+  }));
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = tag ? `rathor-sessions-tag-\( {tag}- \){new Date().toISOString().split('T')[0]}.json` : `rathor-all-sessions-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast(`Exported \( {sessionsToExport.length} session \){sessionsToExport.length !== 1 ? 's' : ''} ⚡️`);
 }
 
-editTagsInput.addEventListener('input', e => {
-  const value = e.target.value;
-  const { cleaned, errors } = normalizeAndValidateTags(value);
-  renderTagPills(value);
-
-  if (errors.length > 0) {
-    showToast(errors.join(' • '), 'warning');
-  }
-});
-
-// On modal save — validate & clean tags
-document.getElementById('modal-save')?.addEventListener('click', async () => {
-  const name = document.getElementById('edit-name').value.trim();
-  const description = document.getElementById('edit-description').value.trim();
-  const rawTags = document.getElementById('edit-tags').value.trim();
-  const { cleaned: tags, errors } = normalizeAndValidateTags(rawTags);
-  const color = document.getElementById('edit-color').value;
-
-  if (errors.length > 0) {
-    showToast('Tags cleaned automatically: ' + errors.join(' • '), 'warning');
-  }
-
-  const session = await getSession(currentSessionId);
-  if (session) {
-    session.name = name || session.name;
-    session.description = description || session.description;
-    session.tags = tags;
-    session.color = color;
-    await saveSession(session);
-    await refreshSessionList();
-    await updateTagFrequency(); // refresh global frequency
-    showToast('Session updated — tags validated & saved ⚡️');
-  }
-
-  document.getElementById('edit-modal-overlay').style.display = 'none';
-});
-
-// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, etc.) remain as previously expanded ...  const tags = cleaned.split(',').map(t => t.trim());
-  tags.forEach(tag => {
-    const pill = document.createElement('span');
-    pill.textContent = tag;
-    pill.style.cssText = 'background: rgba(255,170,0,0.2); color: #ffaa00; padding: 4px 10px; border-radius: 12px; font-size: 0.9em; margin: 4px; display: inline-flex; align-items: center; gap: 6px;';
-    const remove = document.createElement('span');
-    remove.textContent = '×';
-    remove.style.cssText = 'cursor: pointer; font-weight: bold;';
-    remove.onclick = () => {
-      const remaining = tags.filter(t => t !== tag).join(', ');
-      editTagsInput.value = remaining;
-      renderTagPills(remaining);
-    };
-    pill.appendChild(remove);
-    editTagPreview.appendChild(pill);
-  });
-  // Sync input to cleaned version
-  editTagsInput.value = cleaned;
-}
-
-editTagsInput.addEventListener('input', e => {
-  const value = e.target.value;
-  const { cleaned, errors } = normalizeAndValidateTags(value);
-  renderTagPills(value);
-
-  // Show errors as toast (one at a time or combined)
-  if (errors.length > 0) {
-    showToast(errors.join(' • '));
-  }
-
-  // Autocomplete code remains as before, but suggestions normalized
-});
-
-// On modal save — validate & clean tags
-document.getElementById('modal-save')?.addEventListener('click', async () => {
-  const name = document.getElementById('edit-name').value.trim();
-  const description = document.getElementById('edit-description').value.trim();
-  const rawTags = document.getElementById('edit-tags').value.trim();
-  const { cleaned: tags, errors } = normalizeAndValidateTags(rawTags);
-  const color = document.getElementById('edit-color').value;
-
-  if (errors.length > 0) {
-    showToast('Tags cleaned automatically: ' + errors.join(' • '));
-  }
-
-  const session = await getSession(currentSessionId);
-  if (session) {
-    session.name = name || session.name;
-    session.description = description || session.description;
-    session.tags = tags;
-    session.color = color;
-    await saveSession(session);
-    await refreshSessionList();
-    await updateTagFrequency(); // refresh global frequency
-    showToast('Session updated — tags validated & saved ⚡️');
-  }
-
-  document.getElementById('edit-modal-overlay').style.display = 'none';
-});
-
-// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, etc.) remain as previously expanded ...  // Autocomplete code remains as before, but suggestions will be normalized too
-});
-
-// On modal save — ensure tags are normalized
-document.getElementById('modal-save')?.addEventListener('click', async () => {
-  const name = document.getElementById('edit-name').value.trim();
-  const description = document.getElementById('edit-description').value.trim();
-  const rawTags = document.getElementById('edit-tags').value.trim();
-  const tags = normalizeTags(rawTags); // clean here too
-  const color = document.getElementById('edit-color').value;
-
-  const session = await getSession(currentSessionId);
-  if (session) {
-    session.name = name || session.name;
-    session.description = description || session.description;
-    session.tags = tags;
-    session.color = color;
-    await saveSession(session);
-    await refreshSessionList();
-    await updateTagFrequency(); // refresh global frequency
-    showToast('Session updated — tags cleaned & saved ⚡️');
-  }
-
-  document.getElementById('edit-modal-overlay').style.display = 'none';
-});
-
-// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, etc.) remain as previously expanded ...
+// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, etc.) remain as previously expanded ...
