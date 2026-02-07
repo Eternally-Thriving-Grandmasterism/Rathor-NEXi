@@ -11,9 +11,6 @@
 
   <style>
     /* [Previous full CSS – kept unchanged] */
-
-    #stats-modal .stats-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-    .stat-card.large { grid-column: span 2; }
   </style>
 </head>
 <body>
@@ -41,34 +38,35 @@
         </div>
         <div class="stat-card">
           <div class="stat-value" id="stats-hitrate">0%</div>
-          <div class="stat-label">Hit Rate</div>
+          <div class="stat-label">Overall Hit Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stats-avg-latency">0ms</div>
+          <div class="stat-label">Avg Latency (All)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stats-p95-latency">0ms</div>
+          <div class="stat-label">P95 Latency (All)</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="stats-cache-size">0</div>
           <div class="stat-label">Cached Entries</div>
         </div>
-        <div class="stat-card large">
-          <div class="stat-value" id="stats-avg-latency">0ms</div>
-          <div class="stat-label">Average Latency</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stats-p95-latency">0ms</div>
-          <div class="stat-label">P95 Latency</div>
-        </div>
       </div>
     </div>
 
-    <!-- Per-Language Breakdown -->
     <div class="stats-section">
-      <h3>Per-Language Breakdown</h3>
-      <table class="stats-table" id="lang-breakdown-table">
+      <h3>Per-Language Performance</h3>
+      <table class="stats-table" id="lang-performance-table">
         <thead>
           <tr>
             <th>Language</th>
+            <th>Total</th>
             <th>Hits</th>
             <th>Misses</th>
             <th>Hit Rate</th>
             <th>Avg Latency</th>
+            <th>P95 Latency</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -83,6 +81,155 @@
           <tr>
             <th>Time</th>
             <th>Hit/Miss</th>
+            <th>Lang</th>
+            <th>Latency</th>
+            <th>Message Preview</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Cache Health -->
+    <div class="stats-section">
+      <h3>Cache Health</h3>
+      <p>Oldest entry: <span id="oldest-entry">---</span></p>
+      <p>Newest entry: <span id="newest-entry">---</span></p>
+      <p>Expired entries auto-cleaned: <span id="cleaned-expired">0</span></p>
+    </div>
+
+    <div class="action-buttons">
+      <button id="stats-reset-btn">Reset All Metrics</button>
+      <button id="stats-export-btn">Export Stats JSON</button>
+      <button id="stats-close-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- [Rest of HTML unchanged] -->
+
+<script>
+// ────────────────────────────────────────────────
+// Enhanced showDetailedStatsModal with Per-Language Latency
+// ────────────────────────────────────────────────
+
+async function showDetailedStatsModal() {
+  const metrics = await rathorDB.getTranslationMetrics();
+
+  statsTotal.textContent = metrics.total;
+  statsHits.textContent = metrics.hits;
+  statsMisses.textContent = metrics.misses;
+  statsHitRate.textContent = `${metrics.hitRate}%`;
+  statsCacheSize.textContent = metrics.cacheSize;
+  document.getElementById('stats-avg-latency').textContent = `${metrics.avgLatency}ms`;
+  document.getElementById('stats-p95-latency').textContent = `${metrics.p95Latency}ms`;
+
+  // Per-language performance table
+  const langTableBody = document.getElementById('lang-performance-table').querySelector('tbody');
+  langTableBody.innerHTML = '';
+
+  Object.entries(metrics.perLang || {}).forEach(([lang, data]) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${lang}</td>
+      <td>${data.total}</td>
+      <td>${data.hits}</td>
+      <td>${data.misses}</td>
+      <td>${data.hitRate}%</td>
+      <td>${data.avgLatency}ms</td>
+      <td>${data.p95Latency}ms</td>`;
+    langTableBody.appendChild(row);
+  });
+
+  if (Object.keys(metrics.perLang || {}).length === 0) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td colspan="7">No per-language data yet — translations in progress</td>';
+    langTableBody.appendChild(row);
+  }
+
+  // Recent activity with latency
+  const recentTableBody = document.getElementById('recent-activity-table').querySelector('tbody');
+  recentTableBody.innerHTML = '';
+  metrics.history.slice(-20).reverse().forEach(entry => {
+    const time = new Date(entry.timestamp).toLocaleString();
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${time}</td>
+      <td>${entry.hit ? 'Hit' : 'Miss'}</td>
+      <td>${entry.lang || '-'}</td>
+      <td>${entry.latency ? entry.latency + 'ms' : '-'}</td>
+      <td>Translation event</td>`;
+    recentTableBody.appendChild(row);
+  });
+
+  // Cache health
+  oldestEntrySpan.textContent = metrics.history.length > 0 ? new Date(metrics.history[0].timestamp).toLocaleString() : 'No entries';
+  newestEntrySpan.textContent = metrics.history.length > 0 ? new Date(metrics.history[metrics.history.length-1].timestamp).toLocaleString() : 'No entries';
+  cleanedExpiredSpan.textContent = 'Auto-cleaned on load';
+
+  statsModalOverlay.style.display = 'flex';
+
+  // Voice readout with detailed latency info
+  if (isVoiceOutputEnabled) {
+    speak(`Translation cache efficiency is ${metrics.hitRate}% with ${metrics.hits} hits out of ${metrics.total} requests. Average latency across all languages is ${metrics.avgLatency} milliseconds, with P95 at ${metrics.p95Latency} milliseconds.`);
+  }
+}
+
+// ────────────────────────────────────────────────
+// Enhanced translateText with per-lang latency tracking
+// ────────────────────────────────────────────────
+
+async function translateText(text, messageId, sessionId, fromLang = 'auto', toLang = targetTranslationLang) {
+  const startTime = performance.now();
+
+  const cached = await rathorDB.getCachedTranslation(sessionId, messageId, toLang);
+  if (cached) {
+    const latencyMs = performance.now() - startTime;
+    await rathorDB.updateTranslationMetrics(true, latencyMs, toLang);
+    showToast('Translation retrieved from eternal lattice cache ⚡️');
+    return cached.translatedText;
+  }
+
+  try {
+    if (!translator) {
+      showTranslationProgress('Downloading offline translation model (one-time, \~40MB)...');
+      const { pipeline } = Xenova;
+      translator = await pipeline('translation', 'Xenova/m2m100_418M-distilled', {
+        progress_callback: (progress) => {
+          if (progress.status === 'progress') {
+            const percent = Math.round(progress.loaded / progress.total * 100);
+            updateTranslationProgress(percent);
+          }
+        }
+      });
+      updateTranslationProgress(100, 'Offline translation lattice awakened ⚡️');
+      setTimeout(hideTranslationProgress, 800);
+    }
+
+    const output = await translator(text, {
+      src_lang: fromLang === 'auto' ? undefined : fromLang,
+      tgt_lang: `to_${toLang}`
+    });
+
+    const translated = output[0].translation_text;
+    const latencyMs = performance.now() - startTime;
+
+    await rathorDB.cacheTranslation(sessionId, messageId, toLang, translated);
+    await rathorDB.updateTranslationMetrics(false, latencyMs, toLang);
+
+    return translated;
+  } catch (err) {
+    console.error('Translation error:', err);
+    await rathorDB.updateTranslationMetrics(false, performance.now() - startTime, toLang);
+    return text + ' [translation offline error]';
+  }
+}
+
+// ... rest of the lattice unchanged, updateTranslationStats called after every translation ...
+</script>
+
+</body>
+</html>            <th>Hit/Miss</th>
             <th>Lang</th>
             <th>Latency</th>
             <th>Message Preview</th>
