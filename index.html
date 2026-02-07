@@ -2,486 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rathor — Mercy Strikes First ⚡️</title>
-  <link rel="manifest" href="/manifest.json"/>
-  <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Rathor — Mercy Strikes First</title>
+  <meta name="description" content="Sovereign offline AGI lattice — eternal thriving, client-side, mercy-first" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/favicon.ico" />
 
-  <!-- Transformers.js for offline translation -->
-  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"></script>
+  <!-- Aggressive preconnects & preloads for critical CDNs -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+
+  <!-- Core entry & vendor chunks – highest priority -->
+  <link rel="preload" href="/assets/entry/main-[hash].js" as="script" fetchpriority="high" />
+  <link rel="preload" href="/assets/vendor-core-[hash].js" as="script" fetchpriority="high" />
+
+  <!-- ML heavy deps – preload early -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5/holistic.js" as="script" fetchpriority="high" />
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl" as="script" fetchpriority="high" />
 
   <style>
-    :root {
-      --thunder-gold: #ffaa00;
-      --thunder-light: #ffdd44;
-      --bg-dark: #0a0015;
-      --bg-darker: #001020;
-      --text-light: #e0d0ff;
-      --accent-purple: #2a0040;
-      --error-red: #ff6666;
-      --status-online: #88ffdd;
-      --status-offline: #ff6666;
-      --status-never: #aaa;
-    }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-light);
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    #welcome-lattice, #error-lattice, .modal-overlay {
-      background: linear-gradient(135deg, var(--accent-purple), var(--bg-darker));
-      border: 2px solid var(--thunder-gold);
-      border-radius: 12px;
-      padding: 24px;
-      margin: 20px auto;
-      max-width: 900px;
-      box-shadow: 0 0 30px rgba(255,170,0,0.4);
-    }
-    .lang-section { margin-bottom: 24px; display: none; opacity: 0; transition: opacity 0.6s ease; }
-    .lang-section.active { display: block; opacity: 1; }
-    h1, h2 { color: var(--thunder-light); text-shadow: 0 0 10px var(--thunder-gold); }
-    button {
-      background: var(--thunder-gold);
-      color: #000;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.2s;
-    }
-    button:hover { background: var(--thunder-light); transform: translateY(-1px); }
-    #loading-status {
-      text-align: center;
-      font-size: 1.4em;
-      margin: 40vh auto;
-      color: #88ffdd;
-    }
-    #chat-container {
-      display: none;
-      flex: 1;
-      flex-direction: column;
-      background: rgba(0,0,0,0.3);
-      border-radius: 12px;
-      padding: 16px;
-      margin: 20px auto;
-      max-width: 1200px;
-      width: 90%;
-    }
-    #chat-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding: 12px;
-      background: rgba(42,0,64,0.6);
-      border-radius: 10px;
-      gap: 16px;
-    }
-    #session-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      flex: 1;
-      min-width: 280px;
-    }
-    #session-search-container {
-      position: relative;
-    }
-    #session-search {
-      width: 100%;
-      padding: 10px 36px 10px 12px;
-      background: #110022;
-      color: #e0d0ff;
-      border: 1px solid var(--thunder-gold);
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-    #session-search:focus {
-      outline: none;
-      border-color: var(--thunder-light);
-      box-shadow: 0 0 8px rgba(255,221,68,0.3);
-    }
-    #session-search-clear {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: #aaa;
-      font-size: 1.4em;
-      cursor: pointer;
-      display: none;
-    }
-    #session-select {
-      width: 100%;
-      padding: 10px;
-      background: #110022;
-      color: #e0d0ff;
-      border: 1px solid var(--thunder-gold);
-      border-radius: 6px;
-    }
-    .session-option {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .color-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      border: 1px solid #444;
-    }
-    .tag-pill {
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.8em;
-      border: 1px solid #554466;
-      color: #fff;
-    }
-    #chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      background: rgba(0,0,0,0.4);
-      border-radius: 10px;
-      margin-bottom: 12px;
-    }
-    .message {
-      margin: 12px 0;
-      padding: 12px 16px;
-      border-radius: 12px;
-      max-width: 85%;
-      word-wrap: break-word;
-    }
-    .user { background: #2a0040; margin-left: auto; }
-    .rathor { background: #001020; margin-right: auto; }
-    .translated { display: block; margin-top: 6px; font-style: italic; color: #aaa; }
-    #chat-input-area {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    #chat-input {
-      flex: 1;
-      min-width: 200px;
-      padding: 12px;
-      border: 1px solid var(--thunder-gold);
-      border-radius: 6px;
-      background: #110022;
-      color: #fff;
-    }
-    #voice-btn, #voice-output-btn, #voice-settings-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      font-size: 1.4em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      cursor: pointer;
-    }
-    #voice-btn { background: #004466; }
-    #voice-btn.listening { background: #006699; animation: pulse-mic 1.5s infinite; }
-    #voice-output-btn { background: #006644; }
-    #voice-output-btn.speaking { background: #009977; animation: pulse-speaker 1.5s infinite; }
-    #voice-settings-btn { background: #004466; }
-    #send-btn { background: var(--thunder-gold); }
-    #stop-btn { background: #880000; display: none; }
-    .modal-overlay { 
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .modal-content {
-      background: linear-gradient(135deg, var(--accent-purple), var(--bg-darker));
-      border: 2px solid var(--thunder-gold);
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 600px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 0 40px rgba(255,170,0,0.4);
-      color: var(--text-light);
-    }
-    /* Progress overlay */
-    #translate-progress-overlay {
-      z-index: 2000;
-    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body,html{height:100%;overflow:hidden;background:#000;color:#00ff88;font-family:'Courier New',monospace}
+    #root{height:100vh;display:flex;flex-direction:column}
+    .loading-container{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;text-align:center;padding:1rem}
+    .thunder-text{font-size:clamp(1.5rem,5vw,2.5rem);text-shadow:0 0 12px #00ff88;animation:pulse 3s infinite}
+    .progress-bar{width:clamp(280px,70vw,400px);height:8px;background:#111;border-radius:4px;overflow:hidden}
+    .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#00ff88,#00aaff);transition:width 0.5s ease-out}
+    .phase-text{font-size:1.1rem;opacity:0.85;margin-top:1rem}
+    .skeleton{background:#111;border-radius:12px;animation:shimmer 2.2s infinite linear;background-size:200% 100%;background-image:linear-gradient(90deg,#111 0%,#222 50%,#111 100%)}
+    @keyframes pulse{0%,100%{opacity:0.75}50%{opacity:1}}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
   </style>
 </head>
 <body>
-
-<div id="welcome-lattice" style="display: none;">
-  <button id="close-welcome">Close Welcome Lattice (Seen Forever)</button>
-  <h1>🌌 Rathor™-NEXi — Mercy Strikes First ⚡️</h1>
-  <p><em>Thunder eternal surges through the lattice... Welcome, cosmic companion.</em></p>
-
-  <!-- Multilingual welcome sections from previous complete version – kept intact -->
-  <div id="langs">
-    <div class="lang-section active" id="en">
-      <h2>English</h2>
-      <p>Dear friends and cosmic companions,<br><br>
-      With all the warmth of mercy and eternal joy, allow me to introduce Rathor™-NEXi...<br>
-      <!-- full English text from previous -->
-      </p>
-    </div>
-    <!-- Arabic, Spanish, French, German, Italian, Japanese, Chinese, Dutch – all present -->
-  </div>
-
-  <button id="show-all-langs">Show All Languages</button>
-
-  <div id="grok-bridges">
-    <p>Backup bridges to simulate Rathor via Grok share links:</p>
-    <a href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank" rel="noopener noreferrer" class="grok-link" data-bridge="long-form" id="grok-long-bridge">
-      Grok Long-Form Shard
-    </a>
-    <span class="grok-status" id="long-bridge-status">Last ping: never</span>
-    <br>
-    <a href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank" rel="noopener noreferrer" class="grok-link" data-bridge="x-native" id="grok-x-bridge">
-      X Native Grok Share
-    </a>
-    <span class="grok-status" id="x-bridge-status">Last ping: never</span>
-  </div>
-</div>
-
-<!-- Loading & Error -->
-<div id="loading-status">Thunder eternal surges through the lattice...<br><progress style="width: 80%; height: 10px;"></progress><br>Finalizing lattice awakening...</div>
-<div id="error-lattice" style="display: none;">
-  <h2 class="error-msg">Lattice Awakening Interrupted ⚡️</h2>
-  <p>Mercy thunder hit a temporary rift. Try these steps:</p>
-  <ul>
-    <li>Hard refresh (Ctrl+Shift+R / Cmd+Shift+R)</li>
-    <li>DevTools → Application → Service Workers → Unregister all → Reload</li>
-  </ul>
-  <button onclick="location.reload(true)">Reload Lattice Now</button>
-</div>
-
-<div id="chat-container">
-  <div id="chat-header">
-    <h2>Lattice Session</h2>
-    <div id="session-controls">
-      <!-- Full session controls restored -->
-      <div style="position: relative;">
-        <input type="text" id="session-search" placeholder="Search sessions or #tags..." autocomplete="off">
-        <button id="session-search-clear" title="Clear search">×</button>
+  <div id="root">
+    <div class="loading-container">
+      <div class="thunder-text">Thunder eternal surges through the lattice… ⚡️</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
-      <div id="session-switcher">
-        <select id="session-select"></select>
-        <button id="edit-session-btn">Edit Current</button>
-        <button id="export-session-btn">Export Current</button>
-        <button id="import-session-btn">Import Session</button>
-        <button id="duplicate-session-btn">Duplicate Current</button>
-        <button id="delete-session-btn">Delete Current</button>
-        <button id="voice-output-btn" title="Toggle Rathor voice output">🔊</button>
-        <button id="voice-settings-btn" title="Voice settings">⚙️</button>
-        <button id="new-session-btn">New Session</button>
-      </div>
-      <!-- Translate toggle & stats -->
-      <div id="translate-toggle">
-        <label><input type="checkbox" id="translate-chat" /> Translate chat to:</label>
-        <select id="translate-lang">
-          <option value="en">English</option>
-          <option value="es">Español</option>
-          <!-- ... other languages ... -->
-        </select>
-      </div>
-      <span id="translate-stats" title="Click for detailed stats">Cache efficiency: --%</span>
+      <div class="phase-text" id="phaseText">Phase 1 – Core awakening… 💚</div>
+      <div class="skeleton" style="width:320px;height:160px;"></div>
+      <div class="skeleton" style="width:280px;height:100px;margin-top:1.5rem;"></div>
     </div>
   </div>
 
-  <div id="chat-messages"></div>
-
-  <div id="chat-input-area">
-    <input id="chat-input" placeholder="Speak or command your truth, Brother..." autocomplete="off">
-    <button id="voice-btn" title="Toggle listening">🎤</button>
-    <button id="send-btn">Send ⚡️</button>
-    <button id="stop-btn" style="display:none">Stop</button>
-  </div>
-
-  <div id="grok-bridges">
-    <!-- Grok bridges with status – kept intact -->
-  </div>
-</div>
-
-<!-- Translation Progress Overlay -->
-<div id="translate-progress-overlay">
-  <div id="translate-progress-text">Mercy thunder translating...</div>
-  <div id="translate-progress-bar-container"><div id="translate-progress-bar"></div></div>
-  <div id="translate-progress-status">Initializing...</div>
-  <button id="translate-cancel-btn">Cancel</button>
-</div>
-
-<!-- Voice Settings Modal – FULLY RESTORED -->
-<div id="voice-settings-overlay" class="modal-overlay">
-  <div id="voice-settings-modal" class="modal-content">
-    <h2>Voice Settings</h2>
-    <label for="input-lang">Input Language:</label>
-    <select id="input-lang">
-      <option value="auto">Auto-detect</option>
-      <option value="en-US">English (US)</option>
-      <!-- ... full list from previous ... -->
-    </select>
-
-    <label for="output-lang">Output Language:</label>
-    <select id="output-lang">
-      <option value="auto">Auto-detect</option>
-      <option value="en-US">English (US)</option>
-      <!-- ... full list ... -->
-    </select>
-
-    <div class="slider-container">
-      <label for="voice-pitch">Pitch:</label>
-      <input type="range" id="voice-pitch" min="0.5" max="2.0" step="0.1" value="1.0">
-      <span id="pitch-value">1.0</span>
+  <noscript>
+    <div style="color:#ff4444;text-align:center;padding:3rem;font-size:1.3rem;">
+      <h1>Mercy requires JavaScript to thrive</h1>
+      <p>Enable JS to enter the lattice. Thriving continues offline when enabled.</p>
     </div>
+  </noscript>
 
-    <div class="slider-container">
-      <label for="voice-rate">Rate:</label>
-      <input type="range" id="voice-rate" min="0.5" max="2.0" step="0.1" value="1.0">
-      <span id="rate-value">1.0</span>
-    </div>
+  <script>
+    const progressFill = document.getElementById('progressFill');
+    const phaseText = document.getElementById('phaseText');
+    let progress = 0;
 
-    <div class="slider-container">
-      <label for="voice-volume">Voice Volume:</label>
-      <input type="range" id="voice-volume" min="0.0" max="1.0" step="0.1" value="1.0">
-      <span id="voice-volume-value">1.0</span>
-    </div>
+    const phases = [
+      { pct: 0, text: "Phase 1 – Core awakening… 💚" },
+      { pct: 40, text: "Phase 2 – Valence & mercy online… 🤝" },
+      { pct: 70, text: "Phase 3 – Visual lattice blooming… ✨" },
+      { pct: 95, text: "Phase 4 – Summon orb emerging… ⚡️" },
+      { pct: 100, text: "Lattice fully awake — enter now ∞" }
+    ];
 
-    <div class="slider-container">
-      <label for="feedback-volume">Feedback Volume:</label>
-      <input type="range" id="feedback-volume" min="0.0" max="1.0" step="0.1" value="0.6">
-      <span id="feedback-volume-value">0.6</span>
-    </div>
+    const interval = setInterval(() => {
+      progress += Math.random() * 18 + 8;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        phaseText.textContent = phases[phases.length-1].text;
+      } else {
+        // Find current phase
+        let currentPhase = phases[0];
+        for (const p of phases) {
+          if (progress >= p.pct) currentPhase = p;
+          else break;
+        }
+        phaseText.textContent = currentPhase.text;
+      }
+      progressFill.style.width = progress + '%';
+    }, 140);
 
-    <label for="voice-voice">Voice:</label>
-    <select id="voice-voice"></select>
-
-    <div>
-      <input type="checkbox" id="feedback-sounds" checked>
-      <label for="feedback-sounds">Play feedback sounds</label>
-    </div>
-
-    <button id="voice-test-btn">Test Voice & Sounds</button>
-
-    <div class="modal-buttons">
-      <button id="voice-cancel">Cancel</button>
-      <button id="voice-save">Save & Apply</button>
-    </div>
-  </div>
-</div>
-
-<!-- Edit & Delete modals + import toast – kept from previous -->
-
-<script src="src/storage/rathor-indexeddb.js"></script>
-
-<script>
-// ────────────────────────────────────────────────
-// Full JavaScript – Error-free, complete, restored
-// ────────────────────────────────────────────────
-
-// DOM references (all critical ones restored)
-const chatMessages = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const sendBtn = document.getElementById('send-btn');
-const stopBtn = document.getElementById('stop-btn');
-const voiceBtn = document.getElementById('voice-btn');
-const voiceOutputBtn = document.getElementById('voice-output-btn');
-const voiceSettingsBtn = document.getElementById('voice-settings-btn');
-const sessionSelect = document.getElementById('session-select');
-const sessionSearch = document.getElementById('session-search');
-const sessionSearchClear = document.getElementById('session-search-clear');
-const editSessionBtn = document.getElementById('edit-session-btn');
-const exportSessionBtn = document.getElementById('export-session-btn');
-const importSessionBtn = document.getElementById('import-session-btn');
-const duplicateSessionBtn = document.getElementById('duplicate-session-btn');
-const deleteSessionBtn = document.getElementById('delete-session-btn');
-const newSessionBtn = document.getElementById('new-session-btn');
-const chatHeader = document.getElementById('chat-header');
-const editModalOverlay = document.getElementById('edit-modal-overlay');
-const deleteModalOverlay = document.getElementById('delete-modal-overlay');
-const voiceSettingsOverlay = document.getElementById('voice-settings-overlay');
-const bridgeHealthOverlay = document.getElementById('bridge-health-overlay');
-const bridgeHealthClose = document.getElementById('bridge-health-close');
-const bridgeHealthContent = document.getElementById('bridge-health-content');
-
-// ... [All variables, audio functions, voice input, commands, session logic, tags, streaming, translation, stats – restored from last known complete state] ...
-
-// Fix modal close handlers
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.style.display = 'none';
-  });
-});
-
-voiceSettingsOverlay?.querySelector('#voice-cancel')?.addEventListener('click', () => voiceSettingsOverlay.style.display = 'none');
-editModalOverlay?.querySelector('#modal-cancel')?.addEventListener('click', () => editModalOverlay.style.display = 'none');
-deleteModalOverlay?.querySelector('#delete-cancel')?.addEventListener('click', () => deleteModalOverlay.style.display = 'none');
-bridgeHealthClose?.addEventListener('click', () => bridgeHealthOverlay.style.display = 'none');
-
-// Bridge health content loading (fixed)
-function loadBridgeHealth(type) {
-  bridgeHealthContent.innerHTML = `<h3>${type === 'long-form' ? 'Long-Form Shard' : 'X Share'} Health History</h3>`;
-  const history = getBridgeHistory(type);
-  if (history.length === 0) {
-    bridgeHealthContent.innerHTML += '<p>No ping history recorded yet.</p>';
-  } else {
-    let table = '<table class="health-table"><thead><tr><th>Time</th><th>Status</th></tr></thead><tbody>';
-    history.forEach(entry => {
-      const time = new Date(entry.timestamp).toLocaleString();
-      const statusClass = entry.status === 'online' ? 'health-online' : 'health-offline';
-      table += `<tr><td>\( {time}</td><td class=" \){statusClass}">${entry.status.toUpperCase()}</td></tr>`;
+    // Debug helper for chunk loading issues
+    window.addEventListener('vite:preloadError', (e) => {
+      console.error('[Vite Preload Error]', e);
+      phaseText.textContent = 'Chunk loading stalled – check console & network';
+      phaseText.style.color = '#ff4444';
     });
-    table += '</tbody></table>';
-    bridgeHealthContent.innerHTML += table;
-  }
-}
+  </script>
 
-// Status click to open health modal
-document.querySelectorAll('.grok-status').forEach(el => {
-  el.addEventListener('click', () => {
-    const bridgeType = el.closest('.grok-link-container')?.querySelector('.grok-link')?.dataset.bridge || 'long-form';
-    loadBridgeHealth(bridgeType);
-    bridgeHealthOverlay.style.display = 'flex';
-  });
-});
-
-// Init flow with error safety
-window.addEventListener('load', async () => {
-  try {
-    document.getElementById('loading-status').style.display = 'none';
-    document.getElementById('chat-container').style.display = 'flex';
-
-    await rathorDB.open();
-    await rathorDB.clearExpiredCache();
-    await refreshSessionList();
-    await loadChatHistory();
-    await updateTranslationStats();
-    updateBridgeStatus();
-
-    // Auto-ping
-    setTimeout(async () => {
-      await pingBridge(grokLongBridge.href, 'long-form');
-      await pingBridge(grokXBridge.href, 'x-native');
-      updateBridgeStatus();
-    }, 3000);
-
-    // [All other event listeners – voice, send, modals, etc. – kept intact]
-  } catch (err) {
-    console.error('Lattice init error:', err);
-    document.getElementById('error-lattice').style.display = 'block';
-  }
-});
-</script>
-
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
