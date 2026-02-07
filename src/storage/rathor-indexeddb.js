@@ -1,8 +1,9 @@
 const DB_NAME = 'RathorNEXiDB';
-const DB_VERSION = 3; // Bump to 3 for multi-session index + backfill support
+const DB_VERSION = 4; // Bump to 4 for session-metadata store
 
 const STORES = {
   CHAT_HISTORY: 'chat-history',
+  SESSION_METADATA: 'session-metadata',
   MERCY_LOGS: 'mercy-logs',
   EVOLUTION_STATES: 'evolution-states',
   USER_PREFERENCES: 'user-preferences'
@@ -55,7 +56,8 @@ class RathorIndexedDB {
         if (oldVersion < 1) {
           createOrUpdateStore(STORES.CHAT_HISTORY, { keyPath: 'id', autoIncrement: true }, [
             ['timestamp', false],
-            ['role', false]
+            ['role', false],
+            ['sessionId', false]
           ]);
           // ... other initial stores
         }
@@ -68,10 +70,8 @@ class RathorIndexedDB {
         }
 
         if (oldVersion < 3) {
-          // v3: Ensure composite-like query support + backfill legacy messages to 'default'
           const chatStore = tx.objectStore(STORES.CHAT_HISTORY);
           const cursorReq = chatStore.openCursor();
-
           cursorReq.onsuccess = (e) => {
             const cursor = e.target.result;
             if (cursor) {
@@ -82,6 +82,147 @@ class RathorIndexedDB {
               }
               cursor.continue();
             }
+          };
+        }
+
+        if (oldVersion < 4) {
+          // v4: Add session-metadata store
+          createOrUpdateStore(STORES.SESSION_METADATA, { keyPath: 'sessionId' }, [
+            ['lastActive', false]
+          ]);
+
+          // Backfill metadata for existing sessions
+          const sessions = new Set();
+          const chatStore = tx.objectStore(STORES.CHAT_HISTORY);
+          const chatCursor = chatStore.openCursor();
+          chatCursor.onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (cursor) {
+              const value = cursor.value;
+              if (value.sessionId) sessions.add(value.sessionId);
+              cursor.continue();
+            }
+          };
+
+          chatCursor.addEventListener('success', () => {
+            const metaStore = tx.objectStore(STORES.SESSION_METADATA);
+            sessions.forEach(sid => {
+              metaStore.put({
+                sessionId: sid,
+                name: sid === 'default' ? 'Default Session' : `Session ${sid.slice(0,8)}`,
+                createdAt: Date.now(),
+                lastActive: Date.now(),
+                description: '',
+                colorTag: '#ffaa00'
+              });
+            });
+          });
+        }
+      };
+
+      request.onblocked = () => {
+        console.warn('[Rathor IndexedDB] Upgrade blocked — close other tabs');
+      };
+    });
+  }
+
+  // ────────────────────────────────────────────────
+  // Session Management with Metadata
+  // ────────────────────────────────────────────────
+
+  getActiveSessionId() {
+    return this.activeSessionId;
+  }
+
+  async switchSession(sessionId) {
+    if (!sessionId || typeof sessionId !== 'string') throw new Error('Invalid sessionId');
+    this.activeSessionId = sessionId;
+    localStorage.setItem('rathor_active_session', sessionId);
+    // Update lastActive
+    await this.updateSessionMetadata({ lastActive: Date.now() });
+    console.log('[Rathor Session] Switched to:', sessionId);
+  }
+
+  async listSessions() {
+    return this._transaction(STORES.SESSION_METADATA, 'readonly', (tx) => {
+      const store = tx.objectStore(STORES.SESSION_METADATA);
+      const req = store.openCursor();
+      const sessions = [];
+      return new Promise((resolve, reject) => {
+        req.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (cursor) {
+            sessions.push(cursor.value);
+            cursor.continue();
+          } else {
+            resolve(sessions);
+          }
+        };
+        req.onerror = () => reject(req.error);
+      });
+    });
+  }
+
+  async createSession(name = null) {
+    const sessionId = name?.trim() || `Session-${Date.now()}`;
+    const metadata = {
+      sessionId,
+      name: name?.trim() || `Session ${sessionId.slice(0,8)}`,
+      createdAt: Date.now(),
+      lastActive: Date.now(),
+      description: '',
+      colorTag: '#ffaa00' // default thunder gold
+    };
+    await this._transaction(STORES.SESSION_METADATA, 'readwrite', (tx) => {
+      tx.objectStore(STORES.SESSION_METADATA).put(metadata);
+    });
+    await this.switchSession(sessionId);
+    return sessionId;
+  }
+
+  async updateSessionMetadata(updates) {
+    const current = await this.getSessionMetadata(this.activeSessionId);
+    if (!current) return;
+    const updated = { ...current, ...updates, lastActive: Date.now() };
+    await this._transaction(STORES.SESSION_METADATA, 'readwrite', (tx) => {
+      tx.objectStore(STORES.SESSION_METADATA).put(updated);
+    });
+  }
+
+  async getSessionMetadata(sessionId) {
+    return this._transaction(STORES.SESSION_METADATA, 'readonly', (tx) => {
+      const store = tx.objectStore(STORES.SESSION_METADATA);
+      const req = store.get(sessionId);
+      return new Promise((res, rej) => {
+        req.onsuccess = () => res(req.result);
+        req.onerror = () => rej(req.error);
+      });
+    });
+  }
+
+  // ────────────────────────────────────────────────
+  // Enhanced saveMessage with metadata touch
+  // ────────────────────────────────────────────────
+
+  async saveMessage(message) {
+    const enhanced = {
+      ...message,
+      sessionId: this.activeSessionId,
+      timestamp: message.timestamp || Date.now()
+    };
+
+    await this._transaction(STORES.CHAT_HISTORY, 'readwrite', (tx) => {
+      tx.objectStore(STORES.CHAT_HISTORY).add(enhanced);
+    });
+
+    // Touch metadata lastActive
+    await this.updateSessionMetadata({});
+  }
+
+  // ... keep prior loadHistory, clearSessionHistory, _transaction, etc. unchanged ...
+}
+
+export const rathorDB = new RathorIndexedDB();            }
           };
         }
       };
