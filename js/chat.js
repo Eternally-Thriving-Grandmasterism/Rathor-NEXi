@@ -140,6 +140,61 @@ async function processVoiceCommand(raw) {
   return false;
 }
 
+// ... rest of chat.js functions (sendMessage, speak, recognition, recording, session CRUD, etc.) remain unchanged ...  modal.innerHTML = `
+    <div class="modal-content emergency-modal">
+      <h2 style="color: #ff4444;">${assistant.title}</h2>
+      <p style="color: #ff6666; font-weight: bold;">${assistant.disclaimer}</p>
+      <p style="white-space: pre-wrap;">${assistant.content}</p>
+      <div class="modal-buttons">
+        <button onclick="this.closest('.modal-overlay').remove()">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.style.display = 'flex';
+}
+
+// ────────────────────────────────────────────────
+// Voice Command Processor — expanded with emergency
+// ────────────────────────────────────────────────
+
+async function processVoiceCommand(raw) {
+  let cmd = raw.toLowerCase().trim();
+
+  // Emergency assistants
+  if (cmd.includes('medical help') || cmd.includes('medical advice') || cmd.includes('health emergency')) {
+    triggerEmergencyAssistant('medical');
+    return true;
+  }
+
+  if (cmd.includes('legal advice') || cmd.includes('legal help') || cmd.includes('rights')) {
+    triggerEmergencyAssistant('legal');
+    return true;
+  }
+
+  if (cmd.includes('crisis mode') || cmd.includes('emotional support') || cmd.includes('grounding')) {
+    triggerEmergencyAssistant('crisis');
+    return true;
+  }
+
+  // Existing commands (emergency recording, export, test, bridges, etc.)
+  if (cmd.includes('emergency mode') || cmd.includes('crisis recording')) {
+    await startVoiceRecording(currentSessionId, true);
+    showToast('Emergency recording started — saved with priority ⚠️');
+    return true;
+  }
+
+  if (cmd.includes('stop emergency') || cmd.includes('end recording')) {
+    stopVoiceRecording();
+    showToast('Recording stopped & saved ⚡️');
+    return true;
+  }
+
+  // ... other existing commands ...
+
+  return false;
+}
+
 // ... rest of chat.js functions (sendMessage, speak, recognition, recording, session CRUD, etc.) remain unchanged ...      let indicator = opt.querySelector('.session-indicator');
       if (!indicator) {
         indicator = document.createElement('span');
