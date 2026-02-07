@@ -90,20 +90,23 @@
       color: var(--text-light);
       border: 1px solid var(--thunder-gold);
       border-radius: 8px;
-      padding: 12px 16px;
+      padding: 12px 16px 12px 40px;
       font-size: 1em;
       cursor: pointer;
-      min-width: 220px;
+      min-width: 260px;
       appearance: none;
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffaa00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
       background-repeat: no-repeat;
-      background-position: right 12px center;
+      background-position: right 16px center;
       background-size: 16px;
     }
     select:focus {
       outline: none;
       border-color: var(--thunder-light);
       box-shadow: 0 0 12px rgba(255,221,68,0.3);
+    }
+    option {
+      padding: 8px;
     }
     /* ... rest of CSS from previous full version ... */
   </style>
@@ -125,31 +128,31 @@
     </a>
   </div>
 
-  <!-- Language Selector Dropdown – ENHANCED -->
+  <!-- Enhanced Language Selector Dropdown with Flags -->
   <div style="margin: 24px 0; text-align: center;">
     <label for="lang-selector" style="font-size: 1.1em; margin-right: 12px;" data-i18n="actions.selectLanguage">Language:</label>
     <select id="lang-selector">
-      <option value="en">English (English)</option>
-      <option value="ar">العربية (Arabic)</option>
-      <option value="es">Español (Spanish)</option>
-      <option value="fr">Français (French)</option>
-      <option value="de">Deutsch (German)</option>
-      <option value="nl">Nederlands (Dutch)</option>
-      <option value="it">Italiano (Italian)</option>
-      <option value="pt">Português (Portuguese)</option>
-      <option value="ru">Русский (Russian)</option>
-      <option value="ja">日本語 (Japanese)</option>
-      <option value="zh">中文 (简体) (Chinese Simplified)</option>
-      <option value="hi">हिन्दी (Hindi)</option>
-      <option value="sw">Kiswahili (Swahili)</option>
-      <option value="id">Bahasa Indonesia (Indonesian)</option>
-      <option value="tr">Türkçe (Turkish)</option>
-      <option value="ko">한국어 (Korean)</option>
+      <option value="en">🇬🇧 English (English)</option>
+      <option value="ar">🇸🇦 العربية (Arabic)</option>
+      <option value="es">🇪🇸 Español (Spanish)</option>
+      <option value="fr">🇫🇷 Français (French)</option>
+      <option value="de">🇩🇪 Deutsch (German)</option>
+      <option value="nl">🇳🇱 Nederlands (Dutch)</option>
+      <option value="it">🇮🇹 Italiano (Italian)</option>
+      <option value="pt">🇵🇹 Português (Portuguese)</option>
+      <option value="ru">🇷🇺 Русский (Russian)</option>
+      <option value="ja">🇯🇵 日本語 (Japanese)</option>
+      <option value="zh">🇨🇳 中文 (简体) (Chinese Simplified)</option>
+      <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+      <option value="sw">🇹🇿 Kiswahili (Swahili)</option>
+      <option value="id">🇮🇩 Bahasa Indonesia (Indonesian)</option>
+      <option value="tr">🇹🇷 Türkçe (Turkish)</option>
+      <option value="ko">🇰🇷 한국어 (Korean)</option>
     </select>
   </div>
 
   <div id="langs">
-    <!-- Language sections populated dynamically via i18n -->
+    <!-- Language preview sections populated dynamically via i18n -->
   </div>
 </div>
 
@@ -157,13 +160,13 @@
 
 <script>
 // ────────────────────────────────────────────────
-// DYNAMIC i18n LOADING + ENHANCED LANGUAGE SELECTOR DROPDOWN + RTL SUPPORT
+// DYNAMIC i18n LOADING + ENHANCED DROPDOWN WITH FLAGS + IMPROVED AUTO-DETECTION + RTL
 // ────────────────────────────────────────────────
 
 // i18next initialization with dynamic loading
 i18next
   .init({
-    lng: localStorage.getItem('rathor_lang') || navigator.language.split('-')[0] || 'en',
+    lng: localStorage.getItem('rathor_lang') || getBestLanguage(),
     fallbackLng: 'en',
     debug: false,
     ns: 'translation',
@@ -178,14 +181,27 @@ i18next
       updateContent();
       document.getElementById('lang-selector').value = i18next.language;
       applyRTL(i18next.language);
+      if (!localStorage.getItem('rathor_lang')) {
+        showToast(`Auto-detected: \( {i18next.t(`language. \){i18next.language}`)} ⚡️`);
+      }
     });
   });
 
+// Improved auto-detection with navigator.languages priority list
+function getBestLanguage() {
+  const preferred = navigator.languages || [navigator.language];
+  const supported = ['en','ar','es','fr','de','nl','it','pt','ru','ja','zh','hi','sw','id','tr','ko'];
+  
+  for (const lang of preferred) {
+    const short = lang.split('-')[0].toLowerCase();
+    if (supported.includes(short)) return short;
+  }
+  return 'en';
+}
+
 // Load language file dynamically + cache it
 async function loadLanguage(lng) {
-  if (i18next.services.resourceStore.hasResourceBundle(lng, 'translation')) {
-    return;
-  }
+  if (i18next.services.resourceStore.hasResourceBundle(lng, 'translation')) return;
 
   const cache = await caches.open('rathor-locales');
   const cached = await cache.match(`/locales/${lng}.json`);
@@ -281,7 +297,7 @@ async function processVoiceCommand(raw) {
   // ... keep all other commands ...
 }
 
-// Init Flow – full restoration with dynamic i18n + RTL
+// Init Flow – full restoration with dynamic i18n + dropdown + RTL
 window.addEventListener('load', async () => {
   try {
     document.getElementById('loading-status').style.display = 'none';
