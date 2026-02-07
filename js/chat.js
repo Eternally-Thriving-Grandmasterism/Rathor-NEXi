@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Periodic RTT Probes
+// js/chat.js — Rathor Lattice Core with Periodic RTT Probes + Jitter Calculation
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -15,10 +15,13 @@ const translateStats = document.getElementById('translate-stats');
 // Connectivity state
 let isOffline = false;
 let isHighLatency = false;
+let isHighJitter = false;
 let rttHistory = []; // last 5 successful RTTs (ms)
 const RTT_PROBE_INTERVAL = 10000; // 10 seconds
 const HIGH_LATENCY_RTT_THRESHOLD = 150; // ms
 const HIGH_LATENCY_DOWNLINK_THRESHOLD = 10; // Mbps
+const HIGH_JITTER_THRESHOLD = 50; // ms (standard deviation)
+const HIGH_VARIANCE_THRESHOLD = 40; // ms (avg abs diff between consecutive)
 
 await rathorDB.open();
 await refreshSessionList();
@@ -29,7 +32,7 @@ await updateTagFrequency();
 // ... existing event listeners (voice, record, send, translate, search) ...
 
 // ────────────────────────────────────────────────
-// Periodic RTT Probes + Connectivity Awareness
+// Periodic RTT Probes with Jitter Calculation
 // ────────────────────────────────────────────────
 
 async function probeRTT() {
@@ -44,8 +47,24 @@ async function probeRTT() {
     rttHistory.push(rtt);
     if (rttHistory.length > 5) rttHistory.shift();
 
-    const median = [...rttHistory].sort((a,b)=>a-b)[Math.floor(rttHistory.length/2)];
+    // Median RTT (for latency)
+    const sorted = [...rttHistory].sort((a,b)=>a-b);
+    const median = sorted[Math.floor(sorted.length/2)];
+
+    // Jitter = standard deviation
+    const mean = rttHistory.reduce((a,b)=>a+b,0) / rttHistory.length;
+    const variance = rttHistory.reduce((a,b)=>a + Math.pow(b-mean,2),0) / rttHistory.length;
+    const jitter = Math.sqrt(variance);
+
+    // Consecutive variance (alternative metric)
+    let consecutiveVariance = 0;
+    for (let i = 1; i < rttHistory.length; i++) {
+      consecutiveVariance += Math.abs(rttHistory[i] - rttHistory[i-1]);
+    }
+    consecutiveVariance /= (rttHistory.length - 1);
+
     isHighLatency = median > HIGH_LATENCY_RTT_THRESHOLD;
+    isHighJitter = jitter > HIGH_JITTER_THRESHOLD || consecutiveVariance > HIGH_VARIANCE_THRESHOLD;
 
     if (navigator.connection) {
       isOffline = navigator.connection.type === 'none' || navigator.connection.rtt > 10000;
@@ -60,13 +79,17 @@ async function probeRTT() {
 }
 
 function updateConnectivityUI() {
+  let status = '';
   if (isOffline) {
-    showToast('Offline mode — queued actions will sync later ⚡️');
+    status = 'Offline mode — queued actions will sync later ⚡️';
+  } else if (isHighJitter) {
+    status = 'High jitter detected (Starlink spikes?) — increasing batch size & compression ⚡️';
   } else if (isHighLatency) {
-    showToast('High latency (Starlink?) — batching & compressing ⚡️');
+    status = 'High latency (Starlink mode?) — batching & compressing ⚡️';
   } else {
-    showToast('Strong connection — lattice fully online ⚡️');
+    status = 'Strong connection — lattice fully online ⚡️';
   }
+  showToast(status);
 }
 
 // Start periodic probe
@@ -82,6 +105,28 @@ function stopProbes() {
 
 // Visibility handling
 document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopProbes();
+  } else {
+    startProbes();
+  }
+});
+
+// Initial start
+startProbes();
+
+// Queue voice note if offline/high-latency/jitter
+async function startVoiceRecording(sessionId, isEmergency = false) {
+  // ... existing recording logic ...
+  if (isOffline || isHighLatency || isHighJitter) {
+    await rathorDB.saveQueuedAction('voice-note', { sessionId, blob, timestamp, isEmergency });
+    showToast('Voice note queued for reconnection ⚡️');
+  } else {
+    await rathorDB.saveVoiceNote(sessionId, blob, timestamp, isEmergency);
+  }
+}
+
+// ... rest of chat.js functions (sendMessage, speak, recognition, emergency assistants, session search with tags, import/export, etc.) remain as previously expanded ...document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     stopProbes();
   } else {
