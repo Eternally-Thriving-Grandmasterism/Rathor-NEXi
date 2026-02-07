@@ -1,33 +1,23 @@
 {
   "name": "Rathor-NEXi",
   "short_name": "Rathor",
-  "description": "Mercy-gated symbolic AGI lattice — eternal thriving through valence-locked truth. Powered by NEXi eternal remembering core.",
-  "start_url": "/",
+  "description": "Mercy-gated symbolic AGI lattice — offline-first, voice-enabled, eternal coforging",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#0a0015",
   "theme_color": "#ffaa00",
-  "orientation": "portrait-primary",
-  "scope": "/",
   "icons": [
     {
-      "src": "/icons/thunder-favicon-192.jpg",
+      "src": "icons/thunder-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/thunder-favicon-512.jpg",
+      "src": "icons/thunder-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "prefer_related_applications": false,
-  "categories": ["productivity", "artificial-intelligence", "philosophy"],
-  "dir": "ltr",
-  "lang": "en",
-  "id": "/",
-  "launch_handler": {
-    "client_mode": ["navigate-existing", "auto"]
-  }
+  ]
 }
