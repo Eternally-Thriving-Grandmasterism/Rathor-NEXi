@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Full Session Import & Export
+// js/chat.js — Rathor Lattice Core with Full Session Import
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -82,6 +82,32 @@ importFileInput.addEventListener('change', async e => {
 
       // Import messages
       if (Array.isArray(importedSession.messages)) {
+        await saveMessages(finalId, importedSession.messages.map(m => ({
+          ...m,
+          sessionId: finalId,
+          timestamp: m.timestamp || Date.now()
+        })));
+      }
+
+      imported++;
+    }
+
+    await refreshSessionList();
+    await updateTagFrequency();
+
+    let msg = `Imported \( {imported} session \){imported !== 1 ? 's' : ''} successfully ⚡️`;
+    if (warnings.length > 0) msg += `\nWarnings: ${warnings.join('; ')}`;
+    showToast(msg);
+
+  } catch (err) {
+    showToast('Import failed: ' + err.message, 'error');
+    console.error(err);
+  }
+
+  importFileInput.value = ''; // reset input
+});
+
+// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, etc.) remain as previously expanded ...      if (Array.isArray(importedSession.messages)) {
         await saveMessages(finalId, importedSession.messages.map(m => ({
           ...m,
           sessionId: finalId,
