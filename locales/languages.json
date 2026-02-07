@@ -1,0 +1,72 @@
+{
+  "languages": [
+    {
+      "code": "en",
+      "native": "English",
+      "english": "English",
+      "flag": "🇬🇧"
+    },
+    {
+      "code": "ar",
+      "native": "العربية",
+      "english": "Arabic",
+      "flag": "🇸🇦"
+    },
+    {
+      "code": "es",
+      "native": "Español",
+      "english": "Spanish",
+      "flag": "🇪🇸"
+    },
+    {
+      "code": "fr",
+      "native": "Français",
+      "english": "French",
+      "flag": "🇫🇷"
+    },
+    {
+      "code": "de",
+      "native": "Deutsch",
+      "english": "German",
+      "flag": "🇩🇪"
+    },
+    {
+      "code": "ru",
+      "native": "Русский",
+      "english": "Russian",
+      "flag": "🇷🇺"
+    },
+    {
+      "code": "zh",
+      "native": "中文 (简体)",
+      "english": "Chinese (Simplified)",
+      "flag": "🇨🇳"
+    },
+    {
+      "code": "hi",
+      "native": "हिन्दी",
+      "english": "Hindi",
+      "flag": "🇮🇳"
+    },
+    {
+      "code": "pt",
+      "native": "Português",
+      "english": "Portuguese",
+      "flag": "🇵🇹"
+    },
+    {
+      "code": "ja",
+      "native": "日本語",
+      "english": "Japanese",
+      "flag": "🇯🇵"
+    }
+    // ... add the rest of top 100–200 here ...
+    // Example future exolinguistic entries:
+    // {
+    //   "code": "klingon",
+    //   "native": "tlhIngan Hol",
+    //   "english": "Klingon",
+    //   "flag": "🪐"
+    // }
+  ]
+}
