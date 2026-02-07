@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Full Tag Management UI
+// js/chat.js — Rathor Lattice Core with Full Tag Autocomplete
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -14,6 +14,7 @@ const translateStats = document.getElementById('translate-stats');
 
 let currentSessionId = localStorage.getItem('rathor_current_session') || 'default';
 let allSessions = [];
+let tagFrequency = new Map(); // global tag frequency for autocomplete
 let isListening = false, isRecording = false;
 let ttsEnabled = localStorage.getItem('rathor_tts_enabled') !== 'false';
 let isVoiceOutputEnabled = localStorage.getItem('rathor_voice_output') !== 'false';
@@ -26,6 +27,7 @@ await rathorDB.open();
 await refreshSessionList();
 await loadChatHistory();
 updateTranslationStats();
+await updateTagFrequency(); // initial load
 
 voiceBtn.addEventListener('click', () => isListening ? stopListening() : startListening());
 recordBtn.addEventListener('mousedown', () => setTimeout(() => startVoiceRecording(currentSessionId), 400));
@@ -42,12 +44,77 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Tag Management UI — Edit Modal Integration
+// Tag Frequency & Autocomplete
 // ────────────────────────────────────────────────
 
+async function updateTagFrequency() {
+  tagFrequency.clear();
+  const sessions = await rathorDB.getAllSessions();
+  sessions.forEach(session => {
+    if (session.tags) {
+      session.tags.split(',').map(t => t.trim()).filter(t => t).forEach(tag => {
+        tagFrequency.set(tag, (tagFrequency.get(tag) || 0) + 1);
+      });
+    }
+  });
+}
+
+// Autocomplete dropdown for tags in edit modal
 const editTagsInput = document.getElementById('edit-tags');
 const editTagPreview = document.getElementById('edit-tag-preview');
-const editColorInput = document.getElementById('edit-color');
+const editTagSuggestions = document.createElement('div');
+editTagSuggestions.id = 'edit-tag-suggestions';
+editTagSuggestions.style.cssText = 'position: absolute; background: #110022; border: 1px solid var(--thunder-gold); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 10; display: none; width: 100%;';
+editTagsInput.parentNode.appendChild(editTagSuggestions);
+
+editTagsInput.addEventListener('input', e => {
+  const value = e.target.value.trim();
+  const lastTag = value.split(',').pop().trim().toLowerCase();
+
+  if (!lastTag) {
+    editTagSuggestions.style.display = 'none';
+    renderTagPills(value);
+    return;
+  }
+
+  const suggestions = Array.from(tagFrequency.keys())
+    .filter(tag => tag.toLowerCase().includes(lastTag))
+    .sort((a, b) => tagFrequency.get(b) - tagFrequency.get(a)) // most used first
+    .slice(0, 8);
+
+  editTagSuggestions.innerHTML = '';
+  if (suggestions.length === 0) {
+    editTagSuggestions.style.display = 'none';
+  } else {
+    suggestions.forEach(tag => {
+      const div = document.createElement('div');
+      div.textContent = tag;
+      div.style.cssText = 'padding: 8px 12px; cursor: pointer;';
+      div.onmouseover = () => div.style.background = 'rgba(255,170,0,0.15)';
+      div.onmouseout = () => div.style.background = '';
+      div.onclick = () => {
+        const parts = value.split(',');
+        parts.pop();
+        parts.push(' ' + tag);
+        editTagsInput.value = parts.join(',');
+        renderTagPills(editTagsInput.value);
+        editTagSuggestions.style.display = 'none';
+        editTagsInput.focus();
+      };
+      editTagSuggestions.appendChild(div);
+    });
+    editTagSuggestions.style.display = 'block';
+  }
+  renderTagPills(value);
+});
+
+editTagsInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && editTagSuggestions.style.display !== 'none') {
+    e.preventDefault();
+    const first = editTagSuggestions.querySelector('div');
+    if (first) first.click();
+  }
+});
 
 function renderTagPills(tagsString) {
   editTagPreview.innerHTML = '';
@@ -70,94 +137,4 @@ function renderTagPills(tagsString) {
   });
 }
 
-editTagsInput.addEventListener('input', e => renderTagPills(e.target.value));
-
-// Edit modal save logic (add to existing modal-save listener or replace)
-document.getElementById('modal-save')?.addEventListener('click', async () => {
-  const name = document.getElementById('edit-name').value.trim();
-  const description = document.getElementById('edit-description').value.trim();
-  const tags = document.getElementById('edit-tags').value.trim();
-  const color = document.getElementById('edit-color').value;
-
-  const session = await getSession(currentSessionId);
-  if (session) {
-    session.name = name || session.name;
-    session.description = description || session.description;
-    session.tags = tags;
-    session.color = color;
-    await saveSession(session);
-    await refreshSessionList();
-    showToast('Session updated ⚡️');
-  }
-
-  document.getElementById('edit-modal-overlay').style.display = 'none';
-});
-
-// ────────────────────────────────────────────────
-// Session Search — Expanded with Tag Filtering & Color Indicators
-// ────────────────────────────────────────────────
-
-function filterSessions() {
-  const filter = sessionSearch.value.toLowerCase().trim();
-  const options = Array.from(sessionSelect.options);
-
-  if (!filter) {
-    options.forEach(opt => opt.style.display = '');
-    return;
-  }
-
-  let matchCount = 0;
-  options.forEach(opt => {
-    const session = allSessions.find(s => s.id === opt.value);
-    if (!session) {
-      opt.style.display = 'none';
-      return;
-    }
-
-    const name = (session.name || session.id).toLowerCase();
-    const tags = (session.tags || '').toLowerCase().split(',').map(t => t.trim());
-    const color = session.color || '#ffaa00';
-
-    const nameMatch = name.includes(filter);
-    const tagMatch = tags.some(tag => tag.includes(filter));
-
-    if (nameMatch || tagMatch) {
-      opt.style.display = '';
-      matchCount++;
-
-      // Color dot indicator
-      let dot = opt.querySelector('.session-dot');
-      if (!dot) {
-        dot = document.createElement('span');
-        dot.className = 'session-dot';
-        dot.style.cssText = 'display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: middle; border: 1px solid #444;';
-        opt.insertBefore(dot, opt.firstChild);
-      }
-      dot.style.background = color;
-
-      // Matching tag pills
-      let pills = opt.querySelector('.tag-pills');
-      if (!pills) {
-        pills = document.createElement('div');
-        pills.className = 'tag-pills';
-        pills.style.cssText = 'display: inline-flex; gap: 6px; margin-left: 12px; vertical-align: middle;';
-        opt.appendChild(pills);
-      }
-      pills.innerHTML = '';
-      tags.filter(tag => tag.includes(filter)).forEach(tag => {
-        const pill = document.createElement('span');
-        pill.textContent = tag;
-        pill.style.cssText = 'background: rgba(255,170,0,0.15); color: #ffaa00; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; border: 1px solid rgba(255,170,0,0.3);';
-        pills.appendChild(pill);
-      });
-    } else {
-      opt.style.display = 'none';
-    }
-  });
-
-  if (matchCount === 0) {
-    showToast('No matching sessions or tags found');
-  }
-}
-
-// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, etc.) remain unchanged ...
+// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, etc.) remain as previously expanded ...
