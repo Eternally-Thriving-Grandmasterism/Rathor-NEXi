@@ -11,7 +11,20 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-*.png'],
-      manifest: { /* unchanged */ },
+      manifest: {
+        name: 'Rathor — Mercy Strikes First',
+        short_name: 'Rathor',
+        description: 'Sovereign offline AGI lattice',
+        theme_color: '#00ff88',
+        background_color: '#000000',
+        display: 'standalone',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        ]
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,wasm}'],
         runtimeCaching: [
@@ -78,10 +91,34 @@ export default defineConfig(({ mode }) => ({
     target: 'es2020',
     cssCodeSplit: true,
     reportCompressedSize: true,
-    chunkSizeWarningLimit: 2000 // raised to reduce warnings
+    chunkSizeWarningLimit: 2000
   },
 
   server: {
+    port: 3000,
+    open: true,
+    hmr: true,
+    fs: { strict: false }
+  },
+
+  preview: { port: 4173 },
+
+  optimizeDeps: {
+    include: [
+      'react', 'react-dom',
+      '@tensorflow/tfjs', '@tensorflow/tfjs-backend-webgl',
+      '@mediapipe/holistic'
+    ],
+    exclude: ['onnxruntime-web']
+  },
+
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+  },
+
+  // Debug loading issues
+  logLevel: 'info'
+}))  server: {
     port: 3000,
     open: true,
     hmr: true,
