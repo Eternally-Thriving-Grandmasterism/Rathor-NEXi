@@ -1,47 +1,60 @@
-// sw.js – Workbox v7 + explicit lattice shard caching
-// MIT License – Autonomicity Games Inc. 2026
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js');
 
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js');
+workbox.setConfig({ debug: true }); // Enable debug logs in console for now
 
-if (workbox) {
-  workbox.setConfig({ debug: false });
+// Precache manifest if generated (adjust if using workbox-precaching)
+workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
 
-  const { precaching, routing, strategies, expiration } = workbox;
+// Runtime caching for assets (stale-while-revalidate mercy style)
+workbox.routing.registerRoute(
+  /\.(?:js|css|html|png|jpg|svg|json)$/,
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: 'rathor-static-resources',
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 }),
+    ],
+  })
+);
 
-  // Precaching core + lattice + manifest
-  precaching.precacheAndRoute([
-    { url: '/', revision: 'v1' },
-    { url: '/index.html', revision: 'v1' },
-    { url: '/lattice-manifest.json', revision: 'v1' },
-    { url: '/mercy-gate-v1-part1.bin', revision: 'v1' },
-    { url: '/mercy-gate-v1-part2.bin', revision: 'v1' },
-    { url: '/mercy-gate-v1-part3.bin', revision: 'v1' }
-    // ... add more parts as needed
-  ]);
+// Handle navigation requests (SPA-friendly)
+workbox.routing.registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  async ({ event }) => {
+    try {
+      const cache = await caches.open('rathor-navigation');
+      const cached = await cache.match(event.request);
+      if (cached) return cached;
 
-  // Cache-first strategy for large binaries & manifest
-  routing.registerRoute(
-    ({ url }) => url.pathname.includes('mercy-gate-v1') || url.pathname.includes('lattice-manifest'),
-    new strategies.CacheFirst({
-      cacheName: 'lattice-binaries',
-      plugins: [
-        new expiration.ExpirationPlugin({
-          maxEntries: 20,
-          purgeOnQuotaError: true
-        })
-      ]
+      const response = await fetch(event.request);
+      cache.put(event.request, response.clone());
+      return response;
+    } catch (err) {
+      console.error('Navigation fallback error:', err);
+      // Optional: return offline.html if you add one
+      return new Response('Lattice awakening offline — mercy thunder persists.', { status: 503 });
+    }
+  }
+);
+
+// Install: skip waiting to activate immediately
+self.addEventListener('install', (event) => {
+  console.log('[Rathor SW] Installing...');
+  self.skipWaiting(); // Mercy: no waiting limbo
+});
+
+// Activate: claim clients right away
+self.addEventListener('activate', (event) => {
+  console.log('[Rathor SW] Activating...');
+  event.waitUntil(self.clients.claim()); // Take control of all tabs immediately
+  console.log('[Rathor SW] Activated & claiming clients');
+});
+
+// Debug fetch errors
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      console.warn('[Rathor SW] Fetch failed for:', event.request.url);
+      return new Response('Mercy offline fallback — check connection.', { status: 503 });
     })
   );
-
-  // Offline fallback to index.html
-  self.addEventListener('fetch', event => {
-    if (event.request.mode === 'navigate') {
-      event.respondWith(
-        fetch(event.request).catch(() => caches.match('/index.html'))
-      );
-    }
-  });
-}
-
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', () => self.clients.claim());
+});
