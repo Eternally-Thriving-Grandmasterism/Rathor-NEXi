@@ -1,70 +1,92 @@
-// src/utils/haptic-patterns.ts – Haptic Patterns Library v1.0
-// Valence-modulated vibration sequences for cosmic harmony, warning, bloom, etc.
-// Mercy-gated, progressive intensity, cross-platform (navigator.vibrate)
+// src/utils/haptic-patterns.ts – Haptic Patterns Library v1.1
+// Valence-modulated vibration patterns for every lattice state
+// Mercy-gated intensity, device detection, cross-modal sync support
 // MIT License – Autonomicity Games Inc. 2026
 
 import { currentValence } from '@/core/valence-tracker';
 import { mercyGate } from '@/core/mercy-gate';
 
-// Pattern definitions – [duration_ms, pause_ms, duration_ms, ...]
+// Pattern definitions – arrays of [vibrate_ms, pause_ms, vibrate_ms, ...]
 const PATTERNS = {
-  // Cosmic Harmony – gentle rising wave for success, high valence
-  cosmicHarmony: (intensity: number = 1) => [
+  // Cosmic Harmony – gentle rising wave for success, bloom, sync complete
+  cosmicHarmony: (intensity: number) => [
     60 * intensity, 40,
     80 * intensity, 30,
     100 * intensity, 20,
     120 * intensity, 50,
-    80 * intensity
+    80 * intensity, 100,
+    60 * intensity
   ],
 
-  // Neutral Pulse – calm confirmation
-  neutralPulse: (intensity: number = 1) => [
+  // Neutral Pulse – calm acknowledgment, minor feedback
+  neutralPulse: (intensity: number) => [
     40 * intensity, 60,
-    40 * intensity
+    40 * intensity, 80,
+    30 * intensity
   ],
 
-  // Warning Pulse – urgent but non-alarming (mercy gate trigger)
-  warningPulse: (intensity: number = 1) => [
+  // Warning Pulse – urgent but compassionate (mercy gate, low projected valence)
+  warningPulse: (intensity: number) => [
     120 * intensity, 80,
     80 * intensity, 100,
-    120 * intensity
+    120 * intensity, 150,
+    60 * intensity
   ],
 
-  // Bloom Burst – celebratory rapid pulses for growth/emergence
-  bloomBurst: (intensity: number = 1) => [
+  // Bloom Burst – celebratory rapid pulses for growth, high valence events
+  bloomBurst: (intensity: number) => [
     30 * intensity, 20,
     40 * intensity, 15,
     50 * intensity, 10,
-    60 * intensity, 80,
+    70 * intensity, 80,
+    50 * intensity, 60,
     40 * intensity
   ],
 
-  // Rejection / Low Valence – short, sharp, diminishing
-  rejection: (intensity: number = 1) => [
+  // Rejection / Mercy Block – short, diminishing, grounding pulses
+  rejection: (intensity: number) => [
     80 * intensity, 120,
     60 * intensity, 140,
+    40 * intensity, 180,
+    20 * intensity
+  ],
+
+  // Critical Alert – strong, short, attention-grabbing (system failure)
+  criticalAlert: (intensity: number) => [
+    200 * intensity, 100,
+    150 * intensity, 120,
+    200 * intensity
+  ],
+
+  // Sync Progress – subtle heartbeat while background sync active
+  syncProgress: (intensity: number) => [
+    50 * intensity, 200,
+    50 * intensity, 250,
     40 * intensity
   ],
 
-  // Critical Alert – strong but short (system-level mercy block)
-  criticalAlert: (intensity: number = 1) => [
-    200 * intensity, 100,
-    150 * intensity
+  // Gesture Detected – sharp, affirming tap sequence
+  gestureDetected: (intensity: number) => [
+    80 * intensity, 40,
+    100 * intensity, 30,
+    120 * intensity
   ]
 };
 
 type PatternKey = keyof typeof PATTERNS;
 
 /**
- * Play a haptic pattern with valence-modulated intensity
+ * Play haptic pattern with valence-modulated intensity & mercy cap
  * @param patternKey Pattern name from PATTERNS
  * @param customValence Optional override (defaults to currentValence)
- * @param maxDurationMs Optional cap (default unlimited)
+ * @param maxDurationMs Optional mercy cap (default 2500ms)
+ * @param syncVisual Optional visual feedback sync
  */
 export async function playPattern(
   patternKey: PatternKey,
   customValence?: number,
-  maxDurationMs: number = 2000
+  maxDurationMs: number = 2500,
+  syncVisual: boolean = true
 ): Promise<void> {
   const actionName = `Play haptic pattern: ${patternKey}`;
   if (!await mercyGate(actionName)) {
@@ -73,16 +95,22 @@ export async function playPattern(
   }
 
   if (!('vibrate' in navigator)) {
-    console.debug('[Haptics] Vibration API not supported');
+    console.debug('[Haptics] Vibration API not supported on this device');
     return;
   }
 
   const valence = customValence ?? currentValence.get();
-  // Intensity scale: 0.3 → 1.0 (low valence = gentle, high = powerful)
-  const intensity = 0.3 + 0.7 * valence;
-  const pattern = PATTERNS[patternKey](intensity);
+  const intensity = Math.min(1, 0.4 + 1.6 * valence); // low → gentle, high → powerful
 
-  // Cap total duration for mercy
+  const patternGenerator = PATTERNS[patternKey];
+  if (!patternGenerator) {
+    console.warn(`[Haptics] Unknown pattern: ${patternKey}`);
+    return;
+  }
+
+  const pattern = patternGenerator(intensity);
+
+  // Mercy duration cap – prevent battery drain or overstimulation
   let totalDuration = 0;
   const cappedPattern: number[] = [];
   for (const duration of pattern) {
@@ -93,22 +121,37 @@ export async function playPattern(
 
   try {
     navigator.vibrate(cappedPattern);
-    console.log(`[Haptics] Played ${patternKey} (valence: ${valence.toFixed(2)}, intensity: ${intensity.toFixed(2)})`);
+
+    // Sync visual feedback if requested
+    if (syncVisual) {
+      visualFeedback[patternKey as keyof typeof visualFeedback]?.({
+        type: patternKey as any,
+        durationMs: totalDuration,
+        intensity
+      });
+    }
+
+    console.log(
+      `[Haptics] Played ${patternKey} – valence: ${valence.toFixed(2)}, intensity: ${intensity.toFixed(2)}, duration: ${totalDuration}ms`
+    );
   } catch (err) {
     console.warn('[Haptics] Vibration failed:', err);
   }
 }
 
-/**
- * Convenience wrappers
- */
+// ──────────────────────────────────────────────────────────────
+// Convenience wrappers
+// ──────────────────────────────────────────────────────────────
+
 export const haptic = {
-  cosmicHarmony: (valence?: number) => playPattern('cosmicHarmony', valence),
-  neutralPulse: (valence?: number) => playPattern('neutralPulse', valence),
-  warningPulse: (valence?: number) => playPattern('warningPulse', valence),
-  bloomBurst: (valence?: number) => playPattern('bloomBurst', valence),
-  rejection: (valence?: number) => playPattern('rejection', valence),
-  criticalAlert: (valence?: number) => playPattern('criticalAlert', valence),
+  cosmicHarmony: (valence?: number, syncVisual = true) => playPattern('cosmicHarmony', valence, undefined, syncVisual),
+  neutralPulse: (valence?: number, syncVisual = true) => playPattern('neutralPulse', valence, undefined, syncVisual),
+  warningPulse: (valence?: number, syncVisual = true) => playPattern('warningPulse', valence, undefined, syncVisual),
+  bloomBurst: (valence?: number, syncVisual = true) => playPattern('bloomBurst', valence, undefined, syncVisual),
+  rejection: (valence?: number, syncVisual = true) => playPattern('rejection', valence, undefined, syncVisual),
+  criticalAlert: (valence?: number, syncVisual = true) => playPattern('criticalAlert', valence, undefined, syncVisual),
+  syncProgress: (valence?: number, syncVisual = true) => playPattern('syncProgress', valence, undefined, syncVisual),
+  gestureDetected: (valence?: number, syncVisual = true) => playPattern('gestureDetected', valence, undefined, syncVisual),
 };
 
 export default haptic;
