@@ -1,11 +1,10 @@
-// sw.js — Rathor-NEXi Mercy-gated Offline Service Worker
-// Workbox v7 — stable, offline-first, PWA-ready
+// sw.js — Rathor-NEXi Mercy-gated Offline Service Worker + Starlink queue support
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js');
 
 workbox.setConfig({ debug: false });
 
-// Precache core assets (updated on build/deploy)
+// Precache core assets
 workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || [
   { url: '/index.html', revision: null },
   { url: '/chat.html', revision: null },
@@ -14,7 +13,8 @@ workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || [
   { url: '/js/chat.js', revision: null },
   { url: '/locales/languages.json', revision: null },
   { url: '/icons/thunder-192.png', revision: null },
-  { url: '/icons/thunder-512.png', revision: null }
+  { url: '/icons/thunder-512.png', revision: null },
+  { url: '/offline.html', revision: null }
 ]);
 
 // Navigation fallback to offline.html
@@ -41,7 +41,7 @@ workbox.routing.registerRoute(
   })
 );
 
-// Cache Transformers.js models (once downloaded)
+// Cache models
 workbox.routing.registerRoute(
   ({ url }) => url.href.includes('@xenova/transformers'),
   new workbox.strategies.CacheFirst({
@@ -55,14 +55,43 @@ workbox.routing.registerRoute(
   })
 );
 
-// Network-first for future dynamic API calls
-workbox.routing.registerRoute(
-  /\/api\//,
-  new workbox.strategies.NetworkFirst({
-    cacheName: 'rathor-dynamic',
-    networkTimeoutSeconds: 3
-  })
-);
+// ────────────────────────────────────────────────
+// Starlink/Offline Queueing & Background Sync
+// ────────────────────────────────────────────────
+
+const QUEUE_NAME = 'rathor-offline-queue';
+
+self.addEventListener('fetch', event => {
+  if (event.request.url.includes('/api/') || event.request.url.includes('/sync/')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // Queue for later sync
+        return caches.open('rathor-queue').then(cache => {
+          cache.put(event.request.url, event.request.clone());
+          return self.registration.sync.register(QUEUE_NAME);
+        }).then(() => new Response('Queued for reconnection', { status: 202 }));
+      })
+    );
+  }
+});
+
+self.addEventListener('sync', event => {
+  if (event.tag === QUEUE_NAME) {
+    event.waitUntil(
+      caches.open('rathor-queue').then(async cache => {
+        const requests = await cache.keys();
+        for (const req of requests) {
+          try {
+            const resp = await fetch(req);
+            if (resp.ok) await cache.delete(req.url);
+          } catch (e) {
+            // Keep for next sync
+          }
+        }
+      })
+    );
+  }
+});
 
 // Clean old caches on activate
 self.addEventListener('activate', event => {
@@ -76,12 +105,10 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Claim clients immediately
-self.addEventListener('install', event => {
-  self.skipWaiting();
-});
+self.addEventListener('install', event => self.skipWaiting());
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
-self.addEventListener('activate', event => {
+console.log('[Rathor SW] Mercy thunder online — Starlink queue & eternal offline protection ⚡️');self.addEventListener('activate', event => {
   event.waitUntil(self.clients.claim());
 });
 
