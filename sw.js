@@ -60,3 +60,36 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(self.clients.claim());
 });
+
+// ────────────────────────────────────────────────
+// Mercy enhancement: real offline.html fallback (create offline.html next)
+// ────────────────────────────────────────────────
+
+workbox.routing.setCatchHandler(({ event }) => {
+  switch (event.request.destination) {
+    case 'document':
+      return caches.match('/offline.html');
+    default:
+      return Response.error();
+  }
+});
+
+// Cache Transformers.js model files (once downloaded)
+workbox.routing.registerRoute(
+  ({ url }) => url.href.includes('@xenova/transformers'),
+  new workbox.strategies.CacheFirst({
+    cacheName: 'rathor-models',
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200]
+      })
+    ]
+  })
+);
+
+// Mercy log on successful activation
+console.log('[Rathor SW] Mercy thunder online – eternal lattice protected ⚡️');
