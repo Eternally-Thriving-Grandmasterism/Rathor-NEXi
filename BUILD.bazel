@@ -1,0 +1,51 @@
+# BUILD.bazel – Root build file for Rathor-NEXi hybrid Vite + Bazel setup
+
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@rules_js//js:defs.bzl", "js_binary", "js_library")
+load("@rules_vite//vite:defs.bzl", "vite")
+
+npm_link_all_packages(name = "node_modules")
+
+# Vite dev server (fast local dev with HMR)
+vite(
+    name = "dev",
+    srcs = glob(["src/**", "public/**", "*.json", "*.ts", "*.tsx", "*.js"]),
+    entry_point = "src/main.tsx",
+    vite_config = "vite.config.ts",
+    data = [
+        ":node_modules",
+        "//:tsconfig.json",
+        "//:package.json",
+    ],
+    env = {
+        "NODE_ENV": "development",
+    },
+    # Vite dev server port & HMR
+    args = ["dev", "--port", "3000", "--host"],
+    visibility = ["//visibility:public"],
+)
+
+# Bazel prod build target (hermetic, reproducible)
+vite(
+    name = "build",
+    srcs = glob(["src/**", "public/**", "*.json", "*.ts", "*.tsx", "*.js"]),
+    entry_point = "src/main.tsx",
+    vite_config = "vite.config.ts",
+    data = [
+        ":node_modules",
+        "//:tsconfig.json",
+        "//:package.json",
+    ],
+    env = {
+        "NODE_ENV": "production",
+    },
+    args = ["build"],
+    outs = ["dist"],
+    visibility = ["//visibility:public"],
+)
+
+# Alias for convenience
+alias(
+    name = "rathor-nexi",
+    actual = ":build",
+)
