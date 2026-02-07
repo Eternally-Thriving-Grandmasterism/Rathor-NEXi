@@ -1,5 +1,5 @@
 const DB_NAME = 'RathorNEXiDB';
-const DB_VERSION = 2; // Bump if adding new fields/indexes
+const DB_VERSION = 3; // Bump to 3 for multi-session index + backfill support
 
 const STORES = {
   CHAT_HISTORY: 'chat-history',
@@ -11,6 +11,7 @@ const STORES = {
 class RathorIndexedDB {
   constructor() {
     this.db = null;
+    this.activeSessionId = localStorage.getItem('rathor_active_session') || 'default';
   }
 
   async open() {
@@ -32,13 +33,14 @@ class RathorIndexedDB {
 
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
+        const tx = event.target.transaction;
         const oldVersion = event.oldVersion || 0;
         console.log(`[Rathor IndexedDB] Upgrading from v\( {oldVersion} to v \){DB_VERSION}`);
 
         const createOrUpdateStore = (name, options = {}, indexes = []) => {
           let store;
           if (db.objectStoreNames.contains(name)) {
-            store = event.target.transaction.objectStore(name);
+            store = tx.objectStore(name);
           } else {
             store = db.createObjectStore(name, options);
           }
@@ -55,14 +57,32 @@ class RathorIndexedDB {
             ['timestamp', false],
             ['role', false]
           ]);
-          // ... other stores as before
+          // ... other initial stores
         }
 
         if (oldVersion < 2) {
-          const chatStore = event.target.transaction.objectStore(STORES.CHAT_HISTORY);
+          const chatStore = tx.objectStore(STORES.CHAT_HISTORY);
           if (!chatStore.indexNames.contains('sessionId')) {
             chatStore.createIndex('sessionId', 'sessionId', { unique: false });
           }
+        }
+
+        if (oldVersion < 3) {
+          // v3: Ensure composite-like query support + backfill legacy messages to 'default'
+          const chatStore = tx.objectStore(STORES.CHAT_HISTORY);
+          const cursorReq = chatStore.openCursor();
+
+          cursorReq.onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (cursor) {
+              const value = cursor.value;
+              if (!value.sessionId) {
+                value.sessionId = 'default';
+                cursor.update(value);
+              }
+              cursor.continue();
+            }
+          };
         }
       };
 
@@ -72,27 +92,41 @@ class RathorIndexedDB {
     });
   }
 
-  async _transaction(storeNames, mode = 'readonly', callback) {
-    const db = await this.open();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeNames, mode);
-      tx.oncomplete = () => resolve();
-      tx.onerror = (e) => reject(e.target.error);
-      tx.onabort = () => reject(new Error('Transaction aborted'));
-      callback(tx);
-    });
+  // ────────────────────────────────────────────────
+  // Session Management
+  // ────────────────────────────────────────────────
+
+  getActiveSessionId() {
+    return this.activeSessionId;
+  }
+
+  async switchSession(sessionId) {
+    if (!sessionId || typeof sessionId !== 'string') throw new Error('Invalid sessionId');
+    this.activeSessionId = sessionId;
+    localStorage.setItem('rathor_active_session', sessionId);
+    console.log('[Rathor Session] Switched to:', sessionId);
+  }
+
+  async listSessions() {
+    const allMessages = await this.getAll(STORES.CHAT_HISTORY, 'sessionId');
+    const sessions = new Set(allMessages.map(m => m.sessionId || 'default'));
+    return Array.from(sessions);
+  }
+
+  async createSession(sessionId) {
+    // Just switch — no need to pre-create (lazy creation)
+    await this.switchSession(sessionId);
   }
 
   // ────────────────────────────────────────────────
-  // Chat Persistence Methods
+  // Chat Persistence with Session Isolation
   // ────────────────────────────────────────────────
 
   async saveMessage(message) {
-    // message = { role: 'user'|'rathor', content: string, timestamp?: number, valence?: number, sessionId?: string }
     const enhanced = {
       ...message,
-      timestamp: message.timestamp || Date.now(),
-      sessionId: message.sessionId || 'default' // future multi-session support
+      sessionId: this.activeSessionId,
+      timestamp: message.timestamp || Date.now()
     };
 
     return this._transaction(STORES.CHAT_HISTORY, 'readwrite', (tx) => {
@@ -105,12 +139,12 @@ class RathorIndexedDB {
     });
   }
 
-  async loadHistory(limit = 100, sessionId = 'default') {
+  async loadHistory(limit = 100) {
+    const sessionId = this.activeSessionId;
     return this._transaction(STORES.CHAT_HISTORY, 'readonly', (tx) => {
       const store = tx.objectStore(STORES.CHAT_HISTORY);
       const index = store.index('timestamp');
-      const range = IDBKeyRange.lowerBound(0);
-      const req = index.openCursor(range, 'prev'); // newest first
+      const req = index.openCursor(null, 'prev'); // newest first
 
       const messages = [];
       return new Promise((resolve, reject) => {
@@ -124,7 +158,7 @@ class RathorIndexedDB {
             }
             cursor.continue();
           } else {
-            resolve(messages.reverse()); // oldest first for rendering
+            resolve(messages.reverse()); // oldest first for UI
           }
         };
         req.onerror = () => reject(req.error);
@@ -132,11 +166,12 @@ class RathorIndexedDB {
     });
   }
 
-  async clearChatHistory(sessionId = 'default') {
+  async clearSessionHistory(sessionId = null) {
+    const target = sessionId || this.activeSessionId;
     return this._transaction(STORES.CHAT_HISTORY, 'readwrite', (tx) => {
       const store = tx.objectStore(STORES.CHAT_HISTORY);
       const index = store.index('sessionId');
-      const req = index.openCursor(IDBKeyRange.only(sessionId));
+      const req = index.openCursor(IDBKeyRange.only(target));
       req.onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
@@ -146,34 +181,8 @@ class RathorIndexedDB {
       };
     });
   }
-}
 
-export const rathorDB = new RathorIndexedDB();          //       value.lastName = names.join(' ');
-          //       delete value.name;
-          //       cursor.update(value);
-          //     }
-          //     cursor.continue();
-          //   }
-          // };
-        }
-
-        // Future versions: Add more if (oldVersion < X) blocks
-      };
-
-      request.onblocked = () => {
-        console.warn('[Rathor IndexedDB] Upgrade blocked — close other tabs');
-        alert('Please close other tabs/windows using Rathor to complete lattice upgrade.');
-      };
-    });
-  }
-
-  // ... rest of class (add, put, get, getAll, batchAdd, clear, addWithValence) as in previous full version ...
-  // (Omit repeating them here for brevity — keep them identical in your overwrite)
-
-  async migrateExampleData() {
-    // Optional: Manual migration trigger if needed outside upgrade
-    // But prefer doing in onupgradeneeded
-  }
+  // ... keep prior _transaction, add/put/get/getAll/clear/addWithValence methods unchanged ...
 }
 
 export const rathorDB = new RathorIndexedDB();
