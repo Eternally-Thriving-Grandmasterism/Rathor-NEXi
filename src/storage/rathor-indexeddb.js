@@ -1,7 +1,7 @@
-// src/storage/rathor-indexeddb.js — Optimized, versioned, Snappy-compressed IndexedDB wrapper
+// src/storage/rathor-indexeddb.js — Optimized, versioned, Zstandard-compressed IndexedDB wrapper
 
 const DB_NAME = 'rathor-indexeddb';
-const DB_VERSION = 6; // bump for snappy compression
+const DB_VERSION = 7; // bump for zstd compression
 
 const STORES = {
   sessions: 'sessions',
@@ -12,18 +12,18 @@ const STORES = {
 
 let db = null;
 
-// Load SnappyJS from CDN (async import — only once)
-let Snappy = null;
-async function loadSnappy() {
-  if (Snappy) return Snappy;
+// Zstandard (zstd-wasm) loading
+let ZstdCodec = null;
+async function loadZstd() {
+  if (ZstdCodec) return ZstdCodec;
   const script = document.createElement('script');
-  script.src = 'https://unpkg.com/snappyjs@latest/dist/snappy.min.js';
+  script.src = 'https://unpkg.com/@libzstd-js/zstd-codec@0.0.3/dist/zstd.min.js';
   script.async = true;
   document.head.appendChild(script);
   await new Promise(resolve => { script.onload = resolve; });
-  Snappy = window.Snappy;
-  if (!Snappy) throw new Error('SnappyJS failed to load');
-  return Snappy;
+  ZstdCodec = window.ZstdCodec;
+  if (!ZstdCodec) throw new Error('ZstdCodec failed to load');
+  return ZstdCodec;
 }
 
 // Database open with migration
@@ -49,8 +49,8 @@ const dbPromise = new Promise((resolve, reject) => {
       msgStore.createIndex('role', 'role');
     }
 
-    if (oldVersion < 6) {
-      console.log('[rathorDB] Snappy compression support added (v6)');
+    if (oldVersion < 7) {
+      console.log('[rathorDB] Zstandard compression support added (v7)');
     }
   };
 
@@ -69,7 +69,7 @@ async function openDB() {
 }
 
 // ────────────────────────────────────────────────
-// Messages — Snappy-compressed
+// Messages — Zstandard-compressed
 // ────────────────────────────────────────────────
 
 export async function saveMessage(sessionId, role, content) {
@@ -81,11 +81,13 @@ export async function saveMessage(sessionId, role, content) {
   // Compress if > 1 KB
   if (originalSize > 1024) {
     try {
-      await loadSnappy();
-      compressed = await Snappy.compress(content);
-      compression = 'snappy';
+      await loadZstd();
+      const codec = await ZstdCodec({ wasmUrl: 'https://unpkg.com/@libzstd-js/zstd-codec@0.0.3/dist/zstd.wasm' });
+      const data = new TextEncoder().encode(content);
+      compressed = await codec.compress(data, 3); // level 3 = good balance
+      compression = 'zstd';
     } catch (e) {
-      console.warn('Snappy compression failed, saving raw', e);
+      console.warn('Zstd compression failed, saving raw', e);
     }
   }
 
@@ -120,13 +122,15 @@ export async function getMessages(sessionId, limit = 100, offset = 0) {
       const cursor = event.target.result;
       if (!cursor) {
         // Decompress on read
-        await loadSnappy();
+        await loadZstd();
+        const codec = await ZstdCodec({ wasmUrl: 'https://unpkg.com/@libzstd-js/zstd-codec@0.0.3/dist/zstd.wasm' });
         const decompressed = await Promise.all(results.map(async msg => {
-          if (msg.compression === 'snappy') {
+          if (msg.compression === 'zstd') {
             try {
-              msg.content = await Snappy.decompress(msg.content);
+              const decompressedData = await codec.decompress(msg.content);
+              msg.content = new TextDecoder().decode(decompressedData);
             } catch (e) {
-              console.warn('Snappy decompress failed for msg', msg.id, e);
+              console.warn('Zstd decompress failed for msg', msg.id, e);
               // fallback: keep raw
             }
           }
@@ -142,13 +146,15 @@ export async function getMessages(sessionId, limit = 100, offset = 0) {
         results.push(cursor.value);
         cursor.continue();
       } else {
-        await loadSnappy();
+        await loadZstd();
+        const codec = await ZstdCodec({ wasmUrl: 'https://unpkg.com/@libzstd-js/zstd-codec@0.0.3/dist/zstd.wasm' });
         const decompressed = await Promise.all(results.map(async msg => {
-          if (msg.compression === 'snappy') {
+          if (msg.compression === 'zstd') {
             try {
-              msg.content = await Snappy.decompress(msg.content);
+              const decompressedData = await codec.decompress(msg.content);
+              msg.content = new TextDecoder().decode(decompressedData);
             } catch (e) {
-              console.warn('Snappy decompress failed for msg', msg.id, e);
+              console.warn('Zstd decompress failed for msg', msg.id, e);
             }
           }
           return msg;
@@ -161,7 +167,7 @@ export async function getMessages(sessionId, limit = 100, offset = 0) {
   });
 }
 
-// ... rest of functions (sessions CRUD, cleanup, quota) remain as in previous optimized version ...
+// ... rest of functions (sessions CRUD, cleanup, quota, etc.) remain as in previous optimized version ...
 
 export default {
   openDB,
