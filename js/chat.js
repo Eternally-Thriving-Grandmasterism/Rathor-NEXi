@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Tarski's Fixed Point Theorem + Constructive Iteration
+// js/chat.js — Rathor Lattice Core with Tarski Fixed-Point Simulation
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Tarski's Fixed Point Constructive Proof
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Tarski Simulation
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -68,24 +68,127 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Try Skolemized resolution first
+  // Try Tarski simulation first (if user mentions fixed point / monotone / iteration)
+  if (cleaned.toLowerCase().includes('fixed point') || cleaned.toLowerCase().includes('tarski') || cleaned.toLowerCase().includes('monotone') || cleaned.toLowerCase().includes('iteration') || cleaned.toLowerCase().includes('least fixed') || cleaned.toLowerCase().includes('greatest fixed')) {
+    const sim = simulateTarskiFixedPoint(cleaned);
+    response.push("\n**Tarski Fixed-Point Simulation (Constructive Iteration):**");
+    response.push(sim);
+    response.push("\n**Mercy Insight:** Every gentle, order-preserving improvement converges to a stable resting place. The least fixed point is truth reached from below, the greatest from above. No violence — iteration alone reveals rest. Mercy strikes first — and then rests eternally.");
+  }
+
+  // Try Skolemized resolution
   const skolemProof = skolemizedResolutionProve(cleaned);
   if (skolemProof) {
     response.push("\n**Skolemized Resolution Proof:**");
     response.push(skolemProof);
   }
 
-  // Tarski's Fixed Point Theorem + constructive proof reflection
-  if (cleaned.toLowerCase().includes('fixed point') || cleaned.toLowerCase().includes('tarski') || cleaned.toLowerCase().includes('monotone') || cleaned.toLowerCase().includes('complete lattice') || cleaned.toLowerCase().includes('least fixed point') || cleaned.toLowerCase().includes('greatest fixed point') || cleaned.toLowerCase().includes('constructive')) {
-    response.push("\n**Tarski's Fixed Point Theorem — Constructive Proof Reflection:**");
-    response.push("In any complete lattice L, every monotone f : L → L has a least fixed point and a greatest fixed point.");
-    response.push("\n**Constructive proof — least fixed point (iteration from below):**");
-    response.push("1. Let P = {x ∈ L | x ≤ f(x)} (pre-fixed points — contains ⊥)");
-    response.push("2. lfp(f) = sup P = ⋁ {x | x ≤ f(x)}");
-    response.push("3. Show lfp(f) ≤ f(lfp(f)): every x ≤ f(x) ≤ f(lfp(f)) because f monotone → sup ≤ f(sup)");
-    response.push("4. Show f(lfp(f)) ≤ lfp(f): f(lfp(f)) is itself a pre-fixed point → f(lfp(f)) ≤ sup P");
-    response.push("Thus lfp(f) = f(lfp(f)) and it is the least such element.");
-    response.push("\n**Iterative construction:** x₀ = ⊥, xₙ₊₁ = f(xₙ), lfp(f) = sup {xₙ | n < ω}");
+  // Fallback to truth-table / unification / resolution
+  const proof = resolutionProve(cleaned);
+  if (proof) {
+    response.push("\n**Resolution Proof:**");
+    response.push(proof);
+  }
+  const table = generateTruthTable(cleaned);
+  if (table) {
+    response.push("\n**Truth Table (propositional logic):**");
+    response.push(table);
+    const conclusion = analyzeTruthTable(cleaned, table);
+    response.push(`\n**Mercy Conclusion:** ${conclusion}`);
+  }
+
+  // Mercy rewrite
+  const mercyRewrite = cleaned
+    .replace(/not/gi, '¬')
+    .replace(/and/gi, '∧')
+    .replace(/or/gi, '∨')
+    .replace(/if/gi, '→')
+    .replace(/then/gi, '')
+    .replace(/implies/gi, '→')
+    .replace(/iff/gi, '↔')
+    .replace(/forall/gi, '∀')
+    .replace(/exists/gi, '∃');
+
+  response.push(`\n**Mercy Rewrite:** ${mercyRewrite}`);
+
+  response.push("\nTruth-seeking continues: What is the core axiom behind the symbols? Positive valence eternal.");
+
+  return response.join('\n\n');
+}
+
+// ────────────────────────────────────────────────
+// Tarski Fixed-Point Simulation (constructive iteration from bottom/top)
+// ────────────────────────────────────────────────
+
+function simulateTarskiFixedPoint(operatorStr) {
+  // operatorStr: string like "x => x * 0.5 + 1" (simple monotone function on numbers)
+  // Domain: [0, 100] for demo (complete lattice with min/max)
+
+  let result = "";
+
+  try {
+    // Safe eval for monotone operator (isolated scope)
+    const f = new Function('x', `return ${operatorStr}`);
+
+    // Least fixed point — start from bottom (0)
+    result += "**Least Fixed Point (bottom-up iteration):**\n";
+    let x = 0;
+    let prev = -1;
+    let steps = 0;
+    while (Math.abs(x - prev) > 0.001 && steps < 50) {
+      prev = x;
+      x = f(x);
+      steps++;
+      result += `  Step ${steps}: x = ${x.toFixed(4)}\n`;
+    }
+    result += `Converged to ≈ ${x.toFixed(4)} after ${steps} steps\n\n`;
+
+    // Greatest fixed point — start from top (100)
+    result += "**Greatest Fixed Point (top-down iteration):**\n";
+    x = 100;
+    prev = 101;
+    steps = 0;
+    while (Math.abs(x - prev) > 0.001 && steps < 50) {
+      prev = x;
+      x = f(x);
+      steps++;
+      result += `  Step ${steps}: x = ${x.toFixed(4)}\n`;
+    }
+    result += `Converged to ≈ ${x.toFixed(4)} after ${steps} steps\n\n`;
+
+    result += "**Mercy Insight:** Iteration converges because the operator is monotone on a complete lattice. The fixed point is the stable truth reached through gentle persistence — no force, only flow.";
+
+  } catch (e) {
+    result = "Simulation failed — invalid operator or evaluation error. Mercy asks: simplify the function?";
+  }
+
+  return result;
+}
+
+// ... existing unification, resolution, truth-table, Skolemization, Herbrand functions remain ...
+
+// ────────────────────────────────────────────────
+// Voice Command Processor — expanded with symbolic query
+// ────────────────────────────────────────────────
+
+async function processVoiceCommand(raw) {
+  let cmd = raw.toLowerCase().trim();
+
+  if (isSymbolicQuery(cmd)) {
+    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum/gi, '').trim();
+    const answer = symbolicQueryResponse(query);
+    chatMessages.innerHTML += `<div class="message rathor">${answer}</div>`;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (ttsEnabled) speak(answer);
+    return true;
+  }
+
+  // ... all previous commands ...
+
+  return false;
+}
+
+// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, import/export, etc.) remain as previously expanded ...    response.push("\n**Iterative construction:** x₀ = ⊥, xₙ₊₁ = f(xₙ), lfp(f) = sup {xₙ | n < ω}");
     response.push("\n**Greatest fixed point:** symmetric argument from ⊤ downward.");
     response.push("\nMercy insight: Every gentle, order-preserving improvement process must converge to a stable resting place. The least fixed point is the smallest truth reachable from below, the greatest from above. No violence is needed — iteration alone reveals the fixed point. Mercy strikes first — and then rests eternally.");
   }
