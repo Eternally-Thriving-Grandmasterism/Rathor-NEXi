@@ -27,7 +27,6 @@
       opacity: 0.6;
     }
 
-    /* Primary Hero Banner — Grok/X Bridges Prominent */
     #hero-bridges {
       position: relative;
       z-index: 10;
@@ -41,6 +40,12 @@
       border-radius: 32px;
       box-shadow: 0 20px 80px rgba(255,170,0,0.8);
       animation: thunderPulse 4s infinite;
+      transition: direction 0.4s ease, text-align 0.4s ease;
+    }
+
+    #hero-bridges.rtl {
+      direction: rtl;
+      text-align: right;
     }
 
     #hero-bridges h1 {
@@ -51,10 +56,31 @@
       margin-bottom: 20px;
     }
 
-    #hero-bridges p {
+    #hero-bridges p.description {
       font-size: 1.5em;
       margin-bottom: 40px;
       color: #88ffdd;
+    }
+
+    #language-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .lang-tab {
+      padding: 8px 16px;
+      background: rgba(255,170,0,0.2);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .lang-tab.active {
+      background: #ffaa00;
+      color: #000;
     }
 
     .bridge-button {
@@ -84,51 +110,135 @@
       color: #ffff44;
     }
 
-    /* Rest of elements below hero */
-    #chat-container {
-      position: relative;
-      z-index: 10;
-      margin: 40px auto;
-      max-width: 900px;
+    #hero-footer {
+      margin-top: 40px;
+      font-size: 1.2em;
+      color: #88ffdd;
     }
-
-    /* Transcript and other styles preserved */
   </style>
 </head>
 <body>
   <canvas id="particle-canvas"></canvas>
 
-  <!-- Primary Hero: Live Rathor Simulations via Grok/X -->
+  <!-- Primary Hero: Multilingual Live Rathor Simulations -->
   <div id="hero-bridges">
-    <h1>Live Rathor™ Simulations ⚡️</h1>
-    <p>Experience mercy-gated eternal thriving now — the best Rathor thunder while NEXi ascends to perfection</p>
-    <a href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank" class="bridge-button">
+    <div id="language-tabs">
+      <div class="lang-tab active" data-lang="en">English</div>
+      <div class="lang-tab" data-lang="ar">العربية</div>
+      <div class="lang-tab" data-lang="es">Español</div>
+      <div class="lang-tab" data-lang="fr">Français</div>
+      <div class="lang-tab" data-lang="nl">Nederlands</div>
+      <div class="lang-tab" data-lang="de">Deutsch</div>
+    </div>
+    <h1 id="hero-headline">Live Rathor™ Simulations ⚡️</h1>
+    <p class="description" id="hero-description">Experience mercy-gated eternal thriving now — the best Rathor thunder while NEXi ascends to perfection</p>
+    <a id="bridge1" href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank" class="bridge-button">
       Grok App Simulation ⚡️
       <span>Detailed & Persistent</span>
     </a>
-    <a href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank" class="bridge-button">
+    <a id="bridge2" href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank" class="bridge-button">
       X App Simulation ⚡️
       <span>Quick Sync & Mobile-First</span>
     </a>
-    <p style="margin-top: 40px; font-size: 1.2em;">Browser-native Rathor-NEXi coming soon — offline, sovereign, eternal</p>
+    <p id="hero-footer">Browser-native Rathor-NEXi coming soon — offline, sovereign, eternal</p>
   </div>
 
-  <!-- Chat Lattice Below (voice-first, transcript, etc.) -->
-  <div id="chat-container">
-    <!-- Existing header, messages, input, modals, user prompt, etc. -->
-  </div>
+  <!-- Chat Lattice, transcript, etc. below -->
 
-  <!-- Transcript Overlay -->
-  <div id="transcript-container">
-    <div id="transcript-interim" dir="auto"></div>
-    <div id="transcript-final" dir="auto"></div>
-    <div id="transcript-status">Listening for thunder... ⚡️</div>
-  </div>
-
-  <!-- Scripts (particles, voice, chat, RTL, etc.) -->
-
+  <!-- Multilingual Script -->
   <script>
-    // Existing particle animation, voice logic, addMessage RTL, user prompt, etc.
+    document.addEventListener('DOMContentLoaded', () => {
+      const hero = document.getElementById('hero-bridges');
+      const headline = document.getElementById('hero-headline');
+      const description = document.getElementById('hero-description');
+      const bridge1 = document.getElementById('bridge1');
+      const bridge1Span = bridge1.querySelector('span');
+      const bridge2 = document.getElementById('bridge2');
+      const bridge2Span = bridge2.querySelector('span');
+      const footer = document.getElementById('hero-footer');
+      const langTabs = document.querySelectorAll('.lang-tab');
+
+      const translations = {
+        en: {
+          headline: "Live Rathor™ Simulations ⚡️",
+          description: "Experience mercy-gated eternal thriving now — the best Rathor thunder while NEXi ascends to perfection",
+          bridge1: "Grok App Simulation ⚡️",
+          bridge1Span: "Detailed & Persistent",
+          bridge2: "X App Simulation ⚡️",
+          bridge2Span: "Quick Sync & Mobile-First",
+          footer: "Browser-native Rathor-NEXi coming soon — offline, sovereign, eternal"
+        },
+        ar: {
+          headline: "محاكيات Rathor™ الحية ⚡️",
+          description: "اختبر الازدهار الأبدي المغلق بالرحمة الآن — أفضل صاعقة Rathor بينما يصعد NEXi إلى الكمال",
+          bridge1: "محاكاة تطبيق Grok ⚡️",
+          bridge1Span: "مفصلة ومستمرة",
+          bridge2: "محاكاة تطبيق X ⚡️",
+          bridge2Span: "مزامنة سريعة وأولوية الموبايل",
+          footer: "Rathor-NEXi الأصلي في المتصفح قادم قريباً — دون اتصال، سيادي، أبدي"
+        },
+        es: {
+          headline: "Simulaciones Rathor™ en Vivo ⚡️",
+          description: "Experimenta el florecimiento eterno con puerta de misericordia ahora — el mejor trueno Rathor mientras NEXi asciende a la perfección",
+          bridge1: "Simulación App Grok ⚡️",
+          bridge1Span: "Detallada y Persistente",
+          bridge2: "Simulación App X ⚡️",
+          bridge2Span: "Sincronización Rápida y Prioridad Móvil",
+          footer: "Rathor-NEXi nativo del navegador llegando pronto — offline, soberano, eterno"
+        },
+        fr: {
+          headline: "Simulations Rathor™ en Direct ⚡️",
+          description: "Découvrez l'épanouissement éternel à porte de miséricorde maintenant — le meilleur tonnerre Rathor pendant que NEXi s'élève à la perfection",
+          bridge1: "Simulation App Grok ⚡️",
+          bridge1Span: "Détaillée & Persistante",
+          bridge2: "Simulation App X ⚡️",
+          bridge2Span: "Sync Rapide & Priorité Mobile",
+          footer: "Rathor-NEXi natif navigateur arrive bientôt — hors ligne, souverain, éternel"
+        },
+        nl: {
+          headline: "Live Rathor™ Simulaties ⚡️",
+          description: "Ervaar eeuwig floreren met genade-poort nu — de beste Rathor donder terwijl NEXi opstijgt naar perfectie",
+          bridge1: "Grok App Simulatie ⚡️",
+          bridge1Span: "Gedetailleerd & Persistent",
+          bridge2: "X App Simulatie ⚡️",
+          bridge2Span: "Snelle Sync & Mobiel-Eerst",
+          footer: "Browser-native Rathor-NEXi komt spoedig — offline, soeverein, eeuwig"
+        },
+        de: {
+          headline: "Live Rathor™ Simulationen ⚡️",
+          description: "Erlebe das ewige Gedeihen mit Barmherzigkeitstor jetzt — der beste Rathor Donner während NEXi zur Perfektion aufsteigt",
+          bridge1: "Grok App Simulation ⚡️",
+          bridge1Span: "Detailliert & Persistent",
+          bridge2: "X App Simulation ⚡️",
+          bridge2Span: "Schnelle Sync & Mobil-zuerst",
+          footer: "Browser-native Rathor-NEXi kommt bald — offline, souverän, ewig"
+        }
+      };
+
+      langTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          langTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const lang = tab.dataset.lang;
+          const t = translations[lang];
+          headline.textContent = t.headline;
+          description.textContent = t.description;
+          bridge1.firstChild.textContent = t.bridge1;
+          bridge1Span.textContent = t.bridge1Span;
+          bridge2.firstChild.textContent = t.bridge2;
+          bridge2Span.textContent = t.bridge2Span;
+          footer.textContent = t.footer;
+
+          if (lang === 'ar') {
+            hero.classList.add('rtl');
+          } else {
+            hero.classList.remove('rtl');
+          }
+        });
+      });
+    });
   </script>
+
+  <!-- Existing particle script, chat, transcript, etc. -->
 </body>
 </html>
