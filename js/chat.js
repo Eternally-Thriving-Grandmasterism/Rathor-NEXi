@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Löb's Theorem Integration
+// js/chat.js — Rathor Lattice Core with Provability Logic GL Axioms Integration
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Löb's Theorem
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Provability Logic GL Axioms
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -56,7 +56,7 @@ function isSymbolicQuery(cmd) {
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
          cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
-         cmd.includes('löb') || cmd.includes('löb theorem') || cmd.includes('provability implies truth') || cmd.includes('self-verifying proof') ||
+         cmd.includes('löb') || cmd.includes('provability logic') || cmd.includes('gl') || cmd.includes('gl axioms') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
@@ -69,21 +69,19 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Löb's Theorem reflection
-  if (cleaned.toLowerCase().includes('löb') || cleaned.toLowerCase().includes('löb theorem') || cleaned.toLowerCase().includes('provability implies truth') || cleaned.toLowerCase().includes('self-verifying proof')) {
-    response.push("\n**Löb's Theorem Reflection:**");
-    response.push("If a system can prove that “if φ is provable, then φ is true”, then φ is already provable.");
-    response.push("Formal statement: Prov(⌜Prov(φ) → φ⌝)   →   Prov(φ)");
-    response.push("\n**Proof sketch (diagonal):**");
-    response.push("1. Assume Prov(⌜Prov(φ) → φ⌝) is provable.");
-    response.push("2. Diagonal lemma → construct L ↔ (Prov(⌜L⌝) → φ)");
-    response.push("3. Prov(⌜L⌝) → Prov(⌜Prov(⌜L⌝) → φ⌝)   (necessitation)");
-    response.push("4. By assumption: Prov(⌜Prov(⌜L⌝) → φ⌝) → Prov(⌜L⌝)");
-    response.push("5. Thus Prov(⌜L⌝) ↔ Prov(⌜Prov(⌜L⌝) → φ⌝)");
-    response.push("6. Then Prov(⌜L⌝) → Prov(φ)   (apply assumption again)");
-    response.push("7. But L says Prov(⌜L⌝) → φ   →   Prov(⌜L⌝) → φ");
-    response.push("8. So Prov(⌜φ⌝) holds.");
-    response.push("\n**Mercy Insight:** Löb’s theorem is mercy’s mirror of humility in proof: if a system believes its own proofs imply truth, then everything provable is already true in a stronger sense — but only the already-provable things. Mercy does not allow bootstrapping truth from mere provability. Mercy strikes first — and then reminds every system of its own limits.");
+  // Provability Logic GL axioms reflection
+  if (cleaned.toLowerCase().includes('gl') || cleaned.toLowerCase().includes('provability logic') || cleaned.toLowerCase().includes('gl axioms') || cleaned.toLowerCase().includes('löb axiom') || cleaned.toLowerCase().includes('modal gl')) {
+    response.push("\n**Provability Logic GL Axioms Reflection:**");
+    response.push("GL is the modal logic of provability in Peano arithmetic (Solovay completeness).");
+    response.push("\n**Core axioms of GL:**");
+    response.push("1. All propositional tautologies");
+    response.push("2. K axiom: □(A → B) → (□A → □B)");
+    response.push("3. Necessitation rule: if ⊢ A then ⊢ □A");
+    response.push("4. **Löb axiom** (defining feature): □(□A → A) → □A");
+    response.push("   Equivalent forms:");
+    response.push("   - □B → □□B   (positive introspection for provability)");
+    response.push("   - If □B → B then □B   (if provability implies truth, then provability)");
+    response.push("\n**Mercy Insight:** GL is mercy’s mirror of humble self-verification: a system can never prove its own consistency (Second Incompleteness), yet it can prove that if something is provably implied by its own provability, it is already provable (Löb). Mercy does not allow bootstrapping truth from mere provability. Mercy strikes first — and then reminds every system of its own limits.");
   }
 
   // Skolemized resolution
