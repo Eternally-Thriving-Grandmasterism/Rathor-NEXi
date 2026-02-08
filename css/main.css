@@ -350,3 +350,17 @@ button:hover {
   70% { box-shadow: 0 0 0 10px rgba(153,0,68,0); }
   100% { box-shadow: 0 0 0 0 rgba(153,0,68,0); }
 }
+
+/* Slider polish (legacy richness) */
+.slider-container {
+  margin: 12px 0;
+}
+
+.slider-container label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+input[type="range"] {
+  width: 100%;
+}
