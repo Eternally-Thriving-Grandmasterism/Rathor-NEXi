@@ -9,7 +9,7 @@ import { atomspace } from './metta-pln-fusion-engine.js';
 import { localInfer } from './webllm-mercy-integration.js';
 import { swarmSimulate } from './mercy-von-neumann-swarm-simulator.js';
 import { activeInferenceStep } from './mercy-active-inference-core-engine.js';
-import VoiceImmersion from './voice-immersion.js'; // ← added import
+import VoiceImmersion from './voice-immersion.js'; // ← full import
 
 class MercyOrchestrator {
   constructor() {
@@ -20,7 +20,7 @@ class MercyOrchestrator {
     this.metaNEATPopulation = null;
     this.metaFitnessHistory = [];
     
-    // Voice immersion integration
+    // Voice immersion integration — complete
     this.voice = new VoiceImmersion(this);
     this.lastValence = 0.8; // for TTS modulation
   }
@@ -33,7 +33,7 @@ class MercyOrchestrator {
     // Initialize voice immersion layer
     await this.voice.init();
     
-    // Auto-start voice immersion on load? (uncomment to enable immediately)
+    // Auto-start voice immersion on page load? (uncomment to enable immediately)
     // await this.voice.start();
     
     // Or start only on user command / UI toggle
@@ -68,7 +68,7 @@ class MercyOrchestrator {
     // This is where you compute the final text response
     const responseText = "Example response from orchestrator — replace with your actual logic";
 
-    // Optional: update valence for next speak call
+    // Update valence for next speak call
     this.lastValence = await valenceCompute(userInput + responseText) || 0.8;
 
     return responseText;
@@ -86,7 +86,7 @@ class MercyOrchestrator {
     }
   }
 
-  // ... your existing methods (runMetaEvolution, runHybridEvolution, etc.) ...
+  // ... your existing methods (runMetaEvolution, runHybridEvolution, etc.) remain untouched ...
 }
 
 const orchestrator = new MercyOrchestrator();
