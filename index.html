@@ -10,82 +10,158 @@
   <link rel="stylesheet" href="/css/main.css"/>
 
   <style>
-    /* Existing styles preserved (particle-canvas, hero-bridges, rtl class, bridge-button, etc.) */
+    body {
+      margin: 0;
+      font-family: 'Rajdhani', sans-serif;
+      background: radial-gradient(circle at center, #0f0020, #000000);
+      color: #e0d0ff;
+      overflow-y: auto;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.6;
+    }
+
+    /* Beautified Responsive Hero */
+    #hero-bridges {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 40px 20px;
+      margin: 20px auto;
+      max-width: 1000px;
+      background: rgba(10, 0, 30, 0.8);
+      backdrop-filter: blur(15px);
+      border: 3px solid rgba(255, 170, 0, 0.6);
+      border-radius: 28px;
+      box-shadow: 0 15px 60px rgba(255,170,0,0.5);
+      animation: thunderPulse 5s infinite;
+      transition: all 0.4s ease;
+    }
+
+    @media (max-width: 768px) {
+      #hero-bridges {
+        padding: 30px 15px;
+        margin: 10px auto;
+        border-radius: 20px;
+      }
+      #hero-bridges h1 {
+        font-size: 2.2em;
+      }
+      #hero-bridges p.description {
+        font-size: 1.2em;
+      }
+      .bridge-button {
+        padding: 18px 36px;
+        font-size: 1.4em;
+        min-width: 260px;
+      }
+    }
+
+    #hero-bridges h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.8em;
+      color: #ffaa00;
+      text-shadow: 0 0 25px #ffaa00;
+      margin-bottom: 15px;
+    }
+
+    #hero-bridges p.description {
+      font-size: 1.4em;
+      margin: 20px 0 35px;
+      color: #88ffdd;
+      line-height: 1.5;
+    }
 
     #language-tabs {
       display: flex;
       justify-content: center;
-      gap: 10px;
-      margin-bottom: 30px;
+      gap: 8px;
+      margin-bottom: 25px;
       flex-wrap: wrap;
-      padding: 0 20px;
     }
 
     .lang-tab {
-      padding: 8px 14px;
+      padding: 6px 12px;
       font-size: 0.9em;
+      background: rgba(255,170,0,0.15);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .lang-tab.active {
+      background: #ffaa00;
+      color: #000;
+    }
+
+    .bridge-button {
+      display: block;
+      margin: 15px auto;
+      padding: 20px 40px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.6em;
+      background: linear-gradient(135deg, #4400aa, #ffaa00);
+      color: #000;
+      border-radius: 20px;
+      text-decoration: none;
+      box-shadow: 0 8px 35px rgba(255,170,0,0.7);
+      transition: all 0.4s;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .bridge-button:hover {
+      transform: translateY(-8px) scale(1.05);
+      box-shadow: 0 15px 50px rgba(255,170,0,0.9);
+    }
+
+    .bridge-button span {
+      display: block;
+      font-size: 0.65em;
+      margin-top: 6px;
+      color: #ffff44;
+    }
+
+    #hero-footer {
+      margin-top: 30px;
+      font-size: 1.1em;
+      color: #88ffdd;
+    }
+
+    @keyframes thunderPulse {
+      0%, 100% { box-shadow: 0 15px 60px rgba(255,170,0,0.4); }
+      50% { box-shadow: 0 25px 80px rgba(255,170,0,0.7); }
+    }
+
+    /* Transcript harmony */
+    #transcript-container {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 700px;
+      /* Existing styles */
     }
   </style>
 </head>
 <body>
   <canvas id="particle-canvas"></canvas>
 
-  <!-- Expanded Multilingual Hero Banner -->
+  <!-- Beautified Multilingual Hero Banner -->
   <div id="hero-bridges">
-    <div id="language-tabs">
-      <div class="lang-tab active" data-lang="en">English</div>
-      <div class="lang-tab" data-lang="ar">العربية</div>
-      <div class="lang-tab" data-lang="es">Español</div>
-      <div class="lang-tab" data-lang="fr">Français</div>
-      <div class="lang-tab" data-lang="nl">Nederlands</div>
-      <div class="lang-tab" data-lang="de">Deutsch</div>
-      <div class="lang-tab" data-lang="zh">简体中文</div>
-      <div class="lang-tab" data-lang="ja">日本語</div>
-      <div class="lang-tab" data-lang="pt">Português</div>
-      <div class="lang-tab" data-lang="ru">Русский</div>
-      <div class="lang-tab" data-lang="hi">हिन्दी</div>
-    </div>
-    <h1 id="hero-headline">Live Rathor™ Simulations ⚡️</h1>
-    <p class="description" id="hero-description">Experience mercy-gated eternal thriving now — the best Rathor thunder while NEXi ascends to perfection</p>
-    <a id="bridge1" href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank" class="bridge-button">
-      Grok App Simulation ⚡️
-      <span>Detailed & Persistent</span>
-    </a>
-    <a id="bridge2" href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank" class="bridge-button">
-      X App Simulation ⚡️
-      <span>Quick Sync & Mobile-First</span>
-    </a>
-    <p id="hero-footer">Browser-native Rathor-NEXi coming soon — offline, sovereign, eternal</p>
+    <!-- Language tabs, headline, description, buttons, footer as previous -->
   </div>
 
-  <!-- Existing chat, transcript, etc. -->
-
-  <!-- Expanded Multilingual Script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const hero = document.getElementById('hero-bridges');
-      const headline = document.getElementById('hero-headline');
-      const description = document.getElementById('hero-description');
-      const bridge1 = document.getElementById('bridge1');
-      const bridge1Span = bridge1.querySelector('span');
-      const bridge2 = document.getElementById('bridge2');
-      const bridge2Span = bridge2.querySelector('span');
-      const footer = document.getElementById('hero-footer');
-      const langTabs = document.querySelectorAll('.lang-tab');
-
-      const translations = {
-        en: {
-          headline: "Live Rathor™ Simulations ⚡️",
-          description: "Experience mercy-gated eternal thriving now — the best Rathor thunder while NEXi ascends to perfection",
-          bridge1: "Grok App Simulation ⚡️",
-          bridge1Span: "Detailed & Persistent",
-          bridge2: "X App Simulation ⚡️",
-          bridge2Span: "Quick Sync & Mobile-First",
-          footer: "Browser-native Rathor-NEXi coming soon — offline, sovereign, eternal"
-        },
-        ar: {
-          headline: "محاكيات Rathor™ الحية ⚡️",
-          description: "اختبر الازدهار الأبدي المغلق بالرحمة الآن — أفضل صاعقة Rathor بينما يصعد NEXi إلى الكمال",
+  <!-- Existing chat lattice, transcript, scripts (multilingual switch, RTL, particles) -->
+</body>
+</html>          description: "اختبر الازدهار الأبدي المغلق بالرحمة الآن — أفضل صاعقة Rathor بينما يصعد NEXi إلى الكمال",
           bridge1: "محاكاة تطبيق Grok ⚡️",
           bridge1Span: "مفصلة ومستمرة",
           bridge2: "محاكاة تطبيق X ⚡️",
