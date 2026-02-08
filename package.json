@@ -26,3 +26,16 @@
     "workbox-cli": "^7.0.0"
   }
 }
+
+{
+  "scripts": {
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "npm run build && tauri build",
+    "tauri:init": "tauri init"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@tauri-apps/api": "^2.0.0"
+  }
+}
