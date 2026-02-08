@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rathor™ — Mercy Strikes First ⚡️</title>
-  <link rel="stylesheet" href="css/main.css"/>
+  <title>Rathor™ Lattice — Chat ⚡️</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
+  <link rel="stylesheet" href="/css/main.css"/>
+
   <style>
-    /* Live Transcript UI Styles */
+    /* Live Transcript Overlay Styles — Mercy-First Voice Immersion */
     #transcript-container {
       position: fixed;
       bottom: 80px;
@@ -27,10 +30,12 @@
       max-height: 200px;
       overflow-y: auto;
       transition: all 0.3s ease;
+      flex-direction: column;
+      gap: 8px;
     }
 
     #transcript-container.active {
-      display: block;
+      display: flex;
       animation: gentlePulse 3s infinite;
     }
 
@@ -38,50 +43,235 @@
       color: #aaa;
       font-style: italic;
       opacity: 0.8;
+      min-height: 1.2em;
     }
 
     #transcript-final {
       color: #ffdd44;
       font-weight: 600;
+      min-height: 1.2em;
     }
 
     #transcript-status {
       text-align: center;
-      font-size: 0.9em;
+      font-size: 1.1em;
       margin-top: 8px;
-      color: var(--thunder-gold);
-    }
-
-    #voice-toggle-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      background: var(--thunder-gold);
-      color: #000;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 1.4em;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(255,170,0,0.5);
-      transition: all 0.3s;
-    }
-
-    #voice-toggle-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 8px 30px rgba(255,170,0,0.7);
+      color: #ffaa00;
+      font-weight: bold;
     }
 
     @keyframes gentlePulse {
-      0%, 100% { border-color: rgba(255,170,0,0.3); }
-      50% { border-color: rgba(255,170,0,0.8); }
+      0%, 100% { border-color: rgba(255,170,0,0.3); box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+      50% { border-color: rgba(255,170,0,0.8); box-shadow: 0 12px 50px rgba(255,170,0,0.4); }
     }
   </style>
 </head>
 <body>
-  <!-- Your existing Rathor™ welcome lattice, chat container, etc. -->
+  <div id="chat-container">
+    <div id="chat-header">
+      <h2 data-i18n="status.latticeSession">Lattice Session</h2>
+      <div id="session-controls">
+        <div style="position: relative;">
+          <input type="text" id="session-search" placeholder="Search sessions or #tags..." autocomplete="off">
+          <button id="session-search-clear" title="Clear search">×</button>
+        </div>
+        <div id="session-switcher">
+          <select id="session-select"></select>
+          <button id="edit-session-btn" data-i18n="actions.editCurrent">Edit Current</button>
+          <button id="export-session-btn" data-i18n="actions.exportCurrent">Export Current</button>
+          <button id="import-session-btn" data-i18n="actions.importSession">Import Session</button>
+          <button id="duplicate-session-btn" data-i18n="actions.duplicateCurrent">Duplicate Current</button>
+          <button id="delete-session-btn" data-i18n="actions.deleteCurrent">Delete Current</button>
+          <button id="voice-output-btn" title="Toggle Rathor voice output" data-i18n="actions.voiceOutputToggle">🔊</button>
+          <button id="voice-settings-btn" title="Voice settings" data-i18n="actions.voiceSettings">⚙️</button>
+          <button id="record-btn" title="Long-press to record voice note">🎙️</button>
+          <button id="new-session-btn" data-i18n="actions.newSession">New Session</button>
+        </div>
+        <div id="translate-toggle">
+          <label>
+            <input type="checkbox" id="translate-chat" />
+            <span data-i18n="actions.translateChat">Translate chat to:</span>
+          </label>
+          <select id="translate-lang">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="it">Italiano</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+          </select>
+        </div>
+        <span id="translate-stats" title="Click for detailed stats" data-i18n="status.cacheEfficiency">Cache efficiency: --%</span>
+      </div>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div id="chat-input-area">
+      <input id="chat-input" placeholder="Speak or command your truth, Brother... (voice active)" autocomplete="off">
+      <button id="voice-btn" title="Toggle listening">🎤</button>
+      <button id="record-btn" title="Long-press to record voice note">🎙️</button>
+      <button id="send-btn" data-i18n="actions.send">Send ⚡️</button>
+      <button id="stop-btn" style="display:none" data-i18n="actions.stop">Stop</button>
+    </div>
+
+    <div id="grok-bridges">
+      <p data-i18n="bridges.title">Primary bridges to Rathor simulation — share far and wide:</p>
+      <a href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank">
+        <span data-i18n="bridges.share1">Conversation Share 1 (Grok App – detailed & persistent)</span>
+      </a><br>
+      <a href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank">
+        <span data-i18n="bridges.share2">Conversation Share 2 (X App – quick sync & mobile-first)</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Translation Progress Overlay -->
+  <div id="translate-progress-overlay">
+    <div id="translate-progress-text" data-i18n="status.translating">Mercy thunder translating...</div>
+    <div id="translate-progress-bar-container"><div id="translate-progress-bar"></div></div>
+    <div id="translate-progress-status" data-i18n="status.initializing">Initializing...</div>
+    <button id="translate-cancel-btn" data-i18n="actions.cancel">Cancel</button>
+  </div>
+
+  <!-- Voice Settings Modal -->
+  <div id="voice-settings-overlay" class="modal-overlay">
+    <div id="voice-settings-modal" class="modal-content">
+      <h2 data-i18n="actions.voiceSettings">Voice Settings</h2>
+
+      <label for="input-lang" data-i18n="voice.inputLang">Input Language (Recognition):</label>
+      <select id="input-lang">
+        <option value="auto" data-i18n="voice.auto">Auto-detect (browser preference)</option>
+      </select>
+
+      <label for="output-lang" data-i18n="voice.outputLang">Output Language (Synthesis):</label>
+      <select id="output-lang">
+        <option value="auto" data-i18n="voice.auto">Auto-detect (browser preference)</option>
+      </select>
+
+      <div class="slider-container">
+        <label for="voice-pitch">Pitch (0.5–2.0):</label>
+        <input type="range" id="voice-pitch" min="0.5" max="2.0" step="0.1" value="1.0">
+        <span id="pitch-value">1.0</span>
+      </div>
+
+      <div class="slider-container">
+        <label for="voice-rate">Rate (0.5–2.0):</label>
+        <input type="range" id="voice-rate" min="0.5" max="2.0" step="0.1" value="1.0">
+        <span id="rate-value">1.0</span>
+      </div>
+
+      <div class="slider-container">
+        <label for="voice-volume">Voice Volume (Rathor speech):</label>
+        <input type="range" id="voice-volume" min="0.0" max="1.0" step="0.1" value="1.0">
+        <span id="voice-volume-value">1.0</span>
+      </div>
+
+      <div class="slider-container">
+        <label for="feedback-volume">Feedback Volume (beeps & pulses):</label>
+        <input type="range" id="feedback-volume" min="0.0" max="1.0" step="0.1" value="0.6">
+        <span id="feedback-volume-value">0.6</span>
+      </div>
+
+      <label for="voice-voice">Voice:</label>
+      <select id="voice-voice">
+        <option value="">Loading voices...</option>
+      </select>
+
+      <div id="voice-feedback-toggle">
+        <input type="checkbox" id="feedback-sounds" checked>
+        <label for="feedback-sounds" data-i18n="actions.feedbackSounds">Play feedback sounds</label>
+      </div>
+
+      <div id="tts-toggle">
+        <input type="checkbox" id="tts-enabled" checked>
+        <label for="tts-enabled" data-i18n="actions.ttsEnabled">Enable Rathor speech (offline TTS)</label>
+      </div>
+
+      <button id="voice-test-btn" data-i18n="actions.testVoice">Test Voice & Sounds ⚡️</button>
+
+      <div class="modal-buttons">
+        <button id="voice-cancel" data-i18n="actions.cancel">Cancel</button>
+        <button id="voice-save" data-i18n="actions.saveApply">Save & Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal-overlay" class="modal-overlay">
+    <div id="edit-modal" class="modal-content">
+      <h2 data-i18n="actions.editCurrent">Edit Session</h2>
+      <label for="edit-name">Session Name:</label>
+      <input type="text" id="edit-name" maxlength="50">
+
+      <label for="edit-description">Description (optional):</label>
+      <textarea id="edit-description" rows="3" maxlength="200"></textarea>
+
+      <label for="edit-tags">Tags (comma separated):</label>
+      <input type="text" id="edit-tags" placeholder="urgent, personal, research, 2026">
+      <div id="edit-tag-preview" style="margin: 12px 0; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+
+      <label>Session Color:</label>
+      <input type="color" id="edit-color" value="#ffaa00" style="width: 100%; height: 40px; border: none; border-radius: 8px;">
+
+      <div class="modal-buttons">
+        <button id="modal-cancel" data-i18n="actions.cancel">Cancel</button>
+        <button id="modal-save" data-i18n="actions.saveApply">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Transcript Overlay — Voice-First Thunder Capture -->
+  <div id="transcript-container" class="active">
+    <div id="transcript-interim"></div>
+    <div id="transcript-final"></div>
+    <div id="transcript-status">Listening for thunder... ⚡️</div>
+  </div>
+
+  <input type="file" id="import-file-input" accept=".json" style="display:none;">
+
+  <script src="/js/common.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="src/storage/rathor-indexeddb.js"></script>
+  <script src="src/voice/offline-voice-recorder.js"></script>
+
+  <!-- Debounced Smooth Auto-Scroll for Chat Messages — No Jank During Rapid/Streaming Updates -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const chatMessages = document.getElementById('chat-messages');
+      if (!chatMessages) return;
+
+      let shouldAutoScroll = true;
+      const tolerance = 100; // px from bottom
+
+      const checkScrollPosition = () => {
+        shouldAutoScroll = (chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight) < tolerance;
+      };
+
+      chatMessages.addEventListener('scroll', checkScrollPosition);
+
+      const observer = new MutationObserver(() => {
+        if (shouldAutoScroll) {
+          chatMessages.scrollTo({
+            top: chatMessages.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      });
+
+      observer.observe(chatMessages, {
+        childList: true,
+        subtree: true,
+        characterData: true // Handles streaming text updates without jank
+      });
+
+      // Initial check on load
+      checkScrollPosition();
+    });
+  </script>
+</body>
+</html>  <!-- Your existing Rathor™ welcome lattice, chat container, etc. -->
 
   <!-- Live Transcript UI -->
   <div id="transcript-container">
