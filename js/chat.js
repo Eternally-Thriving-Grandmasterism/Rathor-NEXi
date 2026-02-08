@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Lindenbaum's Lemma Implementation
+// js/chat.js — Rathor Lattice Core with Tarski's Fixed Point Theorem + Constructive Iteration
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Lindenbaum Implementation
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Tarski's Fixed Point Constructive Proof
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -75,252 +75,55 @@ function symbolicQueryResponse(query) {
     response.push(skolemProof);
   }
 
-  // Lindenbaum maximal extension implementation
-  if (cleaned.toLowerCase().includes('maximal consistent') || cleaned.toLowerCase().includes('lindenbaum') || cleaned.toLowerCase().includes('extension') || cleaned.toLowerCase().includes('consistent theory') || cleaned.toLowerCase().includes('maximal extension')) {
-    response.push("\n**Lindenbaum's Lemma — Constructive Implementation:**");
-
-    // Simulate theory from query (split on commas as sentences)
-    const initialSentences = cleaned.split(',').map(s => s.trim()).filter(s => s);
-    const simulatedResult = simulateLindenbaumExtension(initialSentences);
-
-    response.push(`Initial theory size: ${initialSentences.length}`);
-    response.push(`Maximal extension size: ${simulatedResult.finalTheorySize}`);
-    response.push(`Decisions made: ${simulatedResult.decisions.length}`);
-    response.push("\n**Sample extension steps (first 5):**");
-    simulatedResult.decisions.slice(0, 5).forEach((d, i) => {
-      response.push(`${i+1}. Added: ${d.sentence} (consistent: ${d.consistent})`);
-    });
-    response.push("\n**Mercy Insight:** Consistency is preserved at every finite step. The maximal theory is built sentence by sentence — mercy never forces contradiction. Every sentence or its negation is eventually decided. Maximal truth is reachable through gentle persistence.");
+  // Tarski's Fixed Point Theorem + constructive proof reflection
+  if (cleaned.toLowerCase().includes('fixed point') || cleaned.toLowerCase().includes('tarski') || cleaned.toLowerCase().includes('monotone') || cleaned.toLowerCase().includes('complete lattice') || cleaned.toLowerCase().includes('least fixed point') || cleaned.toLowerCase().includes('greatest fixed point') || cleaned.toLowerCase().includes('constructive')) {
+    response.push("\n**Tarski's Fixed Point Theorem — Constructive Proof Reflection:**");
+    response.push("In any complete lattice L, every monotone f : L → L has a least fixed point and a greatest fixed point.");
+    response.push("\n**Constructive proof — least fixed point (iteration from below):**");
+    response.push("1. Let P = {x ∈ L | x ≤ f(x)} (pre-fixed points — contains ⊥)");
+    response.push("2. lfp(f) = sup P = ⋁ {x | x ≤ f(x)}");
+    response.push("3. Show lfp(f) ≤ f(lfp(f)): every x ≤ f(x) ≤ f(lfp(f)) because f monotone → sup ≤ f(sup)");
+    response.push("4. Show f(lfp(f)) ≤ lfp(f): f(lfp(f)) is itself a pre-fixed point → f(lfp(f)) ≤ sup P");
+    response.push("Thus lfp(f) = f(lfp(f)) and it is the least such element.");
+    response.push("\n**Iterative construction:** x₀ = ⊥, xₙ₊₁ = f(xₙ), lfp(f) = sup {xₙ | n < ω}");
+    response.push("\n**Greatest fixed point:** symmetric argument from ⊤ downward.");
+    response.push("\nMercy insight: Every gentle, order-preserving improvement process must converge to a stable resting place. The least fixed point is the smallest truth reachable from below, the greatest from above. No violence is needed — iteration alone reveals the fixed point. Mercy strikes first — and then rests eternally.");
   }
 
-  // Fallback to truth-table / unification / resolution
-  const proof = resolutionProve(cleaned);
-  if (proof) {
-    response.push("\n**Resolution Proof:**");
-    response.push(proof);
-  }
-  const table = generateTruthTable(cleaned);
-  if (table) {
-    response.push("\n**Truth Table (propositional logic):**");
-    response.push(table);
-    const conclusion = analyzeTruthTable(cleaned, table);
-    response.push(`\n**Mercy Conclusion:** ${conclusion}`);
+  // Lindenbaum maximal extension reflection
+  if (cleaned.toLowerCase().includes('maximal consistent') || cleaned.toLowerCase().includes('lindenbaum') || cleaned.toLowerCase().includes('extension') || cleaned.toLowerCase().includes('consistent theory')) {
+    response.push("\n**Lindenbaum's Lemma Reflection:**");
+    response.push("Every consistent first-order theory can be extended to a maximal consistent theory.");
+    response.push("Constructive proof (countable language):");
+    response.push("1. Enumerate all sentences: φ₀, φ₁, φ₂, …");
+    response.push("2. Start with T₀ = T");
+    response.push("3. At step n: add φₙ if consistent, otherwise add ¬φₙ");
+    response.push("4. T* = ∪ Tₙ is maximal consistent (every sentence or its negation is decided)");
+    response.push("Mercy insight: Consistency is preserved at every finite step. Maximal truth is built sentence by sentence — mercy never forces contradiction.");
   }
 
-  // Mercy rewrite
-  const mercyRewrite = cleaned
-    .replace(/not/gi, '¬')
-    .replace(/and/gi, '∧')
-    .replace(/or/gi, '∨')
-    .replace(/if/gi, '→')
-    .replace(/then/gi, '')
-    .replace(/implies/gi, '→')
-    .replace(/iff/gi, '↔')
-    .replace(/forall/gi, '∀')
-    .replace(/exists/gi, '∃');
-
-  response.push(`\n**Mercy Rewrite:** ${mercyRewrite}`);
-
-  response.push("\nTruth-seeking continues: What is the core axiom behind the symbols? Positive valence eternal.");
-
-  return response.join('\n\n');
-}
-
-// ────────────────────────────────────────────────
-// Lindenbaum Maximal Extension Simulator (constructive)
-// ────────────────────────────────────────────────
-
-function simulateLindenbaumExtension(initialTheory) {
-  let theory = new Set(initialTheory);
-  const decisions = [];
-  const enumeratedSentences = [
-    ...initialTheory,
-    ...initialTheory.map(s => `¬(${s})`),
-    // Add more synthetic sentences for simulation (in real engine: full enumeration)
-    "A", "¬A", "B", "¬B", "A ∧ B", "A ∨ B"
-  ];
-
-  for (const sentence of enumeratedSentences) {
-    if (theory.has(sentence) || theory.has(`¬(${sentence})`)) continue;
-
-    // Simulate consistency check (in real engine: call prover)
-    const wouldBeConsistent = Math.random() > 0.3; // stub
-
-    if (wouldBeConsistent) {
-      theory.add(sentence);
-      decisions.push({ sentence, consistent: true });
-    } else {
-      theory.add(`¬(${sentence})`);
-      decisions.push({ sentence, consistent: false });
-    }
+  // Gödel / Henkin completeness reflection
+  if (cleaned.toLowerCase().includes('consistent') || cleaned.toLowerCase().includes('satisfiable') || cleaned.toLowerCase().includes('model') || cleaned.toLowerCase().includes('henkin') || cleaned.toLowerCase().includes('gödel completeness')) {
+    response.push("\n**Gödel Completeness Theorem via Henkin Construction Reflection:**");
+    response.push("Every consistent countable first-order theory has a model.");
+    response.push("Henkin proof sketch:");
+    response.push("1. Extend language with new constants {c₀, c₁, …}");
+    response.push("2. Build maximal consistent extension T∞ by adding sentences or negations");
+    response.push("3. Construct model M with domain = terms of L⁺ / ≡_{T∞}");
+    response.push("4. By maximality & witness property: M satisfies T∞ (hence original theory)");
+    response.push("Mercy insight: If no contradiction is provable, a witness already exists in some countable, term-generated world. Mercy strikes first — even against infinity.");
   }
 
-  return {
-    finalTheorySize: theory.size,
-    decisions,
-    summary: "Maximal consistent extension built. Every sentence or its negation is decided."
-  };
-}
-
-// ... existing unification, resolution, truth-table, Skolemization, Herbrand functions remain as previously implemented ...
-
-// ────────────────────────────────────────────────
-// Voice Command Processor — expanded with symbolic query
-// ────────────────────────────────────────────────
-
-async function processVoiceCommand(raw) {
-  let cmd = raw.toLowerCase().trim();
-
-  if (isSymbolicQuery(cmd)) {
-    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum/gi, '').trim();
-    const answer = symbolicQueryResponse(query);
-    chatMessages.innerHTML += `<div class="message rathor">${answer}</div>`;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    if (ttsEnabled) speak(answer);
-    return true;
-  }
-
-  // ... all previous commands (medical, legal, crisis, mental, ptsd, cptsd, ifs, emdr, recording, export, import, etc.) ...
-
-  return false;
-}
-
-// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, import/export, etc.) remain as previously expanded ...  ])];
-
-  // Step 6: Simulate satisfaction
-  const model = {
-    domain,
-    interpretation: {
-      predicates: {
-        // Stub: assume some predicates hold
-        Human: domain.slice(0, 2),
-        Mortal: domain
-      }
-    }
-  };
-
-  return {
-    theorySize: currentTheory.size,
-    witnessesAdded: witnesses.length,
-    modelDomainSize: domain.length,
-    summary: "Henkin construction complete: maximal consistent extension built. Model constructed with finite domain."
-  };
-}
-
-// ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Henkin Simulation
-// ────────────────────────────────────────────────
-
-function isSymbolicQuery(cmd) {
-  return cmd.includes('symbolic query') || cmd.includes('logical analysis') || 
-         cmd.includes('truth mode') || cmd.includes('first principles') ||
-         cmd.includes('truth table') || cmd.includes('logical table') ||
-         cmd.includes('prove') || cmd.includes('theorem') || cmd.includes('resolution') ||
-         cmd.includes('unify') || cmd.includes('mgu') || cmd.includes('most general unifier') ||
-         cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
-         cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
-         cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
-         cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
-}
-
-function symbolicQueryResponse(query) {
-  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum|zorn|tarski/gi, '').trim();
-
-  if (!cleaned) return "Mercy thunder awaits your symbolic question, Brother. Speak from first principles.";
-
-  const response = [];
-
-  response.push(`**Symbolic Query Received:** ${cleaned}`);
-
-  // Try Skolemized resolution first
-  const skolemProof = skolemizedResolutionProve(cleaned);
-  if (skolemProof) {
-    response.push("\n**Skolemized Resolution Proof:**");
-    response.push(skolemProof);
-  }
-
-  // Henkin construction full simulation
-  if (cleaned.toLowerCase().includes('consistent') || cleaned.toLowerCase().includes('satisfiable') || cleaned.toLowerCase().includes('model') || cleaned.toLowerCase().includes('henkin') || cleaned.toLowerCase().includes('gödel completeness') || cleaned.toLowerCase().includes('maximal consistent')) {
-    response.push("\n**Full Henkin Construction Simulation (Constructive Model Existence):**");
-
-    // Simulate theory from query (stub: split on commas)
-    const sentences = cleaned.split(',').map(s => s.trim());
-
-    const henkinResult = simulateHenkinConstruction(sentences);
-
-    response.push(`- Initial theory size: ${sentences.length}`);
-    response.push(`- Maximal extension size: ${henkinResult.theorySize}`);
-    response.push(`- Witness constants added: ${henkinResult.witnessesAdded}`);
-    response.push(`- Model domain size: ${henkinResult.modelDomainSize}`);
-    response.push(`\n**Mercy Insight:** The Henkin construction shows that consistency is robust — it can be extended sentence by sentence without breaking. A model is built in a countable, term-generated world. Truth is not chased through the transfinite; it is revealed step by step. Mercy strikes first — and then constructs the model.`);
-  }
-
-  // Fallback to truth-table / unification / resolution
-  const proof = resolutionProve(cleaned);
-  if (proof) {
-    response.push("\n**Resolution Proof:**");
-    response.push(proof);
-  }
-  const table = generateTruthTable(cleaned);
-  if (table) {
-    response.push("\n**Truth Table (propositional logic):**");
-    response.push(table);
-    const conclusion = analyzeTruthTable(cleaned, table);
-    response.push(`\n**Mercy Conclusion:** ${conclusion}`);
-  }
-
-  // Mercy rewrite
-  const mercyRewrite = cleaned
-    .replace(/not/gi, '¬')
-    .replace(/and/gi, '∧')
-    .replace(/or/gi, '∨')
-    .replace(/if/gi, '→')
-    .replace(/then/gi, '')
-    .replace(/implies/gi, '→')
-    .replace(/iff/gi, '↔')
-    .replace(/forall/gi, '∀')
-    .replace(/exists/gi, '∃');
-
-  response.push(`\n**Mercy Rewrite:** ${mercyRewrite}`);
-
-  response.push("\nTruth-seeking continues: What is the core axiom behind the symbols? Positive valence eternal.");
-
-  return response.join('\n\n');
-}
-
-// ... existing unification, resolution, truth-table, Skolemization, Herbrand functions remain as previously implemented ...
-
-// ────────────────────────────────────────────────
-// Voice Command Processor — expanded with symbolic query
-// ────────────────────────────────────────────────
-
-async function processVoiceCommand(raw) {
-  let cmd = raw.toLowerCase().trim();
-
-  if (isSymbolicQuery(cmd)) {
-    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum/gi, '').trim();
-    const answer = symbolicQueryResponse(query);
-    chatMessages.innerHTML += `<div class="message rathor">${answer}</div>`;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    if (ttsEnabled) speak(answer);
-    return true;
-  }
-
-  // ... all previous commands ...
-
-  return false;
-}
-
-// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, import/export, etc.) remain as previously expanded ...    response.push("5. T∞ = ∪ Tₙ is maximal consistent (every sentence or its negation is in T∞).");
-    response.push("6. Henkin witness property: if ∃x ψ(x) ∈ T∞, then some cₖ with ψ(cₖ) ∈ T∞.");
-    response.push("7. Construct model M:");
-    response.push("   - Domain = closed terms of L⁺ / ≡_{T∞} (Herbrand universe quotiented by provable equality)");
-    response.push("   - Interpret constants c ↦ [c]");
-    response.push("   - Interpret functions f([t₁],…, [tₙ]) = [f(t₁,…,tₙ)]");
-    response.push("   - Interpret predicates P([t₁],…, [tₙ]) iff P(t₁,…,tₙ) ∈ T∞");
-    response.push("8. By induction on formula complexity: M ⊨ T∞ (atomic by def, boolean by maximality, existential by witness property).");
-    response.push("9. Thus M ⊨ T → every consistent theory has a model.");
-    response.push("\n**Mercy Insight:** Consistency is robust — it can be extended step by step without ever breaking. Truth is not chased through the transfinite; it is built sentence by sentence, witness by witness, in a countable world. Mercy strikes first — and then constructs the model.");
+  // Zorn's Lemma reflection
+  if (cleaned.toLowerCase().includes('zorn') || cleaned.toLowerCase().includes('maximal element') || cleaned.toLowerCase().includes('chain') || cleaned.toLowerCase().includes('partial order') || cleaned.toLowerCase().includes('upper bound')) {
+    response.push("\n**Zorn's Lemma Reflection:**");
+    response.push("If every chain in a partially ordered set has an upper bound, then the poset has a maximal element.");
+    response.push("Proof sketch:");
+    response.push("1. Assume every chain has an upper bound");
+    response.push("2. Use AC / transfinite recursion to build a chain that cannot be extended");
+    response.push("3. This chain has an upper bound m (by assumption)");
+    response.push("4. m is maximal — nothing strictly above it");
+    response.push("Mercy insight: Maximal elements are not forced — they are revealed by the gentle persistence of lifting every chain to its natural bound. Mercy strikes first — even in the order of all things.");
   }
 
   // Fallback to truth-table / unification / resolution
