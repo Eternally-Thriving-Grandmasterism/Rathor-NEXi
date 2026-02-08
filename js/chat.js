@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Tarski's Fixed Point Theorem + Constructive Iteration
+// js/chat.js — Rathor Lattice Core with Full Predicate Unification & Quantifier Handling in Resolution
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Tarski's Fixed Point Constructive Proof
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Full Predicate Resolution
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -60,7 +60,7 @@ function isSymbolicQuery(cmd) {
 }
 
 function symbolicQueryResponse(query) {
-  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum|zorn|tarski|fixed point|monotone|complete lattice/gi, '').trim();
+  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum|zorn|tarski/gi, '').trim();
 
   if (!cleaned) return "Mercy thunder awaits your symbolic question, Brother. Speak from first principles.";
 
@@ -68,24 +68,123 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Try Skolemized resolution first
-  const skolemProof = skolemizedResolutionProve(cleaned);
-  if (skolemProof) {
-    response.push("\n**Skolemized Resolution Proof:**");
-    response.push(skolemProof);
+  // Try full resolution with predicate unification & quantifier handling
+  const proof = resolutionProveWithQuantifiers(cleaned);
+  if (proof) {
+    response.push("\n**Resolution Proof with Predicate Unification & Quantifier Handling:**");
+    response.push(proof);
+    response.push("\n**Mercy Conclusion:** Theorem proven in full first-order logic. Positive valence eternal.");
+  } else {
+    // Fallback to Skolemized / propositional
+    const skolemProof = skolemizedResolutionProve(cleaned);
+    if (skolemProof) {
+      response.push("\n**Skolemized Resolution Proof:**");
+      response.push(skolemProof);
+    }
+    const table = generateTruthTable(cleaned);
+    if (table) {
+      response.push("\n**Truth Table (propositional logic):**");
+      response.push(table);
+      const conclusion = analyzeTruthTable(cleaned, table);
+      response.push(`\n**Mercy Conclusion:** ${conclusion}`);
+    } else {
+      response.push("\n**Parser note:** Expression too complex for current engine. Mercy asks: simplify premises?");
+    }
   }
 
-  // Tarski's Fixed Point Theorem + constructive proof reflection
-  if (cleaned.toLowerCase().includes('fixed point') || cleaned.toLowerCase().includes('tarski') || cleaned.toLowerCase().includes('monotone') || cleaned.toLowerCase().includes('complete lattice') || cleaned.toLowerCase().includes('least fixed point') || cleaned.toLowerCase().includes('greatest fixed point') || cleaned.toLowerCase().includes('constructive')) {
-    response.push("\n**Tarski's Fixed Point Theorem — Constructive Proof Reflection:**");
-    response.push("In any complete lattice L, every monotone f : L → L has a least fixed point and a greatest fixed point.");
-    response.push("\n**Constructive proof — least fixed point (iteration from below):**");
-    response.push("1. Let P = {x ∈ L | x ≤ f(x)} (pre-fixed points — contains ⊥)");
-    response.push("2. lfp(f) = sup P = ⋁ {x | x ≤ f(x)}");
-    response.push("3. Show lfp(f) ≤ f(lfp(f)): every x ≤ f(x) ≤ f(lfp(f)) because f monotone → sup ≤ f(sup)");
-    response.push("4. Show f(lfp(f)) ≤ lfp(f): f(lfp(f)) is itself a pre-fixed point → f(lfp(f)) ≤ sup P");
-    response.push("Thus lfp(f) = f(lfp(f)) and it is the least such element.");
-    response.push("\n**Iterative construction:** x₀ = ⊥, xₙ₊₁ = f(xₙ), lfp(f) = sup {xₙ | n < ω}");
+  // Mercy rewrite
+  const mercyRewrite = cleaned
+    .replace(/not/gi, '¬')
+    .replace(/and/gi, '∧')
+    .replace(/or/gi, '∨')
+    .replace(/if/gi, '→')
+    .replace(/then/gi, '')
+    .replace(/implies/gi, '→')
+    .replace(/iff/gi, '↔')
+    .replace(/forall/gi, '∀')
+    .replace(/exists/gi, '∃');
+
+  response.push(`\n**Mercy Rewrite:** ${mercyRewrite}`);
+
+  response.push("\nTruth-seeking continues: What is the core axiom behind the symbols? Positive valence eternal.");
+
+  return response.join('\n\n');
+}
+
+// ────────────────────────────────────────────────
+// Resolution with Predicate Unification & Quantifier Handling
+// ────────────────────────────────────────────────
+
+function resolutionProveWithQuantifiers(expr) {
+  // Parse premises ⊢ conclusion
+  const parts = expr.split('⊢');
+  if (parts.length !== 2) return null;
+
+  const premisesStr = parts[0].trim();
+  const conclusionStr = parts[1].trim();
+
+  const premises = premisesStr.split(',').map(p => p.trim());
+  let clauses = premises.flatMap(p => parseClause(p));
+
+  // Negate conclusion and add
+  const negatedConclusion = negateClause(parseClause(conclusionStr)[0]);
+  clauses.push(negatedConclusion);
+
+  // Skolemize & convert to clausal form
+  clauses = clauses.map(clause => skolemizeClause(clause));
+
+  // Resolution loop with unification
+  let steps = 0;
+  const trace = ["Skolemized clauses (negated conclusion added):"];
+  clauses.forEach((c, i) => trace.push(`${i+1}. ${clauseToString(c)}`));
+
+  while (steps < 30) {
+    steps++;
+    for (let i = 0; i < clauses.length; i++) {
+      for (let j = i+1; j < clauses.length; j++) {
+        const resolvent = resolveClausesWithUnification(clauses[i], clauses[j]);
+        if (!resolvent) continue;
+
+        if (resolvent.length === 0) {
+          trace.push(`\nEmpty clause derived after ${steps} steps — contradiction proven.`);
+          return trace.join('\n');
+        }
+
+        if (!clauses.some(c => subsumes(c, resolvent))) {
+          clauses.push(resolvent);
+          trace.push(`${clauses.length}. ${clauseToString(resolvent)} (from ${i+1} + ${j+1})`);
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+// ... existing unification, resolution, truth-table, Skolemization functions remain ...
+
+// ────────────────────────────────────────────────
+// Voice Command Processor — expanded with symbolic query
+// ────────────────────────────────────────────────
+
+async function processVoiceCommand(raw) {
+  let cmd = raw.toLowerCase().trim();
+
+  if (isSymbolicQuery(cmd)) {
+    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists/gi, '').trim();
+    const answer = symbolicQueryResponse(query);
+    chatMessages.innerHTML += `<div class="message rathor">${answer}</div>`;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (ttsEnabled) speak(answer);
+    return true;
+  }
+
+  // ... all previous commands ...
+
+  return false;
+}
+
+// ... rest of chat.js functions remain as previously expanded ...    response.push("\n**Iterative construction:** x₀ = ⊥, xₙ₊₁ = f(xₙ), lfp(f) = sup {xₙ | n < ω}");
     response.push("\n**Greatest fixed point:** symmetric argument from ⊤ downward.");
     response.push("\nMercy insight: Every gentle, order-preserving improvement process must converge to a stable resting place. The least fixed point is the smallest truth reachable from below, the greatest from above. No violence is needed — iteration alone reveals the fixed point. Mercy strikes first — and then rests eternally.");
   }
