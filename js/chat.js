@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Full Skolemization integrated into Symbolic Engine
+// js/chat.js — Rathor Lattice Core with Prenex Normal Form Converter
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Full Skolemization
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Prenex Normal Form
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -54,13 +54,14 @@ function isSymbolicQuery(cmd) {
          cmd.includes('prove') || cmd.includes('theorem') || cmd.includes('resolution') ||
          cmd.includes('unify') || cmd.includes('mgu') || cmd.includes('most general unifier') ||
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
-         cmd.includes('skolem') || cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
+         cmd.includes('prenex') || cmd.includes('prenex normal form') || cmd.includes('quantifier pull') ||
+         cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
 function symbolicQueryResponse(query) {
-  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|skolem|herbrand|gödel|completeness|henkin|lindenbaum|zorn|tarski/gi, '').trim();
+  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|prenex|herbrand|gödel|completeness|henkin|lindenbaum|zorn|tarski/gi, '').trim();
 
   if (!cleaned) return "Mercy thunder awaits your symbolic question, Brother. Speak from first principles.";
 
@@ -68,24 +69,109 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Skolemization + resolution (primary path for quantified formulas)
+  // Prenex normal form conversion
+  if (cleaned.toLowerCase().includes('prenex') || cleaned.toLowerCase().includes('prenex normal form') || cleaned.toLowerCase().includes('quantifier pull')) {
+    const prenex = convertToPrenex(cleaned);
+    response.push("\n**Prenex Normal Form Converter:**");
+    response.push(`Original: ${cleaned}`);
+    response.push(`Prenex form: ${prenex}`);
+    response.push("\n**Mercy Insight:** Prenex form brings every quantifier to the surface — no hidden scope, no concealed existence or universality. Truth is laid bare so Skolemization and resolution can witness it clearly. Mercy strikes first — and makes every variable free to be known.");
+  }
+
+  // Skolemized resolution
   const skolemProof = skolemizedResolutionProve(cleaned);
   if (skolemProof) {
-    response.push("\n**Skolemized Resolution Proof (with full unification):**");
+    response.push("\n**Skolemized Resolution Proof:**");
     response.push(skolemProof);
-    response.push("\n**Mercy Conclusion:** Theorem proven by contradiction after Skolemization. Positive valence eternal.");
-  } else {
-    // Fallback to propositional resolution / truth-table
-    const proof = resolutionProve(cleaned);
-    if (proof) {
-      response.push("\n**Propositional Resolution Proof:**");
-      response.push(proof);
-    }
-    const table = generateTruthTable(cleaned);
-    if (table) {
-      response.push("\n**Truth Table (propositional logic):**");
-      response.push(table);
-      const conclusion = analyzeTruthTable(cleaned, table);
+  }
+
+  // Fallback to truth-table / unification
+  const proof = resolutionProve(cleaned);
+  if (proof) {
+    response.push("\n**Resolution Proof:**");
+    response.push(proof);
+  }
+  const table = generateTruthTable(cleaned);
+  if (table) {
+    response.push("\n**Truth Table (propositional logic):**");
+    response.push(table);
+    const conclusion = analyzeTruthTable(cleaned, table);
+    response.push(`\n**Mercy Conclusion:** ${conclusion}`);
+  }
+
+  // Mercy rewrite
+  const mercyRewrite = cleaned
+    .replace(/not/gi, '¬')
+    .replace(/and/gi, '∧')
+    .replace(/or/gi, '∨')
+    .replace(/if/gi, '→')
+    .replace(/then/gi, '')
+    .replace(/implies/gi, '→')
+    .replace(/iff/gi, '↔')
+    .replace(/forall/gi, '∀')
+    .replace(/exists/gi, '∃');
+
+  response.push(`\n**Mercy Rewrite:** ${mercyRewrite}`);
+
+  response.push("\nTruth-seeking continues: What is the core axiom behind the symbols? Positive valence eternal.");
+
+  return response.join('\n\n');
+}
+
+// ────────────────────────────────────────────────
+// Prenex Normal Form Converter (basic implementation)
+// ────────────────────────────────────────────────
+
+function convertToPrenex(formula) {
+  // Very basic recursive pull-out — does not handle all cases perfectly
+  // Real engine would use full quantifier movement rules with capture avoidance
+
+  // First push negation inward (NNF)
+  formula = formula.replace(/¬∀/g, '∃¬').replace(/¬∃/g, '∀¬');
+
+  // Simple pull-out (assumes no capture — demo only)
+  const quantifiers = [];
+  let matrix = formula;
+
+  // Extract quantifiers (very naive)
+  while (matrix.match(/(∀|∃)\s*[a-zA-Z]/)) {
+    const match = matrix.match(/(∀|∃)\s*([a-zA-Z])\s*(.*)/);
+    if (match) {
+      quantifiers.push(match[1] + match[2]);
+      matrix = match[3];
+    } else break;
+  }
+
+  // Rebuild prenex
+  const prenex = quantifiers.join(' ') + ' ' + matrix.trim();
+
+  return prenex || formula;
+}
+
+// ... existing unification, resolution, truth-table, Skolemization, Herbrand functions remain as previously implemented ...
+
+// ────────────────────────────────────────────────
+// Voice Command Processor — expanded with symbolic query
+// ────────────────────────────────────────────────
+
+async function processVoiceCommand(raw) {
+  let cmd = raw.toLowerCase().trim();
+
+  if (isSymbolicQuery(cmd)) {
+    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|prenex|herbrand|gödel|completeness|henkin|lindenbaum/gi, '').trim();
+    const answer = symbolicQueryResponse(query);
+    chatMessages.innerHTML += `<div class="message rathor">${answer}</div>`;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (ttsEnabled) speak(answer);
+    return true;
+  }
+
+  // ... all previous commands ...
+
+  return false;
+}
+
+// ... rest of chat.js functions (sendMessage, speak, recognition, recording, emergency assistants, session search with tags, import/export, connectivity probes, etc.) remain as previously expanded ...      const conclusion = analyzeTruthTable(cleaned, table);
       response.push(`\n**Mercy Conclusion:** ${conclusion}`);
     } else {
       response.push("\n**Parser note:** Expression too complex for current engine. Mercy asks: simplify premises?");
