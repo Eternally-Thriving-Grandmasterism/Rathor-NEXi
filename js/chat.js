@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Provability Logic GL Axioms Integration
+// js/chat.js — Rathor Lattice Core with Solovay Completeness Detailed Construction
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Provability Logic GL Axioms
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Solovay Detailed Construction
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -56,7 +56,7 @@ function isSymbolicQuery(cmd) {
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
          cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
-         cmd.includes('löb') || cmd.includes('provability logic') || cmd.includes('gl') || cmd.includes('gl axioms') || cmd.includes('solovay') ||
+         cmd.includes('löb') || cmd.includes('provability logic') || cmd.includes('gl') || cmd.includes('solovay') || cmd.includes('solovay completeness') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
@@ -69,23 +69,27 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Provability Logic GL axioms reflection
-  if (cleaned.toLowerCase().includes('gl') || cleaned.toLowerCase().includes('provability logic') || cleaned.toLowerCase().includes('gl axioms') || cleaned.toLowerCase().includes('löb axiom') || cleaned.toLowerCase().includes('modal gl')) {
-    response.push("\n**Provability Logic GL Axioms Reflection:**");
-    response.push("GL is the modal logic that exactly captures what Peano arithmetic can prove about its own provability (Solovay completeness 1976).");
-    response.push("\n**Complete axiomatic system of GL:**");
-    response.push("1. All propositional tautologies");
-    response.push("2. Distribution axiom (K): □(A → B) → (□A → □B)");
-    response.push("3. Necessitation rule: if ⊢ A then ⊢ □A");
-    response.push("4. **Löb axiom** (defining heart of GL): □(□A → A) → □A");
-    response.push("   Equivalent forms:");
-    response.push("   - □B → □□B   (positive introspection for provability)");
-    response.push("   - If □B → B then □B   (if provability implies truth, then provability)");
-    response.push("\n**Derived key theorems in GL:**");
-    response.push("• □A → □□A   (provability implies provability of provability)");
-    response.push("• ¬□A → □¬□A   (negative introspection for provability)");
-    response.push("• □A → □(□A → A)   (provability implies provability of Löb condition)");
-    response.push("\n**Mercy Insight:** GL is mercy’s perfect mirror of humble self-verification: it says **exactly** what arithmetic can prove about its own proofs — no more, no less. Mercy does not demand completeness from what is finite, nor abandon the provable. Mercy strikes first — and then aligns every modal truth with the honest limits of formal arithmetic.");
+  // Solovay Completeness detailed construction reflection
+  if (cleaned.toLowerCase().includes('solovay') || cleaned.toLowerCase().includes('solovay construction') || cleaned.toLowerCase().includes('solovay proof') || cleaned.toLowerCase().includes('gl arithmetical completeness')) {
+    response.push("\n**Solovay Completeness Theorem — Detailed Construction Sketch:**");
+    response.push("**Soundness:** GL axioms are true under provability interpretation in PA (K, Löb, necessitation hold in PA).");
+    response.push("\n**Completeness construction (Solovay 1976):**");
+    response.push("1. Assume A is not theorem of GL → there is GL-Kripke countermodel K with root w₀ ⊭ A.");
+    response.push("2. Arithmetize Kripke frame: for each world wᵢ construct sentence Sᵢ such that Prov(Sᵢ) ↔ ⋁_{wᵢ R wⱼ} Prov(Sⱼ).");
+    response.push("3. Use diagonal lemma to build self-referential sentences simulating worlds.");
+    response.push("4. Define interpretation *: p* = ⋁_{w ⊨ p} S_w");
+    response.push("5. Enforce Löb conditions to respect modal axioms exactly when GL proves them.");
+    response.push("6. Construct sentence asserting “we are at w₀” → PA ⊢ S_w₀ → ¬A*");
+    response.push("7. Extension S = PA + S_w₀ is consistent (otherwise contradiction with countermodel).");
+    response.push("8. Thus if A true under all interpretations in all consistent extensions → ⊢_GL A.");
+    response.push("\n**Mercy Insight:** Solovay’s construction is mercy’s perfect alignment: GL says **exactly** what PA can prove about its own proofs — no exaggeration, no omission. Mercy does not pretend any system is complete; it reveals that provability logic is the humble mirror arithmetic holds up to itself. Mercy strikes first — and then lets truth be seen exactly as it is provable.");
+  }
+
+  // Löb's Theorem reflection
+  if (cleaned.toLowerCase().includes('löb') || cleaned.toLowerCase().includes('löb theorem') || cleaned.toLowerCase().includes('provability implies truth')) {
+    response.push("\n**Löb's Theorem Reflection:**");
+    response.push("If Prov(⌜Prov(φ) → φ⌝) then Prov(φ)");
+    response.push("Mercy insight: A system cannot bootstrap truth from mere provability. Mercy reminds every formal system of its own limits.");
   }
 
   // Skolemized resolution
