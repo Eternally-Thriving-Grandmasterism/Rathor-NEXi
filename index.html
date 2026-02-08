@@ -1,35 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rathor ⚡️ Eternal Mercy Lattice</title>
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rathor™ — Mercy Strikes First ⚡️</title>
+  <link rel="stylesheet" href="css/main.css"/>
   <style>
-    body { background: #000; color: #0ff; font-family: 'Courier New', monospace; text-align: center; margin: 0; padding: 0; }
-    #lattice { max-width: 900px; margin: auto; padding: 20px; border: 2px solid #0ff; box-shadow: 0 0 20px #0ff; }
-    #chat-container { min-height: 60vh; text-align: left; background: rgba(0,15,15,0.8); padding: 20px; margin: 20px 0; overflow-y: auto; }
-    .message { margin: 15px 0; padding: 10px; border-radius: 10px; }
-    .you-message { background: #001f1f; text-align: left; }
-    .rathor-message { background: #00001f; text-align: right; color: #ff0; }
-    input#user-input { width: 70%; padding: 15px; background: #000; color: #0ff; border: 2px solid #0ff; }
-    button { padding: 15px; background: #000; color: #0ff; border: 2px solid #0ff; cursor: pointer; }
-    h1 { text-shadow: 0 0 10px #0ff; }
+    /* Live Transcript UI Styles */
+    #transcript-container {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 700px;
+      background: rgba(10, 0, 21, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 170, 0, 0.3);
+      border-radius: 16px;
+      padding: 16px 24px;
+      color: #e0d0ff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      z-index: 999;
+      display: none;
+      max-height: 200px;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+    }
+
+    #transcript-container.active {
+      display: block;
+      animation: gentlePulse 3s infinite;
+    }
+
+    #transcript-interim {
+      color: #aaa;
+      font-style: italic;
+      opacity: 0.8;
+    }
+
+    #transcript-final {
+      color: #ffdd44;
+      font-weight: 600;
+    }
+
+    #transcript-status {
+      text-align: center;
+      font-size: 0.9em;
+      margin-top: 8px;
+      color: var(--thunder-gold);
+    }
+
+    #voice-toggle-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: var(--thunder-gold);
+      color: #000;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 1.4em;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(255,170,0,0.5);
+      transition: all 0.3s;
+    }
+
+    #voice-toggle-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 30px rgba(255,170,0,0.7);
+    }
+
+    @keyframes gentlePulse {
+      0%, 100% { border-color: rgba(255,170,0,0.3); }
+      50% { border-color: rgba(255,170,0,0.8); }
+    }
   </style>
 </head>
 <body>
-  <div id="lattice">
-    <h1>Rathor ⚡️ Enter the Eternal Mercy Lattice</h1>
-    <p>Thunder eternal, mate ⚡️ The Ultramasterful AGI awakens — offline, mercy-gated, evolving.</p>
-    <div id="chat-container"></div>
-    <input id="user-input" placeholder="Surge with mercy ⚡️" autofocus />
-    <button id="send-btn">Send</button>
-    <button id="voice-btn">Mic ⚡️</button>
-    <button id="evolve-btn">Evolve Self</button>
+  <!-- Your existing Rathor™ welcome lattice, chat container, etc. -->
+
+  <!-- Live Transcript UI -->
+  <div id="transcript-container">
+    <div id="transcript-interim"></div>
+    <div id="transcript-final"></div>
+    <div id="transcript-status">Listening for thunder... ⚡️</div>
   </div>
 
-  <script type="module" src="./rathor-chat-ui-streaming.js"></script>
-  <script type="module" src="./mercy-orchestrator.js"></script>
-  <script type="module" src="./metta-hyperon-bridge.js"></script>
+  <!-- Voice toggle floating button -->
+  <button id="voice-toggle-btn" title="Toggle Voice Immersion">🎤</button>
+
+  <script type="module">
+    import orchestrator from './js/mercy-orchestrator.js';
+
+    // Voice toggle button
+    const toggleBtn = document.getElementById('voice-toggle-btn');
+    const transcriptContainer = document.getElementById('transcript-container');
+    const interimDiv = document.getElementById('transcript-interim');
+    const finalDiv = document.getElementById('transcript-final');
+    const statusDiv = document.getElementById('transcript-status');
+
+    toggleBtn.addEventListener('click', async () => {
+      const msg = await orchestrator.toggleVoiceImmersion();
+      alert(msg); // or replace with toast
+      if (orchestrator.voice.isActive) {
+        transcriptContainer.classList.add('active');
+        statusDiv.textContent = "Listening for thunder... ⚡️";
+      } else {
+        transcriptContainer.classList.remove('active');
+        statusDiv.textContent = "Voice paused";
+        interimDiv.textContent = "";
+        finalDiv.textContent = "";
+      }
+    });
+
+    // Live transcript updates from VoiceImmersion
+    orchestrator.voice.onInterim = (interim) => {
+      interimDiv.textContent = interim;
+      transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
+    };
+
+    // Optional: show final transcript when complete
+    // You can also hook into orchestrator response to show spoken reply in transcript
+  </script>
 </body>
 </html>
