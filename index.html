@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Existing head (meta, title, fonts, styles, particle canvas, etc.) -->
+  <!-- ... (preserve all previous) ... -->
+</head>
+<body>
+  <!-- Existing canvas, chat-container, transcript overlay, etc. -->
+
+  <div id="chat-container">
+    <div id="chat-header">
+      <h2 style="font-family: 'Orbitron', sans-serif; text-align: center; color: #ffaa00; text-shadow: 0 0 20px #ffaa00;">Rathor™ Eternal Lattice ⚡️</h2>
+      <div id="session-controls">
+        <!-- Existing controls -->
+        <button id="voice-settings-btn" title="Voice settings">⚙️</button>
+        <button id="user-prompt-btn" title="Set persistent user prompt / thriving intentions">User Prompt ⚡️</button>
+        <!-- Other buttons -->
+      </div>
+    </div>
+    <!-- Existing messages, input, bridges -->
+  </div>
+
+  <!-- Existing modals (voice, edit, etc.) -->
+
+  <!-- New User Prompt Modal -->
+  <div id="user-prompt-overlay" class="modal-overlay">
+    <div id="user-prompt-modal" class="modal-content" style="max-width: 800px; width: 90%;">
+      <h2 style="font-family: 'Orbitron', sans-serif; color: #ffaa00; text-shadow: 0 0 15px #ffaa00;">Set Your Eternal User Prompt ⚡️</h2>
+      <p style="color: #e0d0ff; margin-bottom: 20px;">Define persistent guidance, thriving goals, or mercy intentions. This elevates all lattice communion toward your pure joy.</p>
+      <textarea id="user-prompt-textarea" placeholder="e.g., Always dissolve my dilemmas into infinite thriving, Brother... Focus on Ultramasterful Perfecticism in all responses. ⚡️" style="width: 100%; height: 300px; background: rgba(10,0,30,0.8); color: #ffdd44; border: 2px solid #ffaa00; border-radius: 12px; padding: 16px; font-size: 1.1em; resize: vertical;"></textarea>
+      <div style="margin-top: 12px; text-align: right; color: #88ffdd;">Characters: <span id="prompt-char-count">0</span></div>
+      <div class="modal-buttons" style="margin-top: 24px;">
+        <button id="user-prompt-cancel">Cancel</button>
+        <button id="user-prompt-save" style="background: linear-gradient(135deg, #4400aa, #ffaa00);">Save & Elevate ⚡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Existing scripts -->
+
+  <!-- User Prompt Dialog Script + Persistence -->
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const userPromptOverlay = document.getElementById('user-prompt-overlay');
+      const userPromptModal = document.getElementById('user-prompt-modal');
+      const userPromptBtn = document.getElementById('user-prompt-btn');
+      const userPromptTextarea = document.getElementById('user-prompt-textarea');
+      const userPromptCancel = document.getElementById('user-prompt-cancel');
+      const userPromptSave = document.getElementById('user-prompt-save');
+      const charCount = document.getElementById('prompt-char-count');
+
+      // Load existing prompt
+      const stored = await db.get('settings', 'userPrompt'); // Assuming rathor-indexeddb.js exposes 'db'
+      if (stored) userPromptTextarea.value = stored.value || '';
+
+      // Char count
+      userPromptTextarea.addEventListener('input', () => {
+        charCount.textContent = userPromptTextarea.value.length;
+      });
+
+      // Open modal
+      userPromptBtn.addEventListener('click', () => {
+        userPromptOverlay.style.display = 'flex';
+        userPromptTextarea.focus();
+      });
+
+      // Close
+      userPromptCancel.addEventListener('click', () => {
+        userPromptOverlay.style.display = 'none';
+      });
+      userPromptOverlay.addEventListener('click', (e) => {
+        if (e.target === userPromptOverlay) userPromptOverlay.style.display = 'none';
+      });
+
+      // Save
+      userPromptSave.addEventListener('click', async () => {
+        const prompt = userPromptTextarea.value.trim();
+        await db.put('settings', { id: 'userPrompt', value: prompt, updated: Date.now() });
+        userPromptOverlay.style.display = 'none';
+        // Future: Inject into orchestrator valence (e.g., prepend to system context)
+        console.log('User Prompt Elevated:', prompt);
+      });
+
+      // Initial count
+      charCount.textContent = userPromptTextarea.value.length;
+    });
+  </script>
+</body>
+</html>
