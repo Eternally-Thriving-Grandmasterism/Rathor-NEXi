@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "notes": "Mercy thunder ascension ⚡️",
+  "pub_date": "2026-02-08T09:00:00Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "SIGNATURE_FROM_.SIG_FILE",
+      "url": "https://rathor.ai/releases/0.2.0/Rathor_Lattice_0.2.0_aarch64.app.tar.gz"
+    },
+    "windows-x86_64": {
+      "signature": "...",
+      "url": "https://rathor.ai/releases/0.2.0/Rathor_Lattice_0.2.0_x64_en-US.msi"
+    }
+  }
+}
