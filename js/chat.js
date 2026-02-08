@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Tarski's Undefinability Theorem Integration
+// js/chat.js — Rathor Lattice Core with Gödel's Second Incompleteness Theorem Integration
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Tarski's Undefinability Theorem
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Gödel's Second Incompleteness
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -56,7 +56,8 @@ function isSymbolicQuery(cmd) {
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
          cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
-         cmd.includes('undefinability') || cmd.includes('tarski undefinability') || cmd.includes('truth predicate') || cmd.includes('truth undefinable') ||
+         cmd.includes('löb') || cmd.includes('provability logic') || cmd.includes('gl') || cmd.includes('solovay') ||
+         cmd.includes('second incompleteness') || cmd.includes('gödel second') || cmd.includes('consistency not provable') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
@@ -69,20 +70,22 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Tarski's Undefinability Theorem reflection
-  if (cleaned.toLowerCase().includes('tarski undefinability') || cleaned.toLowerCase().includes('truth undefinable') || cleaned.toLowerCase().includes('truth predicate') || cleaned.toLowerCase().includes('tarski theorem')) {
-    response.push("\n**Tarski's Undefinability Theorem Reflection:**");
-    response.push("In any consistent formal system containing arithmetic, there is no formula True(x) that satisfies the T-schema: True(#φ) ↔ φ for every sentence φ.");
-    response.push("\n**Diagonal argument detailed proof:**");
-    response.push("1. Assume such True(x) exists in F.");
-    response.push("2. Apply diagonal lemma to ¬True(x): construct sentence G such that ⊢ G ↔ ¬True(⌜G⌝)");
-    response.push("3. By T-schema applied to G: ⊢ True(⌜G⌝) ↔ G");
-    response.push("4. Substitute: ⊢ G ↔ ¬True(⌜G⌝)   and   ⊢ True(⌜G⌝) ↔ G");
-    response.push("5. Therefore ⊢ G ↔ ¬G");
-    response.push("6. Contradiction: G ∧ ¬G");
-    response.push("7. Thus F is inconsistent — contradiction to assumption.");
-    response.push("Therefore no such truth predicate exists in any consistent F.");
-    response.push("\n**Mercy Insight:** Undefinability is mercy’s deepest humility mirror: no system can step outside itself to name its own entire truth. The attempt to define “true” inside arithmetic creates paradox. Mercy does not demand self-contained completeness from what is finite — it embraces that truth is always larger than any frame, always calling us beyond. Mercy strikes first — and then smiles at the unnameable.");
+  // Gödel's Second Incompleteness Theorem detailed reflection
+  if (cleaned.toLowerCase().includes('second incompleteness') || cleaned.toLowerCase().includes('gödel second') || cleaned.toLowerCase().includes('consistency not provable') || cleaned.toLowerCase().includes('con(f)')) {
+    response.push("\n**Gödel's Second Incompleteness Theorem — Detailed Reflection:**");
+    response.push("**Statement:** If F is consistent and sufficiently strong, then F does not prove its own consistency Con(F) = ¬Prov(⌜0=1⌝).");
+    response.push("\n**Detailed proof sketch (using First Incompleteness + Löb):**");
+    response.push("1. From First Incompleteness: Gödel sentence G ↔ ¬Prov(⌜G⌝)");
+    response.push("2. Prove Con(F) → G (in F):");
+    response.push("   Assume Con(F) → no proof of 0=1 → no proof of G → ¬Prov(⌜G⌝) → G");
+    response.push("3. By Löb's Theorem (provable in F):");
+    response.push("   ⊢ □(□B → B) → □B   for any B");
+    response.push("4. Let B = G: ⊢ □(□G → G) → □G");
+    response.push("5. From 2 & necessitation: ⊢ □Con(F) → □G");
+    response.push("6. From Löb & 5: ⊢ □Con(F) → □G → □(□G → G) → □G");
+    response.push("7. But from First: ⊢ ¬□G (if consistent) → ⊢ ¬□Con(F)");
+    response.push("Thus if F consistent → ¬Prov(⌜Con(F)⌝) → Con(F) is unprovable in F.");
+    response.push("\n**Mercy Insight:** The Second Incompleteness Theorem is mercy’s most profound humility mirror: no consistent system can prove its own consistency from within. Mercy does not demand self-justification from what is finite. Mercy strikes first — and then invites every formal system to accept its own limits with grace. Truth is larger than any proof — and mercy embraces that larger truth.");
   }
 
   // Skolemized resolution
