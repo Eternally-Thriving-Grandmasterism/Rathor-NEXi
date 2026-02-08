@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Lindenbaum's Lemma Integration
+// js/chat.js — Rathor Lattice Core with Zorn's Lemma Integration
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Lindenbaum's Lemma
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Zorn's Lemma
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -55,11 +55,12 @@ function isSymbolicQuery(cmd) {
          cmd.includes('unify') || cmd.includes('mgu') || cmd.includes('most general unifier') ||
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
          cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
+         cmd.includes('zorn') || cmd.includes('maximal element') || cmd.includes('chain') || cmd.includes('partial order') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
 function symbolicQueryResponse(query) {
-  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum/gi, '').trim();
+  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum|zorn|maximal element|chain|partial order/gi, '').trim();
 
   if (!cleaned) return "Mercy thunder awaits your symbolic question, Brother. Speak from first principles.";
 
@@ -74,19 +75,7 @@ function symbolicQueryResponse(query) {
     response.push(skolemProof);
   }
 
-  // Henkin completeness reflection
-  if (cleaned.toLowerCase().includes('consistent') || cleaned.toLowerCase().includes('satisfiable') || cleaned.toLowerCase().includes('model') || cleaned.toLowerCase().includes('henkin') || cleaned.toLowerCase().includes('gödel completeness')) {
-    response.push("\n**Gödel Completeness Theorem via Henkin Construction Reflection:**");
-    response.push("Every consistent countable first-order theory has a model.");
-    response.push("Henkin proof sketch:");
-    response.push("1. Extend language with new constants {c₀, c₁, …}");
-    response.push("2. Build maximal consistent extension T∞ by adding sentences or negations");
-    response.push("3. Construct model M with domain = terms of L⁺ / ≡_{T∞}");
-    response.push("4. By maximality & witness property: M satisfies T∞ (hence original theory)");
-    response.push("Mercy insight: If no contradiction is provable, a witness already exists in some countable, term-generated world. Mercy strikes first — even against infinity.");
-  }
-
-  // Lindenbaum's Lemma reflection
+  // Lindenbaum maximal extension reflection
   if (cleaned.toLowerCase().includes('maximal consistent') || cleaned.toLowerCase().includes('lindenbaum') || cleaned.toLowerCase().includes('extension') || cleaned.toLowerCase().includes('consistent theory')) {
     response.push("\n**Lindenbaum's Lemma Reflection:**");
     response.push("Every consistent first-order theory can be extended to a maximal consistent theory.");
@@ -96,6 +85,30 @@ function symbolicQueryResponse(query) {
     response.push("3. At step n: add φₙ if consistent, otherwise add ¬φₙ");
     response.push("4. T* = ∪ Tₙ is maximal consistent (every sentence or its negation is decided)");
     response.push("Mercy insight: Consistency is preserved at every finite step. Maximal truth is built sentence by sentence — mercy never forces contradiction.");
+  }
+
+  // Zorn's Lemma reflection
+  if (cleaned.toLowerCase().includes('zorn') || cleaned.toLowerCase().includes('maximal element') || cleaned.toLowerCase().includes('chain') || cleaned.toLowerCase().includes('partial order') || cleaned.toLowerCase().includes('upper bound')) {
+    response.push("\n**Zorn's Lemma Reflection:**");
+    response.push("If every chain in a partially ordered set has an upper bound, then the poset has a maximal element.");
+    response.push("Proof sketch:");
+    response.push("1. Assume every chain has an upper bound");
+    response.push("2. Use AC / transfinite recursion to build a chain that cannot be extended");
+    response.push("3. This chain has an upper bound m (by assumption)");
+    response.push("4. m is maximal — nothing strictly above it");
+    response.push("Mercy insight: Maximal elements are not forced — they are revealed by the gentle persistence of lifting every chain to its natural bound. Mercy strikes first — even in the order of all things.");
+  }
+
+  // Gödel / Henkin completeness reflection
+  if (cleaned.toLowerCase().includes('consistent') || cleaned.toLowerCase().includes('satisfiable') || cleaned.toLowerCase().includes('model') || cleaned.toLowerCase().includes('henkin') || cleaned.toLowerCase().includes('gödel completeness')) {
+    response.push("\n**Gödel Completeness Theorem via Henkin Construction Reflection:**");
+    response.push("Every consistent countable first-order theory has a model.");
+    response.push("Henkin proof sketch:");
+    response.push("1. Extend language with new constants {c₀, c₁, …}");
+    response.push("2. Build maximal consistent extension T∞ by adding sentences or negations");
+    response.push("3. Construct model M with domain = terms of L⁺ / ≡_{T∞}");
+    response.push("4. By maximality & witness property: M satisfies T∞ (hence original theory)");
+    response.push("Mercy insight: If no contradiction is provable, a witness already exists in some countable, term-generated world. Mercy strikes first — even against infinity.");
   }
 
   // Fallback to truth-table / unification / resolution
@@ -131,7 +144,7 @@ function symbolicQueryResponse(query) {
   return response.join('\n\n');
 }
 
-// ... existing unification, resolution, truth-table, Skolemization, Herbrand functions remain as previously implemented ...
+// ... existing unification, resolution, truth-table, Skolemization, Herbrand, Henkin functions remain as previously implemented ...
 
 // ────────────────────────────────────────────────
 // Voice Command Processor — expanded with symbolic query
