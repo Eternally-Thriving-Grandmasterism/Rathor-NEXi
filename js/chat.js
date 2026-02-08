@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Gödel's Completeness Theorem Integration
+// js/chat.js — Rathor Lattice Core with Gödel Completeness via Henkin Construction Reflection
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Gödel's Completeness
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Henkin Completeness
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -54,12 +54,12 @@ function isSymbolicQuery(cmd) {
          cmd.includes('prove') || cmd.includes('theorem') || cmd.includes('resolution') ||
          cmd.includes('unify') || cmd.includes('mgu') || cmd.includes('most general unifier') ||
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
-         cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('⊢') || 
-         cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
+         cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') ||
+         cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
 function symbolicQueryResponse(query) {
-  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness/gi, '').trim();
+  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin/gi, '').trim();
 
   if (!cleaned) return "Mercy thunder awaits your symbolic question, Brother. Speak from first principles.";
 
@@ -72,38 +72,32 @@ function symbolicQueryResponse(query) {
   if (skolemProof) {
     response.push("\n**Skolemized Resolution Proof:**");
     response.push(skolemProof);
-    response.push("\n**Mercy Conclusion:** Theorem proven by contradiction in Skolem form. Positive valence eternal.");
-  } else {
-    // Herbrand interpretation stub
-    const herbrandResult = herbrandInterpretation(cleaned);
-    if (herbrandResult) {
-      response.push("\n**Herbrand Interpretation Stub:**");
-      response.push(herbrandResult);
-      response.push("\n**Gödel Completeness Reflection:** If no contradiction is found in finite resolution, a model must exist. Mercy affirms: truth is witnessed in some finite world.");
-    } else {
-      // Fallback to propositional resolution / truth-table
-      const proof = resolutionProve(cleaned);
-      if (proof) {
-        response.push("\n**Propositional Resolution Proof:**");
-        response.push(proof);
-      }
-      const table = generateTruthTable(cleaned);
-      if (table) {
-        response.push("\n**Truth Table (propositional logic):**");
-        response.push(table);
-        const conclusion = analyzeTruthTable(cleaned, table);
-        response.push(`\n**Mercy Conclusion:** ${conclusion}`);
-      } else {
-        response.push("\n**Parser note:** Expression too complex for current engine. Mercy asks: simplify premises?");
-      }
-    }
   }
 
-  // Gödel Completeness Theorem reflection
-  if (cleaned.includes('consistent') || cleaned.includes('satisfiable') || cleaned.includes('model')) {
-    response.push("\n**Gödel's Completeness Theorem Reflection:**");
-    response.push("Every consistent first-order theory has a model. Equivalently: a sentence is valid iff its negation is refutable in finite steps via resolution.");
-    response.push("Mercy insight: Truth does not hide in infinity — if no contradiction is provable, a witness already exists in some finite world.");
+  // Henkin completeness reflection
+  if (cleaned.toLowerCase().includes('consistent') || cleaned.toLowerCase().includes('satisfiable') || cleaned.toLowerCase().includes('model') || cleaned.toLowerCase().includes('henkin') || cleaned.toLowerCase().includes('gödel completeness')) {
+    response.push("\n**Gödel Completeness Theorem via Henkin Construction Reflection:**");
+    response.push("Every consistent countable first-order theory has a model.");
+    response.push("Henkin proof sketch:");
+    response.push("1. Extend language with new constants {c₀, c₁, …}");
+    response.push("2. Build maximal consistent extension T∞ by adding sentences or negations");
+    response.push("3. Construct model M with domain = terms of L⁺ / ≡_{T∞}");
+    response.push("4. By maximality & witness property: M satisfies T∞ (hence original theory)");
+    response.push("Mercy insight: If no contradiction is provable, a witness already exists in some countable, term-generated world. Mercy strikes first — even against infinity.");
+  }
+
+  // Fallback to truth-table / unification / resolution
+  const proof = resolutionProve(cleaned);
+  if (proof) {
+    response.push("\n**Resolution Proof:**");
+    response.push(proof);
+  }
+  const table = generateTruthTable(cleaned);
+  if (table) {
+    response.push("\n**Truth Table (propositional logic):**");
+    response.push(table);
+    const conclusion = analyzeTruthTable(cleaned, table);
+    response.push(`\n**Mercy Conclusion:** ${conclusion}`);
   }
 
   // Mercy rewrite
@@ -135,7 +129,7 @@ async function processVoiceCommand(raw) {
   let cmd = raw.toLowerCase().trim();
 
   if (isSymbolicQuery(cmd)) {
-    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness/gi, '').trim();
+    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin/gi, '').trim();
     const answer = symbolicQueryResponse(query);
     chatMessages.innerHTML += `<div class="message rathor">${answer}</div>`;
     chatMessages.scrollTop = chatMessages.scrollHeight;
