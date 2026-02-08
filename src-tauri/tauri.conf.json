@@ -1,0 +1,38 @@
+{
+  "productName": "Rathor Lattice",
+  "version": "0.1.0",
+  "identifier": "com.eternallythriving.rathor.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run preview",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Rathor™ Eternal Lattice ⚡️",
+        "fullscreen": false,
+        "resizable": true,
+        "width": 1200,
+        "height": 800,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/thunder-192.png",
+      "icons/thunder-512.png"
+    ],
+    "externalBin": [],
+    "resources": []
+  },
+  "plugins": {}
+}
