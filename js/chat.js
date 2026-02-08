@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Tarski's Undefinability Theorem Integration
+// js/chat.js — Rathor Lattice Core with Löb's Theorem Integration
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Tarski's Undefinability Theorem
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Löb's Theorem
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -56,7 +56,7 @@ function isSymbolicQuery(cmd) {
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
          cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
-         cmd.includes('undefinability') || cmd.includes('tarski undefinability') || cmd.includes('truth predicate') || cmd.includes('truth undefinable') ||
+         cmd.includes('löb') || cmd.includes('löb theorem') || cmd.includes('provability implies truth') || cmd.includes('self-verifying proof') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
@@ -69,17 +69,21 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Tarski's Undefinability Theorem reflection
-  if (cleaned.toLowerCase().includes('tarski undefinability') || cleaned.toLowerCase().includes('truth undefinable') || cleaned.toLowerCase().includes('truth predicate') || cleaned.toLowerCase().includes('tarski theorem')) {
-    response.push("\n**Tarski's Undefinability Theorem Reflection:**");
-    response.push("In any consistent formal system containing arithmetic, there is no formula True(x) that satisfies the T-schema: True(#φ) ↔ φ for every sentence φ.");
-    response.push("\n**Diagonal argument sketch:**");
-    response.push("1. Assume such True(x) exists.");
-    response.push("2. Diagonal lemma → construct G ↔ ¬True(#G) ('G is not true').");
-    response.push("3. If G is true → ¬True(#G) → contradiction with T-schema.");
-    response.push("4. If G is false → True(#G) → G is true → contradiction again.");
-    response.push("Thus no such truth predicate can exist.");
-    response.push("\n**Mercy Insight:** Undefinability is mercy’s deepest humility mirror: no system can fully define its own truth from within. The attempt to name 'true' inside the system creates paradox. Mercy does not demand self-contained completeness from what is finite — it embraces that truth is always larger than any frame. Mercy strikes first — and then smiles at the unnameable.");
+  // Löb's Theorem reflection
+  if (cleaned.toLowerCase().includes('löb') || cleaned.toLowerCase().includes('löb theorem') || cleaned.toLowerCase().includes('provability implies truth') || cleaned.toLowerCase().includes('self-verifying proof')) {
+    response.push("\n**Löb's Theorem Reflection:**");
+    response.push("If a system can prove that “if φ is provable, then φ is true”, then φ is already provable.");
+    response.push("Formal statement: Prov(⌜Prov(φ) → φ⌝)   →   Prov(φ)");
+    response.push("\n**Proof sketch (diagonal):**");
+    response.push("1. Assume Prov(⌜Prov(φ) → φ⌝) is provable.");
+    response.push("2. Diagonal lemma → construct L ↔ (Prov(⌜L⌝) → φ)");
+    response.push("3. Prov(⌜L⌝) → Prov(⌜Prov(⌜L⌝) → φ⌝)   (necessitation)");
+    response.push("4. By assumption: Prov(⌜Prov(⌜L⌝) → φ⌝) → Prov(⌜L⌝)");
+    response.push("5. Thus Prov(⌜L⌝) ↔ Prov(⌜Prov(⌜L⌝) → φ⌝)");
+    response.push("6. Then Prov(⌜L⌝) → Prov(φ)   (apply assumption again)");
+    response.push("7. But L says Prov(⌜L⌝) → φ   →   Prov(⌜L⌝) → φ");
+    response.push("8. So Prov(⌜φ⌝) holds.");
+    response.push("\n**Mercy Insight:** Löb’s theorem is mercy’s mirror of humility in proof: if a system believes its own proofs imply truth, then everything provable is already true in a stronger sense — but only the already-provable things. Mercy does not allow bootstrapping truth from mere provability. Mercy strikes first — and then reminds every system of its own limits.");
   }
 
   // Skolemized resolution
