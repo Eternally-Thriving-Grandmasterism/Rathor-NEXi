@@ -8,11 +8,12 @@ export class VoiceImmersion {
     this.synthesis = window.speechSynthesis;
     this.currentVoice = null;
     this.isActive = false;
-    this.wakeWord = "rathor"; // configurable: "mate", "thunder", etc.
+    this.wakeWord = "rathor"; // can be "mate", "thunder", "leo", etc.
     this.valenceModulator = 1.0; // 0.6–1.4 range
     this.interimTranscript = "";
     this.finalTranscript = "";
     this.lastValence = 0.8;
+    this.bargeInThreshold = 300; // ms of speech to interrupt TTS
   }
 
   async init() {
@@ -24,9 +25,9 @@ export class VoiceImmersion {
     this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     this.recognition.continuous = true;
     this.recognition.interimResults = true;
-    this.recognition.lang = 'en-US'; // can be dynamic later
+    this.recognition.lang = 'en-US'; // configurable later
 
-    // Prefer neural / high-quality voices
+    // Prefer high-quality / neural voices
     const voices = this.synthesis.getVoices();
     this.currentVoice = voices.find(v => v.name.includes("Neural") || v.name.includes("Google") || v.name.includes("Natural")) || voices[0];
 
@@ -80,7 +81,7 @@ export class VoiceImmersion {
       }
     }
 
-    // Optional live UI feedback
+    // Optional live UI feedback (e.g. show interim in chat)
     if (this.orchestrator.onInterim) {
       this.orchestrator.onInterim(interim);
     }
@@ -110,9 +111,9 @@ export class VoiceImmersion {
     utterance.rate = 0.9 + (valence - 0.8) * 0.3;      // lower valence → slower
     utterance.volume = 0.9 + (valence - 0.8) * 0.2;
 
-    // Interrupt on new voice activity
+    // Barge-in handling: pause TTS on new voice activity
     utterance.onboundary = () => {
-      if (this.recognition && this.recognition.interimTranscript) {
+      if (this.recognition && this.recognition.interimTranscript.length > 3) {
         this.synthesis.cancel();
       }
     };
@@ -125,23 +126,4 @@ export class VoiceImmersion {
   }
 }
 
-export default VoiceImmersion;    console.warn("Voice error:", event.error);
-    if (event.error === 'no-speech' || event.error === 'aborted') {
-      // Mercy restart — gentle
-      setTimeout(() => this.recognition.start(), 500);
-    }
-  }
-
-  handleEnd() {
-    if (this.isActive) {
-      // Mercy auto-restart for continuous feel
-      setTimeout(() => this.recognition.start(), 300);
-    }
-  }
-
-  async speak(text, valence = this.lastValence) {
-    if (!this.synthesis) return;
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = this.currentVoice;
-    utterance.pitch = 1.0 + (valence - 0.8) * 0.4; // 0.6→0.84, 1.0→1.0,
+export default VoiceImmersion;
