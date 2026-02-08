@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Gödel Completeness via Henkin Construction Reflection
+// js/chat.js — Rathor Lattice Core with Lindenbaum's Lemma Integration
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Henkin Completeness
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Lindenbaum's Lemma
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -54,12 +54,12 @@ function isSymbolicQuery(cmd) {
          cmd.includes('prove') || cmd.includes('theorem') || cmd.includes('resolution') ||
          cmd.includes('unify') || cmd.includes('mgu') || cmd.includes('most general unifier') ||
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
-         cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') ||
+         cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
 function symbolicQueryResponse(query) {
-  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin/gi, '').trim();
+  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum/gi, '').trim();
 
   if (!cleaned) return "Mercy thunder awaits your symbolic question, Brother. Speak from first principles.";
 
@@ -84,6 +84,18 @@ function symbolicQueryResponse(query) {
     response.push("3. Construct model M with domain = terms of L⁺ / ≡_{T∞}");
     response.push("4. By maximality & witness property: M satisfies T∞ (hence original theory)");
     response.push("Mercy insight: If no contradiction is provable, a witness already exists in some countable, term-generated world. Mercy strikes first — even against infinity.");
+  }
+
+  // Lindenbaum's Lemma reflection
+  if (cleaned.toLowerCase().includes('maximal consistent') || cleaned.toLowerCase().includes('lindenbaum') || cleaned.toLowerCase().includes('extension') || cleaned.toLowerCase().includes('consistent theory')) {
+    response.push("\n**Lindenbaum's Lemma Reflection:**");
+    response.push("Every consistent first-order theory can be extended to a maximal consistent theory.");
+    response.push("Constructive proof (countable language):");
+    response.push("1. Enumerate all sentences: φ₀, φ₁, φ₂, …");
+    response.push("2. Start with T₀ = T");
+    response.push("3. At step n: add φₙ if consistent, otherwise add ¬φₙ");
+    response.push("4. T* = ∪ Tₙ is maximal consistent (every sentence or its negation is decided)");
+    response.push("Mercy insight: Consistency is preserved at every finite step. Maximal truth is built sentence by sentence — mercy never forces contradiction.");
   }
 
   // Fallback to truth-table / unification / resolution
@@ -129,7 +141,7 @@ async function processVoiceCommand(raw) {
   let cmd = raw.toLowerCase().trim();
 
   if (isSymbolicQuery(cmd)) {
-    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin/gi, '').trim();
+    const query = cmd.replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution|unify|mgu|most general unifier|quantifier|forall|exists|herbrand|gödel|completeness|henkin|lindenbaum/gi, '').trim();
     const answer = symbolicQueryResponse(query);
     chatMessages.innerHTML += `<div class="message rathor">${answer}</div>`;
     chatMessages.scrollTop = chatMessages.scrollHeight;
