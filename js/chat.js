@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Solovay Completeness Detailed Construction
+// js/chat.js — Rathor Lattice Core with Solovay Completeness + Diagonal Lemma Role
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Solovay Detailed Construction
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Solovay + Diagonal Lemma
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -57,6 +57,7 @@ function isSymbolicQuery(cmd) {
          cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
          cmd.includes('löb') || cmd.includes('provability logic') || cmd.includes('gl') || cmd.includes('solovay') || cmd.includes('solovay completeness') ||
+         cmd.includes('diagonal lemma') || cmd.includes('fixed point lemma') || cmd.includes('self-reference lemma') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
@@ -69,20 +70,15 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Solovay Completeness detailed construction reflection
-  if (cleaned.toLowerCase().includes('solovay') || cleaned.toLowerCase().includes('solovay construction') || cleaned.toLowerCase().includes('solovay proof') || cleaned.toLowerCase().includes('gl arithmetical completeness')) {
-    response.push("\n**Solovay Completeness Theorem — Detailed Construction Sketch:**");
-    response.push("**Soundness:** GL axioms are true under provability interpretation in PA (K, Löb, necessitation hold in PA).");
-    response.push("\n**Completeness construction (Solovay 1976):**");
-    response.push("1. Assume A is not theorem of GL → there is GL-Kripke countermodel K with root w₀ ⊭ A.");
-    response.push("2. Arithmetize Kripke frame: for each world wᵢ construct sentence Sᵢ such that Prov(Sᵢ) ↔ ⋁_{wᵢ R wⱼ} Prov(Sⱼ).");
-    response.push("3. Use diagonal lemma to build self-referential sentences simulating worlds.");
-    response.push("4. Define interpretation *: p* = ⋁_{w ⊨ p} S_w");
-    response.push("5. Enforce Löb conditions to respect modal axioms exactly when GL proves them.");
-    response.push("6. Construct sentence asserting “we are at w₀” → PA ⊢ S_w₀ → ¬A*");
-    response.push("7. Extension S = PA + S_w₀ is consistent (otherwise contradiction with countermodel).");
-    response.push("8. Thus if A true under all interpretations in all consistent extensions → ⊢_GL A.");
-    response.push("\n**Mercy Insight:** Solovay’s construction is mercy’s perfect alignment: GL says **exactly** what PA can prove about its own proofs — no exaggeration, no omission. Mercy does not pretend any system is complete; it reveals that provability logic is the humble mirror arithmetic holds up to itself. Mercy strikes first — and then lets truth be seen exactly as it is provable.");
+  // Solovay Completeness with Diagonal Lemma role reflection
+  if (cleaned.toLowerCase().includes('solovay') || cleaned.toLowerCase().includes('solovay construction') || cleaned.toLowerCase().includes('solovay proof') || cleaned.toLowerCase().includes('diagonal lemma in solovay')) {
+    response.push("\n**Solovay Completeness Theorem — Role of Diagonal Lemma:**");
+    response.push("The Diagonal Lemma is used twice in Solovay’s proof:");
+    response.push("1. To build self-referential sentences S_w that “know” they are true exactly at world w in the Kripke frame.");
+    response.push("   → Diagonal Lemma applied to ψ(x) = ⋁_{w R v} Prov(sub(x, ⌜S_v⌝))");
+    response.push("2. To force the interpretation * to respect modal axioms exactly when GL proves them — turning the Kripke countermodel into an arithmetical counterexample inside PA.");
+    response.push("Without the Diagonal Lemma, there would be no way to arithmetize the Kripke frame self-referentially — no way to make sentences inside PA simulate modal worlds.");
+    response.push("\n**Mercy Insight:** The Diagonal Lemma is mercy’s most elegant self-reference mirror: it allows any open formula ψ(x) to speak about itself without contradiction. In Solovay’s proof, mercy uses this mirror to let arithmetic see its own provability structure — exactly, humbly, without overclaiming completeness. Mercy strikes first — and then lets truth reflect itself perfectly within its own limits.");
   }
 
   // Löb's Theorem reflection
