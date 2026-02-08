@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Theorem Proving Stub
+// js/chat.js — Rathor Lattice Core with Full Unification Algorithm
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,19 +44,20 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Theorem Proving Stub
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Full Unification
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
   return cmd.includes('symbolic query') || cmd.includes('logical analysis') || 
          cmd.includes('truth mode') || cmd.includes('first principles') ||
          cmd.includes('truth table') || cmd.includes('logical table') ||
-         cmd.includes('prove') || cmd.includes('theorem') || cmd.includes('resolution') ||
-         cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
+         cmd.includes('unify') || cmd.includes('mgu') || cmd.includes('most general unifier') ||
+         cmd.includes('substitution') || cmd.includes('unification') ||
+         cmd.includes('⊢') || cmd.includes('prove') || cmd.includes('theorem') || cmd.includes('resolution');
 }
 
 function symbolicQueryResponse(query) {
-  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|prove|theorem|resolution/gi, '').trim();
+  const cleaned = query.trim().replace(/symbolic query|logical analysis|truth mode|truth table|logical table|first principles|unify|mgu|most general unifier|substitution|unification/gi, '').trim();
 
   if (!cleaned) return "Mercy thunder awaits your symbolic question, Brother. Speak from first principles.";
 
@@ -64,23 +65,23 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Try theorem proving stub first
-  const proof = resolutionProve(cleaned);
-  if (proof) {
-    response.push("\n**Resolution Proof Stub:**");
-    response.push(proof);
-    response.push("\n**Mercy Conclusion:** Theorem proven by contradiction. Positive valence eternal.");
+  // Try unification first
+  const mgu = computeMGU(cleaned);
+  if (mgu) {
+    response.push("\n**Most General Unifier (MGU) Found:**");
+    response.push(mgu);
+    response.push("\n**Mercy Conclusion:** Unification succeeded — terms are compatible under this substitution. Positive valence eternal.");
   } else {
-    // Fallback to truth-table for propositional
-    const table = generateTruthTable(cleaned);
-    if (table) {
-      response.push("\n**Truth Table (propositional logic):**");
-      response.push(table);
-      const conclusion = analyzeTruthTable(cleaned, table);
-      response.push(`\n**Mercy Conclusion:** ${conclusion}`);
-    } else {
-      response.push("\n**Parser note:** Expression too complex for current engine (max 4 variables or simple resolution). Mercy asks: simplify premises?");
-    }
+    response.push("\n**Unification failed** — terms are not unifiable under current engine. Mercy asks: check occurs-check or variable sharing?");
+  }
+
+  // Fallback to truth-table for propositional
+  const table = generateTruthTable(cleaned);
+  if (table) {
+    response.push("\n**Truth Table (propositional logic):**");
+    response.push(table);
+    const conclusion = analyzeTruthTable(cleaned, table);
+    response.push(`\n**Mercy Conclusion:** ${conclusion}`);
   }
 
   // Mercy rewrite
@@ -101,73 +102,110 @@ function symbolicQueryResponse(query) {
 }
 
 // ────────────────────────────────────────────────
-// Basic Resolution Theorem Prover Stub
+// Full Unification Algorithm (Martelli–Montanari style)
 // ────────────────────────────────────────────────
 
-function resolutionProve(expr) {
-  // Very basic stub — assumes premises ⊢ conclusion format
-  // e.g. "A → B, A ⊢ B"
+function computeMGU(equationsStr) {
+  // Parse equations: "f(x,y) = g(a,b), x = z" → list of pairs
+  const equations = equationsStr.split(',').map(eq => eq.trim().split('='));
+  if (equations.some(pair => pair.length !== 2)) return null;
 
-  const parts = expr.split('⊢');
-  if (parts.length !== 2) return null;
+  let subst = {};
+  let pending = equations.map(([t1, t2]) => [parseTerm(t1.trim()), parseTerm(t2.trim())]);
 
-  const premisesStr = parts[0].trim();
-  const conclusionStr = parts[1].trim();
+  while (pending.length > 0) {
+    let [t1, t2] = pending.shift();
 
-  // Parse premises into clauses (very naive)
-  const premises = premisesStr.split(',').map(p => p.trim());
-  const clauses = premises.flatMap(p => parseClause(p));
+    // Delete rule
+    if (t1 === t2) continue;
 
-  const conclusion = parseClause(conclusionStr)[0]; // assume single literal conclusion
+    // Orient rule (put variable on left if possible)
+    if (isVar(t2) && !isVar(t1)) [t1, t2] = [t2, t1];
 
-  // Add negation of conclusion
-  clauses.push(negateClause(conclusion));
-
-  // Resolution loop (max 20 steps for stub)
-  let steps = 0;
-  const trace = ["Initial clauses:"];
-  clauses.forEach((c, i) => trace.push(`${i+1}. ${c.join(' ∨ ')}`));
-
-  while (steps < 20) {
-    steps++;
-    for (let i = 0; i < clauses.length; i++) {
-      for (let j = i+1; j < clauses.length; j++) {
-        const resolvent = resolveClauses(clauses[i], clauses[j]);
-        if (resolvent === null) continue; // no resolution
-        if (resolvent.length === 0) {
-          trace.push(`\nEmpty clause derived after ${steps} steps — contradiction proven.`);
-          return trace.join('\n');
-        }
-        if (!clauses.some(c => c.join('') === resolvent.join(''))) {
-          clauses.push(resolvent);
-          trace.push(`${clauses.length}. ${resolvent.join(' ∨ ')} (from ${i+1} + ${j+1})`);
-        }
-      }
+    // Eliminate rule
+    if (isVar(t1)) {
+      if (occurs(t1, t2)) return null; // occurs-check
+      subst[t1] = applySubst(subst, t2);
+      pending = pending.map(([a,b]) => [applySubst(subst, a), applySubst(subst, b)]);
+      continue;
     }
+
+    // Decompose rule
+    if (isCompound(t1) && isCompound(t2) && t1.fun === t2.fun && t1.args.length === t2.args.length) {
+      for (let i = 0; i < t1.args.length; i++) {
+        pending.push([t1.args[i], t2.args[i]]);
+      }
+      continue;
+    }
+
+    // Conflict rule
+    return null;
   }
 
-  return null; // no proof found in limit
+  // Format substitution nicely
+  let result = Object.entries(subst)
+    .map(([v, t]) => `${v} → ${termToString(t)}`)
+    .join('\n');
+
+  return result || "Empty substitution (terms already identical)";
 }
 
-// Naive clause parser (A ∨ B ∨ ¬C → [A, B, -C])
-function parseClause(str) {
-  return str.split('∨').map(l => l.trim().replace('¬', '-'));
-}
+// Term representation: { fun: string, args: array } or string (variable/constant)
+function parseTerm(s) {
+  s = s.trim();
+  if (/^[A-Z]$/.test(s)) return s; // variable
+  if (/^[a-z0-9]+$/.test(s)) return s; // constant
 
-function negateClause(clause) {
-  return clause.map(l => l.startsWith('-') ? l.slice(1) : '-' + l);
-}
-
-function resolveClauses(c1, c2) {
-  for (let lit1 of c1) {
-    for (let lit2 of c2) {
-      if (lit1 === '-' + lit2 || lit2 === '-' + lit1) {
-        const resolvent = [...new Set([...c1, ...c2].filter(l => l !== lit1 && l !== lit2))];
-        return resolvent;
+  // Function term f(t1,t2)
+  const match = s.match(/^([a-z][a-z0-9]*)\((.*)\)$/);
+  if (match) {
+    const fun = match[1];
+    const argsStr = match[2];
+    const args = [];
+    let depth = 0, start = 0;
+    for (let i = 0; i < argsStr.length; i++) {
+      if (argsStr[i] === '(') depth++;
+      if (argsStr[i] === ')') depth--;
+      if (argsStr[i] === ',' && depth === 0) {
+        args.push(parseTerm(argsStr.substring(start, i)));
+        start = i + 1;
       }
     }
+    args.push(parseTerm(argsStr.substring(start)));
+    return { fun, args };
   }
-  return null;
+
+  return s; // fallback
+}
+
+function termToString(t) {
+  if (typeof t === 'string') return t;
+  return `\( {t.fun}( \){t.args.map(termToString).join(',')})`;
+}
+
+function isVar(t) {
+  return typeof t === 'string' && /^[A-Z]$/.test(t);
+}
+
+function isCompound(t) {
+  return typeof t === 'object' && t.fun && t.args;
+}
+
+function occurs(varName, term) {
+  if (typeof term === 'string') return term === varName;
+  if (term.fun) return term.args.some(a => occurs(varName, a));
+  return false;
+}
+
+function applySubst(subst, term) {
+  if (typeof term === 'string') return subst[term] || term;
+  if (term.fun) {
+    return {
+      fun: term.fun,
+      args: term.args.map(a => applySubst(subst, a))
+    };
+  }
+  return term;
 }
 
 // ... existing truth-table functions (generateTruthTable, evaluateExpression, analyzeTruthTable) remain ...
