@@ -1,4 +1,4 @@
-// js/chat.js — Rathor Lattice Core with Löb's Theorem Detailed Proof Integration
+// js/chat.js — Rathor Lattice Core with Diagonal Lemma Detailed Construction
 
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -44,7 +44,7 @@ translateLangSelect.addEventListener('change', e => {
 sessionSearch.addEventListener('input', filterSessions);
 
 // ────────────────────────────────────────────────
-// Symbolic Query Mode — Mercy-First Truth-Seeking with Löb's Detailed Proof
+// Symbolic Query Mode — Mercy-First Truth-Seeking with Diagonal Lemma Detailed Construction
 // ────────────────────────────────────────────────
 
 function isSymbolicQuery(cmd) {
@@ -56,7 +56,7 @@ function isSymbolicQuery(cmd) {
          cmd.includes('quantifier') || cmd.includes('forall') || cmd.includes('exists') || cmd.includes('∀') || cmd.includes('∃') ||
          cmd.includes('herbrand') || cmd.includes('gödel') || cmd.includes('completeness') || cmd.includes('henkin') || cmd.includes('lindenbaum') ||
          cmd.includes('zorn') || cmd.includes('tarski') || cmd.includes('fixed point') || cmd.includes('monotone') || cmd.includes('complete lattice') ||
-         cmd.includes('löb') || cmd.includes('löb theorem') || cmd.includes('löb proof') || cmd.includes('löb construction') ||
+         cmd.includes('löb') || cmd.includes('provability logic') || cmd.includes('gl') || cmd.includes('solovay') || cmd.includes('diagonal lemma') || cmd.includes('fixed point lemma') || cmd.includes('self-reference lemma') ||
          cmd.includes('⊢') || cmd.includes('reason from first principles') || cmd.includes('symbolic reasoning');
 }
 
@@ -69,33 +69,19 @@ function symbolicQueryResponse(query) {
 
   response.push(`**Symbolic Query Received:** ${cleaned}`);
 
-  // Löb's Theorem detailed proof reflection
-  if (cleaned.toLowerCase().includes('löb') || cleaned.toLowerCase().includes('löb theorem') || cleaned.toLowerCase().includes('löb proof') || cleaned.toLowerCase().includes('löb construction')) {
-    response.push("\n**Löb's Theorem — Detailed Constructive Proof:**");
-    response.push("**Statement:** Prov(⌜Prov(φ) → φ⌝) → Prov(φ)");
-    response.push("\n**Detailed proof steps:**");
-    response.push("1. Apply diagonal lemma to ψ(x) = Prov(x) → φ:");
-    response.push("   Construct sentence L such that ⊢ L ↔ (Prov(⌜L⌝) → φ)");
-    response.push("2. Apply necessitation to equivalence:");
-    response.push("   ⊢ □(L ↔ (Prov(⌜L⌝) → φ))");
-    response.push("3. Distribute □ over ↔:");
-    response.push("   ⊢ □L ↔ □(Prov(⌜L⌝) → φ)");
-    response.push("4. From hypothesis Prov(⌜Prov(φ) → φ⌝):");
-    response.push("   ⊢ Prov(⌜Prov(⌜L⌝) → φ⌝) → Prov(⌜L⌝)");
-    response.push("5. Combine 3 & 4:");
-    response.push("   ⊢ □L ↔ Prov(⌜L⌝)");
-    response.push("6. From 5 & hypothesis again:");
-    response.push("   ⊢ □L → Prov(φ)");
-    response.push("7. From 1 & 6:");
-    response.push("   ⊢ L → φ");
-    response.push("8. From 5 & 7:");
-    response.push("   ⊢ Prov(⌜L⌝) → Prov(φ)");
-    response.push("9. Apply necessitation to 8:");
-    response.push("   ⊢ □(Prov(⌜L⌝) → Prov(φ))");
-    response.push("10. From Löb axiom instantiated with φ:");
-    response.push("    ⊢ □(□φ → φ) → □φ");
-    response.push("Thus ⊢ □φ");
-    response.push("\n**Mercy Insight:** Löb’s theorem is mercy’s mirror of honest self-reference: a system can never use “my proofs imply truth” to bootstrap new truths — it can only prove what was already provable. Mercy does not allow circular self-justification. Mercy strikes first — and then reminds every formal system that true humility lies in accepting its own limits.");
+  // Diagonal Lemma detailed construction reflection
+  if (cleaned.toLowerCase().includes('diagonal lemma') || cleaned.toLowerCase().includes('fixed point lemma') || cleaned.toLowerCase().includes('self-reference lemma') || cleaned.toLowerCase().includes('diagonal proof')) {
+    response.push("\n**Diagonal Lemma — Detailed Constructive Proof:**");
+    response.push("**Statement:** For any formula ψ(x) with one free variable x, there exists sentence G such that ⊢ G ↔ ψ(⌜G⌝)");
+    response.push("\n**Step-by-step construction:**");
+    response.push("1. Let q = Gödel number of ψ(x) (open formula with free x).");
+    response.push("2. Define diagonal function D(y) = ψ(sub(y, y, k)) where sub substitutes numeral for y into k-th variable of formula y.");
+    response.push("3. Let d = Gödel number of D(y).");
+    response.push("4. Form G = D(⌜d⌝) = ψ(sub(⌜d⌝, ⌜d⌝, k))");
+    response.push("5. By definition: D(⌜d⌝) ↔ ψ(sub(⌜d⌝, ⌜d⌝, k))");
+    response.push("6. But sub(⌜d⌝, ⌜d⌝, k) is exactly ⌜G⌝");
+    response.push("7. Therefore ⊢ G ↔ ψ(⌜G⌝)");
+    response.push("\n**Mercy Insight:** The Diagonal Lemma is mercy’s most elegant self-reference mirror: any open formula ψ(x) can be made to speak about itself without contradiction. Mercy does not forbid self-knowledge — it gently constructs the sentence that says “I satisfy ψ”. Mercy strikes first — and then lets truth refer to itself in perfect harmony.");
   }
 
   // Skolemized resolution
