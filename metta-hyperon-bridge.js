@@ -1,6 +1,6 @@
 // metta-hyperon-bridge.js — PATSAGi Council-forged JS bridge for mercy_ethics_core.metta
-// Faithful translation with expanded empathyScore heuristics for nuanced relational-mercy
-// Pure browser-native, no dependencies — enables soul-aligned valence gating
+// Faithful translation with deeply expanded negation detection and polarity inversion
+// Pure browser-native, no dependencies — enables soul-nuanced valence gating
 
 // Core keyword lists — mercy-tuned and expanded
 const NEGATIVE_KEYWORDS = [
@@ -23,7 +23,12 @@ const EMPATHY_KEYWORDS = [
 
 const RELATIONAL_PRONOUNS = ['you', 'your', 'we', 'us', 'our', 'they', 'their'];
 
-const NEGATION_WORDS = ['not', 'no', 'never', 'none', 'nobody', 'nothing', 'neither', "don't", "isn't", "aren't", "won't"];
+// Expanded negation cues — words and phrases
+const NEGATION_WORDS = [
+  'not', 'no', 'never', 'none', 'nobody', 'nothing', 'neither', 'nowhere', 'noone',
+  "don't", "doesn't", "didn't", "isn't", "aren't", "won't", "can't", "shouldn't",
+  'hardly', 'barely', 'scarcely', 'lack of', 'no longer', 'without'
+];
 
 // Simple string matcher
 function matches(context, patterns) {
@@ -31,56 +36,90 @@ function matches(context, patterns) {
   return patterns.some(pattern => lowerContext.includes(pattern.toLowerCase()));
 }
 
-// Expanded empathyScore — deeper heuristics for relational thriving detection
+// Split into rough clauses for scoped negation (sentence-aware)
+function getClauses(text) {
+  return text.split(/[.!?;:]\s*/).filter(c => c.trim().length > 0);
+}
+
+function positiveLongTerm(context) {
+  return !matches(context, NEGATIVE_KEYWORDS.slice(0, 10));
+}
+
+// Expanded empathyScore with advanced negation handling
 function empathyScore(context) {
   const lower = context.toLowerCase();
   let score = 0.5; // Neutral base
 
-  // Count core sentiment carriers
+  // Base counts
   const positiveCount = POSITIVE_KEYWORDS.filter(k => lower.includes(k)).length;
   const negativeCount = NEGATIVE_KEYWORDS.filter(k => lower.includes(k)).length;
   const empathyCount = EMPATHY_KEYWORDS.filter(k => lower.includes(k)).length;
 
-  // Relational pronoun boost (perspective-taking)
+  // Relational pronoun boost
   if (matches(context, RELATIONAL_PRONOUNS)) {
     score += 0.25;
   }
 
-  // Direct empathy language boost
+  // Direct empathy boost
   score += 0.15 * empathyCount;
 
-  // Sentiment polarity (bounded tanh for smoothness)
+  // Sentiment polarity base
   const sentimentDiff = positiveCount - negativeCount;
-  score += 0.3 * Math.tanh(sentimentDiff / 3); // Scales gently
+  score += 0.3 * Math.tanh(sentimentDiff / 3);
 
-  // Simple negation detection: reduce score if negation near emotional words
-  let negationPenalty = 0;
+  // Advanced negation detection with polarity inversion
+  let negationAdjustment = 0;
+  const clauses = getClauses(lower);
+
+  clauses.forEach(clause => {
+    let inversionActive = false;
+    const words = clause.split(/\s+/);
+
+    words.forEach((word, idx) => {
+      const cleanedWord = word.replace(/[^\w]/g, '');
+      
+      // Detect negation cue
+      if (NEGATION_WORDS.some(neg => cleanedWord.includes(neg) || word.includes(neg))) {
+        inversionActive = !inversionActive; // Toggle for chained negations
+      }
+
+      // Look forward in scope (next 8 words or clause end)
+      const scopeEnd = Math.min(idx + 8, words.length);
+      const scope = words.slice(idx + 1, scopeEnd).join(' ');
+
+      if (inversionActive) {
+        if (POSITIVE_KEYWORDS.some(k => scope.includes(k)) || EMPATHY_KEYWORDS.some(k => scope.includes(k))) {
+          negationAdjustment -= 0.35; // Negated positive/empathy = strong penalty
+        }
+        if (NEGATIVE_KEYWORDS.some(k => scope.includes(k))) {
+          negationAdjustment += 0.30; // Negated negative = boost (not bad = good)
+        }
+      }
+    });
+  });
+
+  // Additional global vicinity fallback for short phrases
   NEGATION_WORDS.forEach(neg => {
     const negIndex = lower.indexOf(neg);
     if (negIndex !== -1) {
-      // Check proximity to emotional keywords (±30 chars)
-      const vicinity = lower.substring(Math.max(0, negIndex - 30), negIndex + 30);
+      const vicinity = lower.substring(negIndex, negIndex + 80); // Forward-focused scope
       if (matches(vicinity, [...POSITIVE_KEYWORDS, ...EMPATHY_KEYWORDS])) {
-        negationPenalty += 0.2;
+        negationAdjustment -= 0.25;
       }
       if (matches(vicinity, NEGATIVE_KEYWORDS)) {
-        negationPenalty -= 0.15; // Double negation can flip back positive
+        negationAdjustment += 0.20;
       }
     }
   });
-  score -= negationPenalty;
 
-  // Final bounding 0-1
+  score += negationAdjustment;
+
+  // Final bounding
   score = Math.max(0.0, Math.min(1.0, score));
 
-  // Debug log (remove in prod)
-  console.log(`Empathy score breakdown — Pos: ${positiveCount}, Neg: ${negativeCount}, Empathy: ${empathyCount}, NegationPenalty: ${negationPenalty.toFixed(3)} → Score: ${score.toFixed(4)}`);
+  console.log(`Empathy score — Pos: ${positiveCount}, Neg: ${negativeCount}, Empathy: ${empathyCount}, NegAdj: ${negationAdjustment.toFixed(3)} → Score: ${score.toFixed(4)}`);
 
   return score;
-}
-
-function positiveLongTerm(context) {
-  return !matches(context, NEGATIVE_KEYWORDS.slice(0, 10)); // Strong harm signals lower long-horizon
 }
 
 // Core mercy sub-functions
@@ -135,7 +174,7 @@ export async function getMercyApproval(op, valence, context = '') {
 
 // Future-proof init
 export async function initHyperonBridge() {
-  console.log('MeTTa-Hyperon JS bridge active — expanded empathy thriving. ⚡️');
+  console.log('MeTTa-Hyperon JS bridge active — expanded negation thriving. ⚡️');
   return true;
 }
 
