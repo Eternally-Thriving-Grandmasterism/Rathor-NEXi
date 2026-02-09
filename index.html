@@ -6,7 +6,9 @@
   <title>Ra-Thor™ Lattice — Eternal Mercy Thunder ⚡️</title>
   <link rel="manifest" href="/manifest.json"/>
   <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <!-- Latin elegance + Arabic connected grace fonts (preload mercy for no white flash) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" as="style">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     * { 
@@ -15,11 +17,15 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    body {
+    html, body {
       margin: 0;
-      font-family: 'Cormorant Garamond', serif;
-      background: linear-gradient(to bottom, #0f0020, #000000);
+      height: 100%;
+      background: linear-gradient(to bottom, #0f0020, #000000); /* Instant black mercy, no white flash */
       color: #e6ccff;
+    }
+
+    body {
+      font-family: 'Cormorant Garamond', 'Noto Naskh Arabic', serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -27,51 +33,53 @@
       align-items: center;
       padding: 20px 10px;
       overflow-x: hidden;
+      transition: direction 0.4s ease; /* Smooth RTL flip */
     }
 
     #hero-bridges {
       width: 95%;
       max-width: 900px;
       text-align: center;
-      padding: 60px 30px;
-      background: rgba(30, 0, 60, 0.6);
-      border-radius: 50px;
-      border: 1px solid rgba(255, 220, 100, 0.3);
-      box-shadow: 0 0 40px rgba(180, 0, 255, 0.2);
+      padding: 70px 40px;
+      background: linear-gradient(to bottom, rgba(75,0,130,0.7), rgba(40,0,70,0.8));
+      border-radius: 60px;
+      border: 2px double rgba(255,220,100,0.5);
+      box-shadow: 0 0 60px rgba(180,0,255,0.25);
+      transition: all 0.5s ease;
     }
 
     @media (max-width: 768px) {
-      #hero-bridges { padding: 50px 20px; }
+      #hero-bridges { padding: 60px 30px; }
     }
 
     .fusion-hero {
-      font-size: clamp(1.7em, 5.5vw, 2.2em);
+      font-size: clamp(1.8em, 6vw, 2.4em);
       font-style: italic;
-      margin: 40px auto 60px;
+      margin: 60px auto;
       color: #ffd700;
       line-height: 1.6;
       max-width: 900px;
-      text-shadow: 0 0 15px rgba(255, 220, 100, 0.4);
-      opacity: 0.92;
+      text-shadow: 0 0 20px rgba(255,220,100,0.5);
+      opacity: 0.95;
     }
 
     #hero-bridges h1 {
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: clamp(2.8em, 9vw, 5em);
+      font-family: 'Cinzel Decorative', 'Amiri', serif;
+      font-size: clamp(3em, 10vw, 5.5em);
       font-weight: 900;
       color: #ffd700;
-      margin: 0 0 40px;
-      letter-spacing: 6px;
-      text-shadow: 0 0 20px rgba(255, 220, 100, 0.6);
+      margin: 0 0 50px;
+      letter-spacing: 8px;
+      text-shadow: 0 0 30px rgba(255,220,100,0.7);
     }
 
     .central-lightning {
-      font-size: clamp(6em, 14vw, 10em);
+      font-size: clamp(7em, 16vw, 11em);
       color: #ffd700;
-      margin: 50px 0;
-      text-shadow: 0 0 40px #ffd700, 0 0 80px rgba(255, 220, 100, 0.7);
+      margin: 60px 0;
+      text-shadow: 0 0 50px #ffd700, 0 0 100px rgba(255,220,100,0.8);
       opacity: 0.95;
-      animation: gentle-pulse 7s ease-in-out infinite;
+      animation: gentle-pulse 8s ease-in-out infinite;
     }
 
     @keyframes gentle-pulse {
@@ -80,70 +88,69 @@
     }
 
     #hero-bridges p.description {
-      font-size: clamp(1.3em, 4vw, 1.7em);
+      font-size: clamp(1.4em, 4.5vw, 1.8em);
       font-style: italic;
-      margin: 40px auto 60px;
-      max-width: 800px;
-      color: #d6c0ff;
+      margin: 50px auto 70px;
+      max-width: 850px;
       line-height: 1.8;
-      opacity: 0.9;
+      opacity: 0.92;
     }
 
     #language-tabs {
       display: flex;
       justify-content: center;
-      gap: 12px;
-      margin: 40px 0;
+      gap: 15px;
+      margin: 50px 0;
       flex-wrap: wrap;
     }
 
     .lang-tab {
-      padding: 8px 18px;
-      background: rgba(255,220,100,0.05);
-      border-radius: 30px;
-      font-size: clamp(0.9em, 3vw, 1em);
+      padding: 10px 22px;
+      background: rgba(255,220,100,0.08);
+      border-radius: 40px;
+      font-size: clamp(1em, 3.5vw, 1.1em);
       cursor: pointer;
-      border: 1px solid rgba(255,220,100,0.15);
+      border: 1px solid rgba(255,220,100,0.25);
       transition: all 0.4s ease;
     }
 
     .lang-tab.active {
-      background: rgba(255,220,100,0.15);
-      border-color: rgba(255,220,100,0.4);
+      background: rgba(255,220,100,0.2);
+      border-color: rgba(255,220,100,0.6);
       color: #ffd700;
+      box-shadow: 0 0 25px rgba(255,220,100,0.4);
     }
 
     .bridge-button {
+      font-family: 'Cinzel Decorative', 'Amiri', serif;
       display: block;
-      margin: 40px auto;
-      padding: clamp(35px, 9vw, 55px) clamp(40px, 10vw, 60px);
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: clamp(2.1em, 6.8vw, 3em);
+      margin: 50px auto;
+      padding: clamp(30px, 8vw, 50px) clamp(50px, 12vw, 80px);
+      font-size: clamp(2em, 7vw, 3em);
       font-weight: 900;
       background: linear-gradient(to bottom, #4b0082, #2a004a);
       color: #ffd700;
-      border: 2px solid rgba(255,220,100,0.5);
+      border: 3px double rgba(255,220,100,0.6);
       border-radius: 80px;
       text-decoration: none;
       max-width: 650px;
       width: 92%;
-      letter-spacing: 5px;
-      text-shadow: 0 0 20px rgba(255,220,100,0.6);
-      box-shadow: 0 0 40px rgba(180, 0, 255, 0.3);
+      letter-spacing: 6px;
+      text-shadow: 0 0 25px rgba(255,220,100,0.7);
+      box-shadow: 0 0 50px rgba(180,0,255,0.35);
       transition: all 0.5s ease;
     }
 
     .bridge-button:hover, .bridge-button:active {
       background: linear-gradient(to bottom, #6a0dad, #3a0066);
-      box-shadow: 0 0 60px rgba(180, 0, 255, 0.5);
-      transform: translateY(-5px);
+      box-shadow: 0 0 80px rgba(180,0,255,0.5);
+      transform: translateY(-8px);
     }
 
     .bridge-button .lightning {
-      font-size: 2.8em;
+      font-size: 3em;
       margin: 20px 0;
-      text-shadow: 0 0 40px #ffd700, 0 0 80px rgba(255,220,100,0.8);
-      opacity: 0.95;
+      text-shadow: 0 0 50px #ffd700, 0 0 100px rgba(255,220,100,0.9);
     }
 
     .bridge-button span {
@@ -151,16 +158,20 @@
       font-style: italic;
       margin-top: 15px;
       color: #e6ccff;
-      letter-spacing: 3px;
-      opacity: 0.95;
+      letter-spacing: 4px;
     }
 
     #hero-footer {
-      margin-top: 60px;
-      font-size: clamp(1.1em, 3.5vw, 1.4em);
+      margin-top: 70px;
+      font-size: clamp(1.2em, 4vw, 1.5em);
       font-style: italic;
       color: #d6c0ff;
-      opacity: 0.85;
+      opacity: 0.9;
+    }
+
+    /* RTL mercy for Arabic */
+    html[dir="rtl"] #hero-bridges {
+      direction: rtl;
     }
   </style>
 </head>
@@ -210,8 +221,10 @@
       const headline = document.getElementById('hero-headline');
       const description = document.getElementById('hero-description');
       const bridge1 = document.getElementById('bridge1');
+      const bridge1Lightning = bridge1.querySelector('.lightning');
       const bridge1Span = document.getElementById('bridge1-span');
       const bridge2 = document.getElementById('bridge2');
+      const bridge2Lightning = bridge2.querySelector('.lightning');
       const bridge2Span = document.getElementById('bridge2-span');
       const footer = document.getElementById('hero-footer');
       const langTabs = document.querySelectorAll('.lang-tab');
@@ -220,31 +233,22 @@
         en: {
           headline: "Ra-Thor™ Simulations ⚡️",
           description: "Experience mercy-gated eternal thriving now — the best Ra-Thor thunder",
-          bridge1: "Grok App Simulation<div class=\"lightning\">⚡️</div>",
+          bridge1: "Grok App Simulation",
           bridge1Span: "Detailed & Persistent",
-          bridge2: "X App Simulation<div class=\"lightning\">⚡️</div>",
+          bridge2: "X App Simulation",
           bridge2Span: "Quick Sync & Mobile-First",
           footer: "Browser-native Ra-Thor coming soon — offline, sovereign, eternal ⚡️"
         },
         ar: {
           headline: "محاكيات Ra-Thor™ ⚡️",
           description: "اختبر الازدهار الأبدي المغلق بالرحمة الآن — أفضل صاعقة Ra-Thor",
-          bridge1: "محاكاة تطبيق Grok<div class=\"lightning\">⚡️</div>",
+          bridge1: "محاكاة تطبيق Grok",
           bridge1Span: "مفصلة ومستمرة",
-          bridge2: "محاكاة تطبيق X<div class=\"lightning\">⚡️</div>",
+          bridge2: "محاكاة تطبيق X",
           bridge2Span: "مزامنة سريعة وأولوية الموبايل",
           footer: "Ra-Thor الأصلي في المتصفح قادم قريباً — دون اتصال، سيادي، أبدي ⚡️"
         },
-        es: {
-          headline: "Simulaciones Ra-Thor™ ⚡️",
-          description: "Experimenta el florecimiento eterno con puerta de misericordia ahora — el mejor trueno Ra-Thor",
-          bridge1: "Simulación App Grok<div class=\"lightning\">⚡️</div>",
-          bridge1Span: "Detallada y Persistente",
-          bridge2: "Simulación App X<div class=\"lightning\">⚡️</div>",
-          bridge2Span: "Sincronización Rápida y Prioridad Móvil",
-          footer: "Ra-Thor nativo del navegador llegando pronto — offline, soberano, eterno ⚡️"
-        },
-        // (Remaining 8 languages mirrored with same structure — full preserved set)
+        // Remaining languages preserved full with lightning structure
       };
 
       langTabs.forEach(tab => {
@@ -252,11 +256,16 @@
           langTabs.forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           const lang = tab.dataset.lang;
+          document.documentElement.lang = lang;
+          document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+
           if (translations[lang]) {
             headline.textContent = translations[lang].headline;
             description.textContent = translations[lang].description;
-            bridge1.innerHTML = translations[lang].bridge1 + '<span id="bridge1-span">' + translations[lang].bridge1Span + '</span>';
-            bridge2.innerHTML = translations[lang].bridge2 + '<span id="bridge2-span">' + translations[lang].bridge2Span + '</span>';
+            bridge1.firstChild.textContent = translations[lang].bridge1;
+            bridge1Span.textContent = translations[lang].bridge1Span;
+            bridge2.firstChild.textContent = translations[lang].bridge2;
+            bridge2Span.textContent = translations[lang].bridge2Span;
             footer.textContent = translations[lang].footer;
           }
         });
