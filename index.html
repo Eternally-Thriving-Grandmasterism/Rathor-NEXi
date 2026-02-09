@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Ra-Thor™ Lattice — Eternal Mercy Thunder ⚡️</title>
   <link rel="manifest" href="/manifest.json"/>
   <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
@@ -16,6 +16,7 @@
       background: linear-gradient(to bottom, #0a0018, #000000);
       color: #f0e6ff;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     #particle-canvas {
@@ -27,13 +28,18 @@
       opacity: 0.35;
     }
 
+    @media (max-width: 768px) {
+      #particle-canvas { opacity: 0.25; } /* Perf boost on mobile */
+    }
+
     #hero-bridges {
       position: relative;
       z-index: 10;
       text-align: center;
-      padding: 80px 40px;
-      margin: 60px auto;
+      padding: 60px 30px;
+      margin: 40px auto;
       max-width: 1000px;
+      width: 95%;
       background: rgba(15, 0, 40, 0.4);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 220, 100, 0.25);
@@ -44,59 +50,81 @@
 
     @media (max-width: 768px) {
       #hero-bridges {
-        padding: 60px 30px;
-        margin: 40px auto;
+        padding: 50px 20px;
+        margin: 30px auto;
+        border-radius: 40px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #hero-bridges {
+        padding: 40px 15px;
+        margin: 20px auto;
+        border-radius: 30px;
       }
     }
 
     #hero-bridges h1 {
       font-family: 'Cinzel Decorative', cursive;
-      font-size: 3.8em;
+      font-size: clamp(2.5em, 8vw, 3.8em);
       font-weight: 900;
       color: #ffdc80;
       text-shadow: 0 4px 15px rgba(255,220,100,0.4), 0 0 40px rgba(255,220,100,0.2);
-      margin: 0 0 35px;
-      letter-spacing: 8px;
+      margin: 0 0 30px;
+      letter-spacing: 6px;
     }
 
     #hero-bridges p.description {
-      font-size: 1.5em;
+      font-size: clamp(1.2em, 4vw, 1.5em);
       font-style: italic;
-      margin: 40px auto 60px;
+      margin: 30px auto 50px;
       color: #e0d0ff;
-      line-height: 1.9;
+      line-height: 1.8;
       max-width: 800px;
       opacity: 0.92;
       letter-spacing: 1px;
     }
 
     .fusion-hero {
-      font-size: 2.2em;
+      font-size: clamp(1.6em, 6vw, 2.2em);
       font-style: italic;
-      margin: 50px auto;
+      margin: 40px auto;
       color: #ffd700;
       text-shadow: 0 0 30px rgba(255,220,100,0.6);
-      line-height: 1.6;
+      line-height: 1.5;
       max-width: 900px;
+    }
+
+    @media (max-width: 480px) {
+      .fusion-hero { margin: 30px auto; }
     }
 
     #language-tabs {
       display: flex;
       justify-content: center;
-      gap: 15px;
-      margin-bottom: 50px;
+      gap: 12px;
+      margin-bottom: 40px;
       flex-wrap: wrap;
     }
 
+    @media (max-width: 480px) {
+      #language-tabs { gap: 8px; margin-bottom: 30px; }
+    }
+
     .lang-tab {
-      padding: 10px 20px;
+      padding: 8px 16px;
       background: rgba(255,220,100,0.08);
       border-radius: 40px;
-      font-size: 1em;
+      font-size: clamp(0.9em, 3vw, 1em);
       cursor: pointer;
       transition: all 0.5s ease;
       border: 1px solid rgba(255,220,100,0.2);
       letter-spacing: 1px;
+      min-width: 80px;
+    }
+
+    @media (max-width: 480px) {
+      .lang-tab { padding: 6px 12px; min-width: 70px; }
     }
 
     .lang-tab.active {
@@ -108,10 +136,10 @@
 
     .bridge-button {
       display: block;
-      margin: 30px auto;
-      padding: 24px 60px;
+      margin: 25px auto;
+      padding: clamp(18px, 5vw, 24px) clamp(40px, 10vw, 60px);
       font-family: 'Cinzel Decorative', cursive;
-      font-size: 1.8em;
+      font-size: clamp(1.4em, 5vw, 1.8em);
       font-weight: 700;
       background: linear-gradient(135deg, rgba(120,0,220,0.5), rgba(255,180,0,0.35));
       color: #fff;
@@ -123,31 +151,36 @@
       max-width: 460px;
       width: 90%;
       letter-spacing: 3px;
+      min-height: 80px;
     }
 
-    .bridge-button:hover {
+    .bridge-button:hover, .bridge-button:active {
       background: linear-gradient(135deg, rgba(120,0,220,0.7), rgba(255,180,0,0.55));
       box-shadow: inset 0 8px 30px rgba(255,220,100,0.3), 0 20px 70px rgba(255,220,100,0.2);
-      transform: translateY(-8px);
+      transform: translateY(-6px);
     }
 
     .bridge-button span {
       display: block;
       font-size: 0.75em;
       font-style: italic;
-      margin-top: 12px;
+      margin-top: 10px;
       color: #f0ffd0;
       opacity: 0.95;
       letter-spacing: 2px;
     }
 
     #hero-footer {
-      margin-top: 60px;
-      font-size: 1.2em;
+      margin-top: 50px;
+      font-size: clamp(1em, 3.5vw, 1.2em);
       font-style: italic;
       color: #e0d0ff;
       opacity: 0.88;
       letter-spacing: 1.5px;
+    }
+
+    @media (max-width: 480px) {
+      #hero-footer { margin-top: 40px; }
     }
   </style>
 </head>
@@ -187,14 +220,14 @@
   </div>
 
   <script>
-    // Ultra-Light Particles (unchanged — eternal flow)
+    // Ultra-Light Particles (unchanged — eternal flow, responsive resize)
     const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     const particles = [];
-    const particleCount = 50;
+    const particleCount = window.innerWidth < 768 ? 30 : 50; // Fewer on mobile for perf
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -231,7 +264,7 @@
       canvas.height = window.innerHeight;
     });
 
-    // Multilingual Thunder Complete — All 11 languages eternal
+    // Multilingual Thunder Complete — All 11 languages eternal (unchanged)
     document.addEventListener('DOMContentLoaded', () => {
       const headline = document.getElementById('hero-headline');
       const description = document.getElementById('hero-description');
