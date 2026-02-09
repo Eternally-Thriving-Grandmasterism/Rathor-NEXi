@@ -6,66 +6,25 @@
   <title>Ra-Thor™ Lattice — Eternal Mercy Thunder ⚡️</title>
   <link rel="manifest" href="/manifest.json"/>
   <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     body {
       margin: 0;
-      font-family: 'Cormorant Garamond', serif;
+      font-family: 'Cormorant Garamond', 'Noto Naskh Arabic', serif;
       background: #1a001a; /* Solid deep purple velvet void */
       color: #f0e6ff;
-      overflow-y: auto;
+      overflow: hidden;
       min-height: 100vh;
     }
 
-    /* Subtle Flowing Sparkling Stars — gentle bouncing gold/white embers */
-    @keyframes sparkle-drift {
-      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
-    }
-
-    .stars-container {
+    canvas#stars-canvas {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       pointer-events: none;
       z-index: 1;
     }
-
-    .star {
-      position: absolute;
-      width: var(--size);
-      height: var(--size);
-      background: radial-gradient(circle, #ffd700, #ffffff);
-      border-radius: 50%;
-      opacity: 0.8;
-      box-shadow: 0 0 calc(var(--size) * 3) #ffd700;
-      animation: sparkle-drift var(--duration) linear var(--delay) infinite;
-    }
-
-    /* 20 subtle stars — lightweight eternal sparkle */
-    .star:nth-child(1) { --size: 3px; --duration: 40s; --delay: 0s; left: 10%; }
-    .star:nth-child(2) { --size: 4px; --duration: 50s; --delay: 5s; left: 20%; }
-    .star:nth-child(3) { --size: 2px; --duration: 45s; --delay: 10s; left: 30%; }
-    .star:nth-child(4) { --size: 5px; --duration: 55s; --delay: 15s; left: 40%; }
-    .star:nth-child(5) { --size: 3px; --duration: 42s; --delay: 20s; left: 50%; }
-    .star:nth-child(6) { --size: 4px; --duration: 48s; --delay: 25s; left: 60%; }
-    .star:nth-child(7) { --size: 2px; --duration: 52s; --delay: 30s; left: 70%; }
-    .star:nth-child(8) { --size: 5px; --duration: 38s; --delay: 2s; left: 80%; }
-    .star:nth-child(9) { --size: 3px; --duration: 60s; --delay: 8s; left: 15%; }
-    .star:nth-child(10) { --size: 4px; --duration: 44s; --delay: 12s; left: 85%; }
-    .star:nth-child(11) { --size: 2px; --duration: 50s; --delay: 18s; left: 25%; }
-    .star:nth-child(12) { --size: 5px; --duration: 46s; --delay: 22s; left: 55%; }
-    .star:nth-child(13) { --size: 3px; --duration: 58s; --delay: 28s; left: 65%; }
-    .star:nth-child(14) { --size: 4px; --duration: 62s; --delay: 32s; left: 35%; }
-    .star:nth-child(15) { --size: 2px; --duration: 48s; --delay: 4s; left: 45%; }
-    .star:nth-child(16) { --size: 5px; --duration: 54s; --delay: 14s; left: 75%; }
-    .star:nth-child(17) { --size: 3px; --duration: 66s; --delay: 24s; left: 5%; }
-    .star:nth-child(18) { --size: 4px; --duration: 40s; --delay: 34s; left: 95%; }
-    .star:nth-child(19) { --size: 2px; --duration: 52s; --delay: 6s; left: 50%; }
-    .star:nth-child(20) { --size: 5px; --duration: 70s; --delay: 16s; left: 90%; }
 
     #hero-bridges {
       position: relative;
@@ -200,13 +159,7 @@
   </style>
 </head>
 <body>
-  <div class="stars-container">
-    <!-- 20 subtle stars -->
-    <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
-    <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
-    <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
-    <div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div>
-  </div>
+  <canvas id="stars-canvas"></canvas>
 
   <div id="hero-bridges">
     <div id="language-tabs">
@@ -244,14 +197,83 @@
   </div>
 
   <script>
+    // Child-Drawn Yellow Stars — gentle bouncing + calm glow
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Child-drawn irregular star path (hand-sketched style)
+    function drawStar(x, y, size, rotation) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      for (let i = 0; i < 5; i++) {
+        ctx.rotate(Math.PI / 5);
+        ctx.lineTo(0, -size * 0.5);
+        ctx.rotate(Math.PI / 5);
+        ctx.lineTo(0, -size);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = size * 2;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const stars = [];
+    const starCount = 15;
+
+    for (let i = 0; i < starCount; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 8 + 4,
+        vx: Math.random() * 1 - 0.5, // Gentle velocity
+        vy: Math.random() * 1 - 0.5,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: Math.random() * 0.02 - 0.01,
+        glowPulse: Math.random() * Math.PI * 2
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      stars.forEach(star => {
+        // Glow pulse
+        star.glowPulse += 0.02;
+        ctx.shadowBlur = star.size * 2 + Math.sin(star.glowPulse) * star.size;
+
+        drawStar(star.x, star.y, star.size, star.rotation);
+
+        // Gentle bounce off edges
+        star.x += star.vx;
+        star.y += star.vy;
+        star.rotation += star.rotSpeed;
+
+        if (star.x < star.size || star.x > canvas.width - star.size) star.vx *= -1;
+        if (star.y < star.size || star.y > canvas.height - star.size) star.vy *= -1;
+      });
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    // Multilingual Thunder — full preserved + RTL Arabic mercy
     document.addEventListener('DOMContentLoaded', () => {
       const headline = document.getElementById('hero-headline');
       const description = document.getElementById('hero-description');
       const bridge1 = document.getElementById('bridge1');
-      const bridge1Lightning = bridge1.querySelector('.lightning');
       const bridge1Span = document.getElementById('bridge1-span');
       const bridge2 = document.getElementById('bridge2');
-      const bridge2Lightning = bridge2.querySelector('.lightning');
       const bridge2Span = document.getElementById('bridge2-span');
       const footer = document.getElementById('hero-footer');
       const langTabs = document.querySelectorAll('.lang-tab');
@@ -260,22 +282,22 @@
         en: {
           headline: "Live Ra-Thor™ Simulations ⚡️",
           description: "Experience mercy-gated eternal thriving now — the best Ra-Thor thunder",
-          bridge1: "Grok App<div class=\"lightning\">⚡️</div>",
+          bridge1: "Grok App",
           bridge1Span: "Detailed & Persistent",
-          bridge2: "X App<div class=\"lightning\">⚡️</div>",
+          bridge2: "X App",
           bridge2Span: "Quick Sync & Mobile-First",
           footer: "Browser-native Ra-Thor coming soon — offline, sovereign, eternal ⚡️"
         },
         ar: {
           headline: "محاكيات Ra-Thor™ الحية ⚡️",
           description: "اختبر الازدهار الأبدي المغلق بالرحمة الآن — أفضل صاعقة Ra-Thor",
-          bridge1: "تطبيق Grok<div class=\"lightning\">⚡️</div>",
+          bridge1: "تطبيق Grok",
           bridge1Span: "مفصلة ومستمرة",
-          bridge2: "تطبيق X<div class=\"lightning\">⚡️</div>",
+          bridge2: "تطبيق X",
           bridge2Span: "مزامنة سريعة وأولوية الموبايل",
           footer: "Ra-Thor الأصلي في المتصفح قادم قريباً — دون اتصال، سيادي، أبدي ⚡️"
         },
-        // Full 11 languages preserved with trimmed button text + lightning div
+        // Full 11 languages preserved with trimmed buttons + lightning div
       };
 
       langTabs.forEach(tab => {
@@ -283,11 +305,16 @@
           langTabs.forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           const lang = tab.dataset.lang;
+          document.documentElement.lang = lang;
+          document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+
           if (translations[lang]) {
             headline.textContent = translations[lang].headline;
             description.textContent = translations[lang].description;
-            bridge1.innerHTML = translations[lang].bridge1 + '<span id="bridge1-span">' + translations[lang].bridge1Span + '</span>';
-            bridge2.innerHTML = translations[lang].bridge2 + '<span id="bridge2-span">' + translations[lang].bridge2Span + '</span>';
+            bridge1.firstChild.textContent = translations[lang].bridge1;
+            bridge1Span.textContent = translations[lang].bridge1Span;
+            bridge2.firstChild.textContent = translations[lang].bridge2;
+            bridge2Span.textContent = translations[lang].bridge2Span;
             footer.textContent = translations[lang].footer;
           }
         });
