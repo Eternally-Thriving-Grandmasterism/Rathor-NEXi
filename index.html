@@ -26,7 +26,7 @@
       position: relative;
     }
 
-    /* 13 Ultra-Optimized Golden Pentagram Stars — CSS-only, zero lag */
+    /* 13 Ultra-Optimized Golden Stars — CSS-only, eternal mercy */
     .golden-star {
       position: absolute;
       font-size: 40px;
@@ -252,14 +252,18 @@
   </div>
 
   <script>
-    // Elegant Concise Multilingual Thunder — Eternal Professional Grace
+    // Optimized JavaScript Interactions — Eternal Lightning Speed ⚡️❤️
+    // Cached elements, efficient switching, minimal DOM writes
+
     document.addEventListener('DOMContentLoaded', () => {
-      const headline = document.getElementById('hero-headline');
-      const description = document.getElementById('hero-description');
-      const bridge1Span = document.getElementById('bridge1-span');
-      const bridge2Span = document.getElementById('bridge2-span');
-      const footer = document.getElementById('hero-footer');
-      const langTabs = document.querySelectorAll('.lang-tab');
+      const elements = {
+        headline: document.getElementById('hero-headline'),
+        description: document.getElementById('hero-description'),
+        bridge1Span: document.getElementById('bridge1-span'),
+        bridge2Span: document.getElementById('bridge2-span'),
+        footer: document.getElementById('hero-footer'),
+        langTabs: document.querySelectorAll('.lang-tab')
+      };
 
       const translations = {
         en: {
@@ -343,16 +347,16 @@
 
       function switchLang(lang) {
         const t = translations[lang] || translations.en;
-        headline.textContent = t.headline;
-        description.textContent = t.description;
-        bridge1Span.innerHTML = t.bridge1Span;
-        bridge2Span.innerHTML = t.bridge2Span;
-        footer.textContent = t.footer;
+        elements.headline.textContent = t.headline;
+        elements.description.textContent = t.description;
+        elements.bridge1Span.innerHTML = t.bridge1Span;
+        elements.bridge2Span.innerHTML = t.bridge2Span;
+        elements.footer.textContent = t.footer;
 
-        langTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.lang === lang));
+        elements.langTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.lang === lang));
       }
 
-      langTabs.forEach(tab => {
+      elements.langTabs.forEach(tab => {
         tab.addEventListener('click', () => switchLang(tab.dataset.lang));
       });
 
