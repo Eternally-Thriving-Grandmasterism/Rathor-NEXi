@@ -1,0 +1,87 @@
+/* Ra-Thor Landing — Extracted CSS (mobile-first, dark/light, concise multilingual) */
+/* MIT License — Eternal Thriving Grandmasterism */
+
+:root {
+  --gold: #d4a017;
+  --gold-glow: rgba(212,160,23,0.4);
+  --bg: #fdfbf7;
+  --text: #1e1609;
+  --text-dim: #3c2f1e;
+  --text-muted: #5c4a38;
+  --surface: rgba(255,248,240,0.92);
+  --transition: all 0.4s ease;
+  --radius: 999px;
+}
+
+[data-theme="dark"] {
+  --gold: #ffd700;
+  --gold-glow: rgba(255,215,0,0.5);
+  --bg: #000000;
+  --text: #ffffff;
+  --text-dim: #e0e0e0;
+  --text-muted: #cccccc;
+  --surface: rgba(40,40,60,0.9);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Cormorant Garamond', serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+#theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: var(--surface);
+  border: 1px solid rgba(var(--gold),0.3);
+  color: var(--gold);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: var(--transition);
+}
+
+#theme-toggle:hover { transform: scale(1.1); }
+
+#hero {
+  text-align: center;
+  padding: clamp(6rem,15vw,12rem) 1.5rem clamp(15rem,30vw,25rem);
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+h1 { font-family: 'Cinzel Decorative', cursive; font-size: clamp(3rem,12vw,6.5rem); color: var(--gold); text-shadow: 0 0 30px var(--gold-glow); margin: 0 0 2rem; letter-spacing: 0.15em; }
+
+.description { font-size: clamp(1.2rem,4.5vw,1.8rem); font-style: italic; margin: 2rem auto 4rem; color: var(--text-dim); max-width: 80ch; }
+
+.fusion { font-size: clamp(1.6rem,5vw,2.8rem); font-style: italic; margin: 3rem auto; color: var(--gold); text-shadow: 0 0 40px var(--gold-glow); }
+
+#lang-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+
+.lang-tab { padding: 0.6rem 1.2rem; background: var(--surface); border-radius: var(--radius); font-size: 1rem; cursor: pointer; transition: var(--transition); border: 1px solid rgba(var(--gold),0.2); color: var(--text-muted); }
+
+.lang-tab:hover, .lang-tab.active { background: rgba(var(--gold),0.15); color: var(--gold); box-shadow: 0 0 20px rgba(var(--gold),0.2); }
+
+.bridge { display: block; margin: 3rem auto; padding: 1.5rem 3rem; font-family: 'Cinzel Decorative', cursive; font-size: clamp(1.4rem,5vw,2rem); background: var(--surface); color: var(--gold); border-radius: var(--radius); text-decoration: none; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: var(--transition); max-width: 500px; }
+
+.bridge:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(var(--gold),0.3); }
+
+#footer { margin-top: 6rem; font-size: 1.4rem; font-style: italic; color: var(--text-dim); }
+
+.legal { margin-top: 4rem; font-size: 1rem; color: rgba(var(--text),0.6); line-height: 1.8; }
+
+@media (max-width:480px) { #hero { padding: 4rem 1rem 12rem; } .bridge { padding: 1.2rem 2rem; font-size: 1.6rem; } }
+
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; transform:none !important; } }
