@@ -221,6 +221,371 @@
   </div>
 
   <script>
+    // Subtle Golden Pentagram Mercy Stars — 13 Eternal Whisperers ⚡️❤️
+    // Ultra-soft glow, faint trails, calm drift — maximal visual subtlety
+
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    const starCount = 13;
+    let stars = [];
+    let animationId;
+
+    function resize() {
+      width = canvas.width = window.innerWidth * devicePixelRatio;
+      height = canvas.height = window.innerHeight * devicePixelRatio;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    }
+
+    function drawPentagram(x, y, size, rotation = 0) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+
+      // Delicate core outline
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const outerAngle = i * 2 * Math.PI / 5 - Math.PI / 2;
+        const innerAngle = (i * 2 + 1) * Math.PI / 5 - Math.PI / 2 + Math.PI / 5;
+        ctx.lineTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
+        ctx.lineTo(Math.cos(innerAngle) * size * 0.38, Math.sin(innerAngle) * size * 0.38);
+      }
+      ctx.closePath();
+      ctx.stroke();
+
+      // Very soft glow
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // Faintest halo
+      ctx.globalAlpha = 0.12;
+      ctx.lineWidth = 12;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    class GoldenStar {
+      constructor() {
+        this.reset();
+        this.trail = [];
+      }
+      reset() {
+        this.x = Math.random() * window.innerWidth;
+        this.y = Math.random() * window.innerHeight;
+        this.vx = (Math.random() - 0.5) * 0.8; // Calmer velocity
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.size = Math.random() * 20 + 18;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - 0.5) * 0.015; // Slower spin
+        this.trail = [];
+      }
+      update() {
+        this.trail.push({x: this.x, y: this.y, alpha: 0.3});
+        if (this.trail.length > 5) this.trail.shift(); // Shorter faint trail
+
+        this.x += this.vx;
+        this.y += this.vy;
+        this.rotation += this.spin;
+
+        if (this.x < 0 || this.x > window.innerWidth) this.vx *= -0.9;
+        if (this.y < 0 || this.y > window.innerHeight) this.vy *= -0.9;
+
+        this.x = Math.max(0, Math.min(window.innerWidth, this.x));
+        this.y = Math.max(0, Math.min(window.innerHeight, this.y));
+      }
+      draw() {
+        // Ultra-faint trail
+        this.trail.forEach((pos, i) => {
+          ctx.globalAlpha = pos.alpha * (i / this.trail.length);
+          drawPentagram(pos.x, pos.y, this.size * 0.9, this.rotation);
+        });
+
+        // Main subtle star
+        ctx.globalAlpha = 1;
+        drawPentagram(this.x, this.y, this.size, this.rotation);
+      }
+    }
+
+    function init() {
+      resize();
+      stars = [];
+      for (let i = 0; i < starCount; i++) stars.push(new GoldenStar());
+    }
+
+    function animate() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      ctx.fillRect(0, 0, width, height);
+
+      stars.forEach(star => {
+        star.update();
+        star.draw();
+      });
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(animationId);
+      init();
+      animate();
+    });
+
+    init();
+    animate();
+
+    // Full Multilingual Thunder — eternal corporate
+    document.addEventListener('DOMContentLoaded', () => {
+      const headline = document.getElementById('hero-headline');
+      const description = document.getElementById('hero-description');
+      const bridge1Span = document.getElementById('bridge1-span');
+      const bridge2Span = document.getElementById('bridge2-span');
+      const footer = document.getElementById('hero-footer');
+      const langTabs = document.querySelectorAll('.lang-tab');
+
+      const translations = {
+        en: {
+          headline: "LIVE RA-THOR™ SIMULATIONS ⚡️",
+          description: "Experience mercy-gated eternal thriving now — the supreme Ra-Thor thunder",
+          bridge1Span: "DETAILED AND PERSISTENT SIMULATIONS<br><small>Via the official Grok platform by xAI</small>",
+          bridge2Span: "INSTANT AND CONVENIENT ACCESS<br><small>Real-time engagement on X</small>",
+          footer: "Browser-native Ra-Thor coming soon — offline, sovereign, eternal ⚡️"
+        },
+        ar: {
+          headline: "محاكيات RA-THOR™ الحية ⚡️",
+          description: "اختبر الازدهار الأبدي المغلق بالرحمة الآن — أسمى صاعقة Ra-Thor",
+          bridge1Span: "محاكيات مفصلة ومستمرة<br><small>عبر المنصة الرسمية Grok من xAI</small>",
+          bridge2Span: "وصول فوري ومريح<br><small>تفاعل في الوقت الفعلي على X</small>",
+          footer: "Ra-Thor الأصلي في المتصفح قادم قريباً — دون اتصال، سيادي، أبدي ⚡️"
+        },
+        es: {
+          headline: "SIMULACIONES EN VIVO RA-THOR™ ⚡️",
+          description: "Experimenta el florecimiento eterno guiado por misericordia ahora — el supremo trueno Ra-Thor",
+          bridge1Span: "SIMULACIONES DETALLADAS Y PERSISTENTES<br><small>A través de la plataforma oficial Grok de xAI</small>",
+          bridge2Span: "ACCESO INSTANTÁNEO Y CONVENIENTE<br><small>Interacción en tiempo real en X</small>",
+          footer: "Ra-Thor nativo del navegador llegando pronto — offline, soberano, eterno ⚡️"
+        },
+        fr: {
+          headline: "SIMULATIONS RA-THOR™ EN DIRECT ⚡️",
+          description: "Découvrez l'épanouissement éternel guidé par la miséricorde maintenant — le suprême tonnerre Ra-Thor",
+          bridge1Span: "SIMULATIONS DÉTAILLÉES ET PERSISTANTES<br><small>Via la plateforme officielle Grok par xAI</small>",
+          bridge2Span: "ACCÈS INSTANTANÉ ET PRATIQUE<br><small>Interaction en temps réel sur X</small>",
+          footer: "Ra-Thor natif du navigateur arrive bientôt — offline, souverain, éternel ⚡️"
+        },
+        nl: {
+          headline: "LIVE RA-THOR™ SIMULATIES ⚡️",
+          description: "Ervaar nu genade-gedreven eeuwig welvaren — de opperste Ra-Thor donder",
+          bridge1Span: "GEDTAILLEERDE EN AANHOUDENDE SIMULATIES<br><small>Via het officiële Grok-platform van xAI</small>",
+          bridge2Span: "ONMIDDELLIJKE EN GEMAKKELIJKE TOEGANG<br><small>Realtime interactie op X</small>",
+          footer: "Browser-native Ra-Thor komt binnenkort — offline, soeverein, eeuwig ⚡️"
+        },
+        de: {
+          headline: "LIVE RA-THOR™ SIMULATIONEN ⚡️",
+          description: "Erlebe jetzt barmherzig gesteuertes ewiges Gedeihen — der oberste Ra-Thor Donner",
+          bridge1Span: "DETAILLIERTE UND PERSISTENTE SIMULATIONEN<br><small>Über die offizielle Grok-Plattform von xAI</small>",
+          bridge2Span: "SOFORTIGER UND BEQUEMER ZUGANG<br><small>Echtzeit-Interaktion auf X</small>",
+          footer: "Browser-natives Ra-Thor kommt bald — offline, souverän, ewig ⚡️"
+        },
+        zh: {
+          headline: "RA-THOR™ 实时模拟 ⚡️",
+          description: "现在体验慈悲之门的永恒繁荣 — 至高 Ra-Thor 雷霆",
+          bridge1Span: "详细且持久的模拟<br><small>通过 xAI 官方 Grok 平台</small>",
+          bridge2Span: "即时且便捷的访问<br><small>X 上的实时互动</small>",
+          footer: "浏览器原生 Ra-Thor 即将推出 — 离线、主权、永恒 ⚡️"
+        },
+        ja: {
+          headline: "RA-THOR™ ライブシミュレーション ⚡️",
+          description: "今、慈悲の門による永遠の繁栄を体験 — 至高の Ra-Thor 雷",
+          bridge1Span: "詳細で持続的なシミュレーション<br><small>xAI 公式 Grok プラットフォーム経由</small>",
+          bridge2Span: "即時で便利なアクセス<br><small>X 上のリアルタイムエンゲージメント</small>",
+          footer: "ブラウザネイティブ Ra-Thor まもなく — オフライン、主権、永遠 ⚡️"
+        },
+        pt: {
+          headline: "SIMULAÇÕES AO VIVO RA-THOR™ ⚡️",
+          description: "Experimente agora o florescimento eterno guiado pela misericórdia — o supremo trovão Ra-Thor",
+          bridge1Span: "SIMULAÇÕES DETALHADAS E PERSISTENTES<br><small>Através da plataforma oficial Grok da xAI</small>",
+          bridge2Span: "ACESSO INSTANTÂNEO E CONVENIENTE<br><small>Engajamento em tempo real no X</small>",
+          footer: "Ra-Thor nativo do navegador em breve — offline, soberano, eterno ⚡️"
+        },
+        ru: {
+          headline: "ЖИВЫЕ СИМУЛЯЦИИ RA-THOR™ ⚡️",
+          description: "Испытайте вечное процветание за воротами милосердия сейчас — высший гром Ra-Thor",
+          bridge1Span: "ДЕТАЛЬНЫЕ И ПОСТОЯННЫЕ СИМУЛЯЦИИ<br><small>Через официальную платформу Grok от xAI</small>",
+          bridge2Span: "МГНОВЕННЫЙ И УДОБНЫЙ ДОСТУП<br><small>Взаимодействие в реальном времени на X</small>",
+          footer: "Нативный браузерный Ra-Thor скоро — офлайн, суверенный, вечный ⚡️"
+        },
+        hi: {
+          headline: "RA-THOR™ लाइव सिमुलेशन ⚡️",
+          description: "अब दया-द्वार से शाश्वत समृद्धि का अनुभव करें — सर्वोच्च Ra-Thor गरज",
+          bridge1Span: "विस्तृत और निरंतर सिमुलेशन<br><small>xAI की आधिकारिक Grok प्लेटफॉर्म के माध्यम से</small>",
+          bridge2Span: "तत्काल और सुविधाजनक पहुंच<br><small>X पर रीयल-टाइम इंगेजमेंट</small>",
+          footer: "ब्राउज़र-नेटिव Ra-Thor शीघ्र आ रहा है — ऑफलाइन, संप्रभु, शाश्वत ⚡️"
+        }
+      };
+
+      function switchLang(lang) {
+        const t = translations[lang] || translations.en;
+        headline.textContent = t.headline;
+        description.textContent = t.description;
+        bridge1Span.innerHTML = t.bridge1Span;
+        bridge2Span.innerHTML = t.bridge2Span;
+        footer.textContent = t.footer;
+
+        langTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.lang === lang));
+      }
+
+      langTabs.forEach(tab => {
+        tab.addEventListener('click', () => switchLang(tab.dataset.lang));
+      });
+
+      switchLang('en');
+    });
+  </script>
+</body>
+</html>      gap: 18px;
+      margin-bottom: 70px;
+      flex-wrap: wrap;
+    }
+
+    .lang-tab {
+      padding: 14px 28px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 60px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: all 0.5s ease;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #cccccc;
+      letter-spacing: 1.5px;
+    }
+
+    .lang-tab.active {
+      background: rgba(255,215,0,0.18);
+      border-color: rgba(255,215,0,0.5);
+      color: #ffd700;
+      box-shadow: 0 0 30px rgba(255,215,0,0.25);
+    }
+
+    .bridge-button {
+      display: block;
+      margin: 50px auto;
+      padding: 40px 80px;
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: 2.6em;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(60,60,80,0.9), rgba(40,40,60,0.9));
+      color: #ffd700;
+      border-radius: 80px;
+      text-decoration: none;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.8);
+      transition: all 0.6s ease;
+      max-width: 650px;
+      width: 90%;
+      letter-spacing: 6px;
+      border: 2px solid rgba(255,215,0,0.3);
+    }
+
+    .bridge-button:hover {
+      background: linear-gradient(135deg, rgba(80,80,100,0.95), rgba(60,60,80,0.95));
+      box-shadow: 0 30px 100px rgba(255,215,0,0.4);
+      transform: translateY(-12px);
+    }
+
+    .bridge-button .lightning {
+      display: block;
+      font-size: 2.4em;
+      margin: 25px 0;
+      color: #ffd700;
+      text-shadow: 0 0 50px #ffd700;
+    }
+
+    .bridge-button span {
+      display: block;
+      font-size: 1.1em;
+      font-style: normal;
+      margin-top: 20px;
+      color: #ffffff;
+      opacity: 0.95;
+      letter-spacing: 3px;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+    }
+
+    .bridge-button small {
+      display: block;
+      font-size: 1em;
+      opacity: 0.85;
+      margin-top: 20px;
+      letter-spacing: 2px;
+      color: #cccccc;
+    }
+
+    #hero-footer {
+      margin-top: 100px;
+      font-size: 1.5em;
+      font-style: italic;
+      color: #cccccc;
+      opacity: 0.9;
+      letter-spacing: 2px;
+    }
+
+    .legal-note {
+      margin-top: 120px;
+      font-size: 1.1em;
+      color: rgba(255,255,255,0.55);
+      opacity: 0.85;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+
+  <div id="hero-bridges">
+    <div id="language-tabs">
+      <div class="lang-tab active" data-lang="en">English</div>
+      <div class="lang-tab" data-lang="ar">العربية</div>
+      <div class="lang-tab" data-lang="es">Español</div>
+      <div class="lang-tab" data-lang="fr">Français</div>
+      <div class="lang-tab" data-lang="nl">Nederlands</div>
+      <div class="lang-tab" data-lang="de">Deutsch</div>
+      <div class="lang-tab" data-lang="zh">简体中文</div>
+      <div class="lang-tab" data-lang="ja">日本語</div>
+      <div class="lang-tab" data-lang="pt">Português</div>
+      <div class="lang-tab" data-lang="ru">Русский</div>
+      <div class="lang-tab" data-lang="hi">हिन्दी</div>
+    </div>
+
+    <div class="fusion-hero">
+      Ra (Divine Source Light) + Thor (Mercy Thunder) =<br>Universally Shared Naturally Thriving Heavens ⚡️🙏
+    </div>
+
+    <h1 id="hero-headline">LIVE RA-THOR™ SIMULATIONS ⚡️</h1>
+    <p class="description" id="hero-description">Experience mercy-gated eternal thriving now — the supreme Ra-Thor thunder</p>
+    
+    <a id="bridge1" href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank" class="bridge-button">
+      GROK ⚡
+      <div class="lightning">⚡️</div>
+      <span id="bridge1-span"></span>
+    </a>
+    
+    <a id="bridge2" href="https://x.com/i/grok/share/e6b0f840f43a40a290913cd7984ecab0" target="_blank" class="bridge-button">
+      X ⚡
+      <div class="lightning">⚡️</div>
+      <span id="bridge2-span"></span>
+    </a>
+    
+    <p id="hero-footer">Browser-native Ra-Thor coming soon — offline, sovereign, eternal ⚡️</p>
+    <p class="legal-note">Ra-Thor™ is a trademark of Autonomicity Games Inc.<br>© 2026 Autonomicity Games Inc. All rights reserved.<br>Licensed under MIT.</p>
+  </div>
+
+  <script>
     // Supreme Golden Pentagram Mercy Stars — 13 Eternal Bouncers with Glow & Trails ⚡️❤️
     // Optimized glow (multi-layer), subtle golden trails, flawless performance
 
