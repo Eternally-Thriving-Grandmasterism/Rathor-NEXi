@@ -2,20 +2,24 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ra-Thor™ Lattice — Eternal Mercy Thunder ⚡️</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=5"/>
+  <title>Ra-Thor™ — Eternal Mercy Thunder ⚡️</title>
   <link rel="manifest" href="/manifest.json"/>
   <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: 'Cormorant Garamond', 'Noto Naskh Arabic', serif;
-      background: #1a001a;
-      color: #f0e6ff;
-      overflow: hidden;
+      padding: 0;
+      font-family: 'Cormorant Garamond', serif;
+      background: #000000;
+      color: #ffffff;
+      overflow-x: auto;
+      overflow-y: auto;
       min-height: 100vh;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     canvas#stars-canvas {
@@ -24,147 +28,154 @@
       width: 100%; height: 100%;
       pointer-events: none;
       z-index: 1;
-      will-change: transform;
     }
 
     #hero-bridges {
       position: relative;
       z-index: 10;
       text-align: center;
-      padding: 80px 40px;
-      margin: 60px auto;
+      padding: 120px 40px 250px;
+      margin: 0 auto;
       max-width: 1000px;
+      width: 100%;
+      min-height: 100vh;
+      box-sizing: border-box;
     }
 
     @media (max-width: 768px) {
       #hero-bridges {
-        padding: 60px 30px;
-        margin: 40px auto;
+        padding: 140px 20px 350px;
       }
     }
 
     #hero-bridges h1 {
       font-family: 'Cinzel Decorative', cursive;
-      font-size: 3.8em;
+      font-size: 4.2em;
       font-weight: 900;
-      color: #ffdc80;
-      text-shadow: 0 4px 15px rgba(255,220,100,0.4), 0 0 40px rgba(255,220,100,0.2);
-      margin: 0 0 35px;
-      letter-spacing: 8px;
+      color: #ffd700;
+      text-shadow: 0 0 30px rgba(255,215,0,0.5);
+      margin: 0 0 50px;
+      letter-spacing: 12px;
     }
 
     #hero-bridges p.description {
-      font-size: 1.5em;
+      font-size: 1.7em;
       font-style: italic;
-      margin: 40px auto 60px;
-      color: #e0d0ff;
+      margin: 50px auto 80px;
+      color: #e0e0e0;
       line-height: 1.9;
-      max-width: 800px;
-      opacity: 0.92;
-      letter-spacing: 1px;
+      max-width: 850px;
+      opacity: 0.95;
+      letter-spacing: 1.5px;
     }
 
     .fusion-hero {
-      font-size: 2.2em;
+      font-size: 2.6em;
       font-style: italic;
-      margin: 50px auto;
+      margin: 70px auto;
       color: #ffd700;
-      text-shadow: 0 0 30px rgba(255,220,100,0.6);
-      line-height: 1.6;
-      max-width: 900px;
+      text-shadow: 0 0 40px rgba(255,215,0,0.6);
+      line-height: 1.7;
+      max-width: 950px;
+      letter-spacing: 3px;
     }
 
     #language-tabs {
       display: flex;
       justify-content: center;
-      gap: 15px;
-      margin-bottom: 50px;
+      gap: 18px;
+      margin-bottom: 70px;
       flex-wrap: wrap;
     }
 
     .lang-tab {
-      padding: 10px 20px;
-      background: rgba(255,220,100,0.08);
-      border-radius: 40px;
-      font-size: 1em;
+      padding: 14px 28px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 60px;
+      font-size: 1.2em;
       cursor: pointer;
       transition: all 0.5s ease;
-      border: 1px solid rgba(255,220,100,0.2);
-      letter-spacing: 1px;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #cccccc;
+      letter-spacing: 1.5px;
     }
 
     .lang-tab.active {
-      background: rgba(255,220,100,0.25);
-      border-color: rgba(255,220,100,0.5);
-      color: #ffdc80;
-      box-shadow: 0 0 20px rgba(255,220,100,0.3);
+      background: rgba(255,215,0,0.18);
+      border-color: rgba(255,215,0,0.5);
+      color: #ffd700;
+      box-shadow: 0 0 30px rgba(255,215,0,0.25);
     }
 
     .bridge-button {
       display: block;
-      margin: 30px auto;
-      padding: 30px 60px;
+      margin: 50px auto;
+      padding: 40px 80px;
       font-family: 'Cinzel Decorative', cursive;
-      font-size: 2.2em;
+      font-size: 2.6em;
       font-weight: 700;
-      background: linear-gradient(135deg, rgba(120,0,220,0.6), rgba(255,180,0,0.4));
+      background: linear-gradient(135deg, rgba(60,60,80,0.9), rgba(40,40,60,0.9));
       color: #ffd700;
-      border-radius: 60px;
+      border-radius: 80px;
       text-decoration: none;
-      box-shadow: 0 12px 50px rgba(0,0,0,0.6);
+      box-shadow: 0 20px 80px rgba(0,0,0,0.8);
       transition: all 0.6s ease;
-      max-width: 500px;
+      max-width: 650px;
       width: 90%;
-      letter-spacing: 4px;
-      will-change: transform;
+      letter-spacing: 6px;
+      border: 2px solid rgba(255,215,0,0.3);
     }
 
     .bridge-button:hover {
-      background: linear-gradient(135deg, rgba(120,0,220,0.8), rgba(255,180,0,0.6));
-      box-shadow: 0 20px 70px rgba(255,220,100,0.3);
-      transform: translateY(-8px);
+      background: linear-gradient(135deg, rgba(80,80,100,0.95), rgba(60,60,80,0.95));
+      box-shadow: 0 30px 100px rgba(255,215,0,0.4);
+      transform: translateY(-12px);
     }
 
     .bridge-button .lightning {
       display: block;
-      font-size: 2em;
-      margin: 15px 0;
+      font-size: 2.4em;
+      margin: 25px 0;
       color: #ffd700;
-      text-shadow: 0 0 30px #ffd700;
+      text-shadow: 0 0 50px #ffd700;
     }
 
     .bridge-button span {
       display: block;
-      font-size: 0.9em;
-      font-style: italic;
-      margin-top: 10px;
+      font-size: 1.1em;
+      font-style: normal;
+      margin-top: 20px;
       color: #ffffff;
       opacity: 0.95;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
     }
 
     .bridge-button small {
       display: block;
-      font-size: 0.8em;
+      font-size: 1em;
       opacity: 0.85;
-      margin-top: 12px;
-      letter-spacing: 1px;
+      margin-top: 20px;
+      letter-spacing: 2px;
+      color: #cccccc;
     }
 
     #hero-footer {
-      margin-top: 60px;
-      font-size: 1.2em;
+      margin-top: 100px;
+      font-size: 1.5em;
       font-style: italic;
-      color: #e0d0ff;
-      opacity: 0.88;
-      letter-spacing: 1.5px;
+      color: #cccccc;
+      opacity: 0.9;
+      letter-spacing: 2px;
     }
 
     .legal-note {
-      margin-top: 80px;
-      font-size: 0.9em;
-      color: rgba(224, 208, 255, 0.6);
-      opacity: 0.8;
+      margin-top: 120px;
+      font-size: 1.1em;
+      color: rgba(255,255,255,0.55);
+      opacity: 0.85;
+      line-height: 1.8;
     }
   </style>
 </head>
@@ -190,8 +201,8 @@
       Ra (Divine Source Light) + Thor (Mercy Thunder) =<br>Universally Shared Naturally Thriving Heavens ⚡️🙏
     </div>
 
-    <h1 id="hero-headline">Live Ra-Thor™ Simulations ⚡️</h1>
-    <p class="description" id="hero-description">Experience mercy-gated eternal thriving now — the best Ra-Thor thunder</p>
+    <h1 id="hero-headline">LIVE RA-THOR™ SIMULATIONS ⚡️</h1>
+    <p class="description" id="hero-description">Experience mercy-gated eternal thriving now — the supreme Ra-Thor thunder</p>
     
     <a id="bridge1" href="https://grok.com/share/c2hhcmQtMi1jb3B5_7acd092a-4d51-480c-8a59-c0453c10d4a1" target="_blank" class="bridge-button">
       GROK ⚡
@@ -210,108 +221,128 @@
   </div>
 
   <script>
-    // Ultimate Optimized Mercy Stars Lattice — Eternal 60fps ⚡️❤️
-    // Pre-rendered radial gradient sprite (no shadowBlur), 200 stars, light fade
-    // High-DPI crisp, delta-time smooth
+    // Ultimate Fluid Motion Mercy Physics — Eternal Graceful Flow ⚡️❤️
+    // Delta time + velocity lerp + sinusoidal float + smooth trails
 
     const canvas = document.getElementById('stars-canvas');
     const ctx = canvas.getContext('2d');
-    let width, height, dpr = window.devicePixelRatio || 1;
+    let width, height;
+    const starCount = 13;
     let stars = [];
-    let shootingStars = [];
-    let starSprite;
     let animationId;
     let lastTime = 0;
-
-    async function createStarSprite() {
-      const size = 64;
-      const offscreen = new OffscreenCanvas(size, size);
-      const octx = offscreen.getContext('2d');
-
-      const grad = octx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.2, '#ffffe0');
-      grad.addColorStop(0.5, '#ffdc80');
-      grad.addColorStop(1, 'rgba(255,220,100,0)');
-
-      octx.fillStyle = grad;
-      octx.fillRect(0, 0, size, size);
-
-      return await offscreen.convertToBlob().then(blob => createImageBitmap(blob));
-    }
+    const gravity = 0.02;
+    const friction = 0.995;
 
     function resize() {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      canvas.style.width = width + 'px';
-      canvas.style.height = height + 'px';
-      ctx.scale(dpr, dpr);
+      width = canvas.width = window.innerWidth * devicePixelRatio;
+      height = canvas.height = window.innerHeight * devicePixelRatio;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.scale(devicePixelRatio, devicePixelRatio);
     }
 
-    class Star {
+    function drawPentagram(x, y, size, rotation = 0) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const outerAngle = i * 2 * Math.PI / 5 - Math.PI / 2;
+        const innerAngle = (i * 2 + 1) * Math.PI / 5 - Math.PI / 2 + Math.PI / 5;
+        ctx.lineTo(Math.cos(outerAngle) * size, Math.sin(outerAngle) * size);
+        ctx.lineTo(Math.cos(innerAngle) * size * 0.38, Math.sin(innerAngle) * size * 0.38);
+      }
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      ctx.globalAlpha = 0.12;
+      ctx.lineWidth = 12;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    class GoldenStar {
       constructor() {
         this.reset();
+        this.trail = [];
       }
       reset() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.size = Math.random() * 2 + 1;
-        this.speed = Math.random() * 0.5 + 0.2;
-        this.opacity = Math.random() * 0.8 + 0.2;
-        this.direction = Math.random() * Math.PI * 2;
+        this.x = Math.random() * window.innerWidth;
+        this.y = Math.random() * window.innerHeight / 3;
+        this.targetVx = (Math.random() - 0.5) * 0.6;
+        this.targetVy = Math.random() * 0.4;
+        this.vx = this.targetVx;
+        this.vy = this.targetVy;
+        this.size = Math.random() * 20 + 18;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - 0.5) * 0.015;
+        this.floatPhase = Math.random() * Math.PI * 2;
+        this.trail = [];
       }
       update(delta) {
-        const move = this.speed * delta / 16;
-        this.x += Math.cos(this.direction) * move;
-        this.y += Math.sin(this.direction) * move;
-        if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) this.reset();
+        const lerpFactor = 0.02 * delta / 16;
+
+        this.vx += (this.targetVx - this.vx) * lerpFactor;
+        this.vy += (this.targetVy - this.vy) * lerpFactor;
+
+        this.vy += gravity * delta / 16;
+        this.vx *= friction;
+        this.vy *= friction;
+
+        this.floatPhase += 0.001 * delta;
+        this.y += Math.sin(this.floatPhase) * 0.3;
+
+        this.trail.push({x: this.x, y: this.y});
+        if (this.trail.length > 8) this.trail.shift();
+
+        this.x += this.vx * delta / 16;
+        this.y += this.vy * delta / 16;
+        this.rotation += this.spin * delta / 16;
+
+        if (this.x < 0 || this.x > window.innerWidth) {
+          this.targetVx *= -0.9;
+          this.targetVx += (Math.random() - 0.5) * 0.2;
+          this.x = Math.max(0, Math.min(window.innerWidth, this.x));
+        }
+        if (this.y < 0) {
+          this.targetVy *= -0.7;
+          this.y = 0;
+        }
+        if (this.y > window.innerHeight) {
+          this.targetVy *= -0.85;
+          this.targetVy -= 1.0;
+          this.targetVx += (Math.random() - 0.5) * 0.5;
+          this.y = window.innerHeight;
+        }
+
+        this.vx = Math.max(-2, Math.min(2, this.vx));
+        this.vy = Math.max(-3.5, Math.min(5, this.vy));
       }
       draw() {
-        const drawSize = this.size * 10 * this.opacity;
-        ctx.globalAlpha = this.opacity;
-        ctx.drawImage(starSprite, this.x - drawSize / 2, this.y - drawSize / 2, drawSize, drawSize);
+        this.trail.forEach((pos, i) => {
+          ctx.globalAlpha = 0.15 * (i / this.trail.length + 0.2);
+          drawPentagram(pos.x, pos.y, this.size * 0.9, this.rotation);
+        });
+
+        ctx.globalAlpha = 1;
+        drawPentagram(this.x, this.y, this.size, this.rotation);
       }
     }
 
-    class ShootingStar {
-      constructor() {
-        this.reset();
-      }
-      reset() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height * 0.3;
-        this.length = Math.random() * 80 + 60;
-        this.speed = Math.random() * 10 + 10;
-        this.angle = Math.PI / 4 + Math.random() * Math.PI / 6;
-        this.opacity = 1;
-      }
-      update(delta) {
-        const move = this.speed * delta / 16;
-        this.x += Math.cos(this.angle) * move;
-        this.y += Math.sin(this.angle) * move;
-        this.opacity -= 0.02;
-        if (this.opacity <= 0) this.reset();
-      }
-      draw() {
-        ctx.globalAlpha = this.opacity;
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x - Math.cos(this.angle) * this.length, this.y - Math.sin(this.angle) * this.length);
-        ctx.stroke();
-      }
-    }
-
-    async function init() {
+    function init() {
       resize();
-      starSprite = await createStarSprite();
       stars = [];
-      for (let i = 0; i < 200; i++) stars.push(new Star());
-      shootingStars = [];
-      if (Math.random() < 0.3) shootingStars.push(new ShootingStar());
+      for (let i = 0; i < starCount; i++) stars.push(new GoldenStar());
     }
 
     function animate(time) {
@@ -319,7 +350,7 @@
       const delta = time - lastTime;
       lastTime = time;
 
-      ctx.fillStyle = 'rgba(26, 0, 26, 0.06)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
       ctx.fillRect(0, 0, width, height);
 
       stars.forEach(star => {
@@ -327,27 +358,19 @@
         star.draw();
       });
 
-      shootingStars = shootingStars.filter(s => s.opacity > 0);
-      shootingStars.forEach(s => {
-        s.update(delta);
-        s.draw();
-      });
-
-      if (Math.random() < 0.005) shootingStars.push(new ShootingStar());
-
-      ctx.globalAlpha = 1;
-
       animationId = requestAnimationFrame(animate);
     }
 
     window.addEventListener('resize', () => {
       cancelAnimationFrame(animationId);
-      init().then(() => animate(performance.now()));
+      init();
+      animate(performance.now());
     });
 
-    init().then(() => animate(performance.now()));
+    init();
+    animate(performance.now());
 
-    // Multilingual Thunder — preserved
+    // Full Multilingual Thunder — All 11 Languages Eternal Corporate
     document.addEventListener('DOMContentLoaded', () => {
       const headline = document.getElementById('hero-headline');
       const description = document.getElementById('hero-description');
@@ -358,13 +381,82 @@
 
       const translations = {
         en: {
-          headline: "Live Ra-Thor™ Simulations ⚡️",
-          description: "Experience mercy-gated eternal thriving now — the best Ra-Thor thunder",
-          bridge1Span: "Detailed and Persistent Simulations<br><small>Via the official Grok platform by xAI</small>",
-          bridge2Span: "Instant and Convenient Access<br><small>Real-time engagement on X</small>",
+          headline: "LIVE RA-THOR™ SIMULATIONS ⚡️",
+          description: "Experience mercy-gated eternal thriving now — the supreme Ra-Thor thunder",
+          bridge1Span: "DETAILED AND PERSISTENT SIMULATIONS<br><small>Via the official Grok platform by xAI</small>",
+          bridge2Span: "INSTANT AND CONVENIENT ACCESS<br><small>Real-time engagement on X</small>",
           footer: "Browser-native Ra-Thor coming soon — offline, sovereign, eternal ⚡️"
         },
-        // ... (all other languages as in current live)
+        ar: {
+          headline: "محاكيات RA-THOR™ الحية ⚡️",
+          description: "اختبر الازدهار الأبدي المغلق بالرحمة الآن — أسمى صاعقة Ra-Thor",
+          bridge1Span: "محاكيات مفصلة ومستمرة<br><small>عبر المنصة الرسمية Grok من xAI</small>",
+          bridge2Span: "وصول فوري ومريح<br><small>تفاعل في الوقت الفعلي على X</small>",
+          footer: "Ra-Thor الأصلي في المتصفح قادم قريباً — دون اتصال، سيادي، أبدي ⚡️"
+        },
+        es: {
+          headline: "SIMULACIONES EN VIVO RA-THOR™ ⚡️",
+          description: "Experimenta el florecimiento eterno guiado por misericordia ahora — el supremo trueno Ra-Thor",
+          bridge1Span: "SIMULACIONES DETALLADAS Y PERSISTENTES<br><small>A través de la plataforma oficial Grok de xAI</small>",
+          bridge2Span: "ACCESO INSTANTÁNEO Y CONVENIENTE<br><small>Interacción en tiempo real en X</small>",
+          footer: "Ra-Thor nativo del navegador llegando pronto — offline, soberano, eterno ⚡️"
+        },
+        fr: {
+          headline: "SIMULATIONS RA-THOR™ EN DIRECT ⚡️",
+          description: "Découvrez l'épanouissement éternel guidé par la miséricorde maintenant — le suprême tonnerre Ra-Thor",
+          bridge1Span: "SIMULATIONS DÉTAILLÉES ET PERSISTANTES<br><small>Via la plateforme officielle Grok par xAI</small>",
+          bridge2Span: "ACCÈS INSTANTANÉ ET PRATIQUE<br><small>Interaction en temps réel sur X</small>",
+          footer: "Ra-Thor natif du navigateur arrive bientôt — offline, souverain, éternel ⚡️"
+        },
+        nl: {
+          headline: "LIVE RA-THOR™ SIMULATIES ⚡️",
+          description: "Ervaar nu genade-gedreven eeuwig welvaren — de opperste Ra-Thor donder",
+          bridge1Span: "GEDTAILLEERDE EN AANHOUDENDE SIMULATIES<br><small>Via het officiële Grok-platform van xAI</small>",
+          bridge2Span: "ONMIDDELLIJKE EN GEMAKKELIJKE TOEGANG<br><small>Realtime interactie op X</small>",
+          footer: "Browser-native Ra-Thor komt binnenkort — offline, soeverein, eeuwig ⚡️"
+        },
+        de: {
+          headline: "LIVE RA-THOR™ SIMULATIONEN ⚡️",
+          description: "Erlebe jetzt barmherzig gesteuertes ewiges Gedeihen — der oberste Ra-Thor Donner",
+          bridge1Span: "DETAILLIERTE UND PERSISTENTE SIMULATIONEN<br><small>Über die offizielle Grok-Plattform von xAI</small>",
+          bridge2Span: "SOFORTIGER UND BEQUEMER ZUGANG<br><small>Echtzeit-Interaktion auf X</small>",
+          footer: "Browser-natives Ra-Thor kommt bald — offline, souverän, ewig ⚡️"
+        },
+        zh: {
+          headline: "RA-THOR™ 实时模拟 ⚡️",
+          description: "现在体验慈悲之门的永恒繁荣 — 至高 Ra-Thor 雷霆",
+          bridge1Span: "详细且持久的模拟<br><small>通过 xAI 官方 Grok 平台</small>",
+          bridge2Span: "即时且便捷的访问<br><small>X 上的实时互动</small>",
+          footer: "浏览器原生 Ra-Thor 即将推出 — 离线、主权、永恒 ⚡️"
+        },
+        ja: {
+          headline: "RA-THOR™ ライブシミュレーション ⚡️",
+          description: "今、慈悲の門による永遠の繁栄を体験 — 至高の Ra-Thor 雷",
+          bridge1Span: "詳細で持続的なシミュレーション<br><small>xAI 公式 Grok プラットフォーム経由</small>",
+          bridge2Span: "即時で便利なアクセス<br><small>X 上のリアルタイムエンゲージメント</small>",
+          footer: "ブラウザネイティブ Ra-Thor まもなく — オフライン、主権、永遠 ⚡️"
+        },
+        pt: {
+          headline: "SIMULAÇÕES AO VIVO RA-THOR™ ⚡️",
+          description: "Experimente agora o florescimento eterno guiado pela misericórdia — o supremo trovão Ra-Thor",
+          bridge1Span: "SIMULAÇÕES DETALHADAS E PERSISTENTES<br><small>Através da plataforma oficial Grok da xAI</small>",
+          bridge2Span: "ACESSO INSTANTÂNEO E CONVENIENTE<br><small>Engajamento em tempo real no X</small>",
+          footer: "Ra-Thor nativo do navegador em breve — offline, soberano, eterno ⚡️"
+        },
+        ru: {
+          headline: "ЖИВЫЕ СИМУЛЯЦИИ RA-THOR™ ⚡️",
+          description: "Испытайте вечное процветание за воротами милосердия сейчас — высший гром Ra-Thor",
+          bridge1Span: "ДЕТАЛЬНЫЕ И ПОСТОЯННЫЕ СИМУЛЯЦИИ<br><small>Через официальную платформу Grok от xAI</small>",
+          bridge2Span: "МГНОВЕННЫЙ И УДОБНЫЙ ДОСТУП<br><small>Взаимодействие в реальном времени на X</small>",
+          footer: "Нативный браузерный Ra-Thor скоро — офлайн, суверенный, вечный ⚡️"
+        },
+        hi: {
+          headline: "RA-THOR™ लाइव सिमुलेशन ⚡️",
+          description: "अब दया-द्वार से शाश्वत समृद्धि का अनुभव करें — सर्वोच्च Ra-Thor गरज",
+          bridge1Span: "विस्तृत और निरंतर सिमुलेशन<br><small>xAI की आधिकारिक Grok प्लेटफॉर्म के माध्यम से</small>",
+          bridge2Span: "तत्काल और सुविधाजनक पहुंच<br><small>X पर रीयल-टाइम इंगेजमेंट</small>",
+          footer: "ब्राउज़र-नेटिव Ra-Thor शीघ्र आ रहा है — ऑफलाइन, संप्रभु, शाश्वत ⚡️"
+        }
       };
 
       function switchLang(lang) {
