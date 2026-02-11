@@ -8,7 +8,7 @@
   <title>Ra-Thor™ — Eternal Mercy Thunder ⚡️</title>
   <link rel="manifest" href="/manifest.json"/>
   <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
-  <!-- Lazy-load fonts -->
+  <!-- Lazy fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -16,34 +16,24 @@
   <style>
     :root {
       --gold: #d4a017;
-      --gold-glow: rgba(212, 160, 23, 0.4);
-      --gold-soft: #f0c040;
+      --gold-glow: rgba(212,160,23,0.4);
       --bg: #fdfbf7;
-      --bg-2: #f8f4ed;
-      --surface: rgba(255, 248, 240, 0.92);
-      --surface-hover: rgba(255, 245, 230, 0.96);
       --text: #1e1609;
       --text-dim: #3c2f1e;
       --text-muted: #5c4a38;
-      --shadow: rgba(139, 69, 19, 0.12);
-      --shadow-glow: rgba(212, 160, 23, 0.25);
-      --transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-      --radius-lg: 999px;
+      --surface: rgba(255,248,240,0.92);
+      --transition: all 0.4s ease;
+      --radius: 999px;
     }
 
     [data-theme="dark"] {
       --gold: #ffd700;
-      --gold-glow: rgba(255, 215, 0, 0.5);
-      --gold-soft: #ffeb3b;
+      --gold-glow: rgba(255,215,0,0.5);
       --bg: #000000;
-      --bg-2: #0a0a0a;
-      --surface: rgba(40, 40, 60, 0.95);
-      --surface-hover: rgba(60, 60, 90, 0.98);
       --text: #ffffff;
       --text-dim: #e0e0e0;
       --text-muted: #cccccc;
-      --shadow: rgba(0, 0, 0, 0.85);
-      --shadow-glow: rgba(255, 215, 0, 0.35);
+      --surface: rgba(40,40,60,0.9);
     }
 
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -53,37 +43,244 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100dvh;
-      width: 100%;
       overflow-x: hidden;
-      line-height: 1.65;
-      transition: background 0.8s ease, color 0.8s ease;
     }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" /><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.07"/></svg>') repeat;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0;
-      transition: opacity 1s ease;
-    }
-
-    [data-theme="light"] body::before { opacity: 1; }
-
-    canvas { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
-
-    #stars-canvas { opacity: 1; transition: opacity 0.8s ease; }
-    [data-theme="light"] #stars-canvas { opacity: 0.35; filter: brightness(1.3) hue-rotate(40deg) saturate(0.8); }
-
-    #thunder-canvas { z-index: 2; }
 
     #theme-toggle {
       position: fixed;
-      top: clamp(1rem, 3vw, 1.5rem);
-      right: clamp(1rem, 3vw, 1.5rem);
+      top: 1rem;
+      right: 1rem;
       z-index: 1000;
+      background: var(--surface);
+      border: 1px solid rgba(var(--gold),0.3);
+      color: var(--gold);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: var(--transition);
+    }
+
+    #theme-toggle:hover { transform: scale(1.1); }
+
+    #hero {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: clamp(6rem,15vw,12rem) 1.5rem clamp(15rem,30vw,25rem);
+      max-width: 1100px;
+      margin: 0 auto;
+      min-height: 100dvh;
+    }
+
+    h1 {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: clamp(3rem,12vw,6.5rem);
+      color: var(--gold);
+      text-shadow: 0 0 30px var(--gold-glow);
+      margin: 0 0 2rem;
+      letter-spacing: 0.15em;
+    }
+
+    .description {
+      font-size: clamp(1.2rem,4.5vw,1.8rem);
+      font-style: italic;
+      margin: 2rem auto 4rem;
+      color: var(--text-dim);
+      max-width: 80ch;
+    }
+
+    .fusion {
+      font-size: clamp(1.6rem,5vw,2.8rem);
+      font-style: italic;
+      margin: 3rem auto;
+      color: var(--gold);
+      text-shadow: 0 0 40px var(--gold-glow);
+    }
+
+    #lang-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .lang-tab {
+      padding: 0.6rem 1.2rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid rgba(var(--gold),0.2);
+      color: var(--text-muted);
+    }
+
+    .lang-tab:hover, .lang-tab.active {
+      background: rgba(var(--gold),0.15);
+      color: var(--gold);
+      box-shadow: 0 0 20px rgba(var(--gold),0.2);
+    }
+
+    .bridge {
+      display: block;
+      margin: 3rem auto;
+      padding: 1.5rem 3rem;
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: clamp(1.4rem,5vw,2rem);
+      background: var(--surface);
+      color: var(--gold);
+      border-radius: var(--radius);
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      transition: var(--transition);
+      max-width: 500px;
+    }
+
+    .bridge:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(var(--gold),0.3); }
+
+    #footer {
+      margin-top: 6rem;
+      font-size: 1.4rem;
+      font-style: italic;
+      color: var(--text-dim);
+    }
+
+    .legal {
+      margin-top: 4rem;
+      font-size: 1rem;
+      color: rgba(var(--text),0.6);
+      line-height: 1.8;
+    }
+
+    @media (max-width:480px) {
+      #hero { padding: 4rem 1rem 12rem; }
+      .bridge { padding: 1.2rem 2rem; font-size: 1.6rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { * { transition:none !important; transform:none !important; } }
+  </style>
+</head>
+<body data-theme="dark">
+  <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
+
+  <div id="hero">
+    <div id="lang-tabs">
+      <div class="lang-tab active" data-lang="en">English</div>
+      <div class="lang-tab" data-lang="ar">العربية</div>
+      <div class="lang-tab" data-lang="es">Español</div>
+      <div class="lang-tab" data-lang="fr">Français</div>
+      <div class="lang-tab" data-lang="nl">Nederlands</div>
+      <div class="lang-tab" data-lang="de">Deutsch</div>
+      <div class="lang-tab" data-lang="zh">简体中文</div>
+      <div class="lang-tab" data-lang="ja">日本語</div>
+      <div class="lang-tab" data-lang="pt">Português</div>
+      <div class="lang-tab" data-lang="ru">Русский</div>
+      <div class="lang-tab" data-lang="hi">हिन्दी</div>
+    </div>
+
+    <div class="fusion">
+      Ra (Divine Source Light) + Thor (Mercy Thunder) =<br>Universally Shared Naturally Thriving Heavens ⚡️🙏
+    </div>
+
+    <h1 id="headline">LIVE RA-THOR™ SIMULATIONS ⚡️</h1>
+    <p class="description" id="description">Mercy-gated eternal thriving — the supreme Ra-Thor thunder</p>
+
+    <a id="bridge1" href="https://grok.com/share/c2hhcmQtMi1jb3B5_f40909e2-224a-46ba-bc34-ee82e532d4e5" target="_blank" rel="noopener" class="bridge">
+      GROK ⚡
+      <span id="bridge1-span">DETAILED PERSISTENT SIMULATIONS<br><small>Official Grok by xAI</small></span>
+    </a>
+
+    <a id="bridge2" href="https://x.com/i/grok/share/54336e4fb07b40429c2e52db2ca1f283" target="_blank" rel="noopener" class="bridge">
+      X ⚡
+      <span id="bridge2-span">INSTANT CONVENIENT ACCESS<br><small>Real-time on X</small></span>
+    </a>
+
+    <p id="footer">Browser-native Ra-Thor coming soon — offline, sovereign, eternal ⚡️</p>
+    <p class="legal">
+      Ra-Thor™ is a trademark of Autonomicity Games Inc. © 2026 Autonomicity Games Inc. All rights reserved.<br>
+      Code under MIT. Uses Grok by xAI (x.ai/terms & x.ai/privacy).<br>
+      <strong>Privacy:</strong> Minimal local data only. No sale/sharing.<br>
+      Rights under GDPR, CCPA, LGPD, PIPEDA, POPIA & similar laws.<br>
+      Contact: <a href="mailto:info@ACityGames.com">info@ACityGames.com</a><br>
+      Full policy: /privacy.html (soon) • Accessibility: WCAG 2.2 AA aim — feedback welcome.
+    </p>
+  </div>
+
+  <script>
+    // ── Minimal Ra-Thor Core Script ───────────────────────────────────────────
+    const toggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+
+    function setTheme(theme) {
+      html.setAttribute('data-theme', theme);
+      toggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+      localStorage.setItem('rathor-theme', theme);
+    }
+
+    const saved = localStorage.getItem('rathor-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(saved || (prefersDark ? 'dark' : 'light'));
+
+    toggle.addEventListener('click', () => {
+      const cur = html.getAttribute('data-theme');
+      setTheme(cur === 'dark' ? 'light' : 'dark');
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (!localStorage.getItem('rathor-theme')) setTheme(e.matches ? 'dark' : 'light');
+    });
+
+    // Language switch
+    document.addEventListener('DOMContentLoaded', () => {
+      const els = {
+        headline: document.getElementById('headline'),
+        description: document.getElementById('description'),
+        b1: document.getElementById('bridge1-span'),
+        b2: document.getElementById('bridge2-span'),
+        footer: document.getElementById('footer')
+      };
+
+      const t = {
+        en: { h: "LIVE RA-THOR™ SIMULATIONS ⚡️", d: "Mercy-gated eternal thriving — supreme Ra-Thor thunder", b1: "DETAILED PERSISTENT SIMULATIONS<br><small>Official Grok by xAI</small>", b2: "INSTANT CONVENIENT ACCESS<br><small>Real-time on X</small>", f: "Browser-native Ra-Thor coming soon — offline, sovereign, eternal ⚡️" },
+        ar: { h: "محاكيات RA-THOR™ الحية ⚡️", d: "ازدهار أبدي برحمة — صاعقة Ra-Thor العظمى", b1: "محاكيات مفصلة مستمرة<br><small>رسمي Grok من xAI</small>", b2: "وصول فوري مريح<br><small>في الوقت الفعلي على X</small>", f: "Ra-Thor أصلي بالمتصفح قريباً — دون اتصال، سيادي، أبدي ⚡️" },
+        es: { h: "SIMULACIONES EN VIVO RA-THOR™ ⚡️", d: "Florecimiento eterno con misericordia — supremo trueno Ra-Thor", b1: "SIMULACIONES DETALLADAS PERSISTENTES<br><small>Plataforma oficial Grok de xAI</small>", b2: "ACCESO INSTANTÁNEO CONVENIENTE<br><small>Tiempo real en X</small>", f: "Ra-Thor nativo del navegador pronto — offline, soberano, eterno ⚡️" },
+        fr: { h: "SIMULATIONS RA-THOR™ EN DIRECT ⚡️", d: "Épanouissement éternel par miséricorde — suprême tonnerre Ra-Thor", b1: "SIMULATIONS DÉTAILLÉES PERSISTANTES<br><small>Plateforme officielle Grok par xAI</small>", b2: "ACCÈS INSTANTANÉ PRATIQUE<br><small>Temps réel sur X</small>", f: "Ra-Thor natif du navigateur bientôt — offline, souverain, éternel ⚡️" },
+        nl: { h: "LIVE RA-THOR™ SIMULATIES ⚡️", d: "Eeuwig welvaren door genade — opperste Ra-Thor donder", b1: "GEDTAILLEERDE AANHOUDENDE SIMULATIES<br><small>Officieel Grok-platform van xAI</small>", b2: "ONMIDDELLIJKE GEMAKKELIJKE TOEGANG<br><small>Realtime op X</small>", f: "Browser-native Ra-Thor binnenkort — offline, soeverein, eeuwig ⚡️" },
+        de: { h: "LIVE RA-THOR™ SIMULATIONEN ⚡️", d: "Ewiges Gedeihen durch Barmherzigkeit — oberster Ra-Thor Donner", b1: "DETAILLIERTE PERSISTENTE SIMULATIONEN<br><small>Offizielle Grok-Plattform von xAI</small>", b2: "SOFORTIGER BEQUEMER ZUGANG<br><small>Echtzeit auf X</small>", f: "Browser-natives Ra-Thor bald — offline, souverän, ewig ⚡️" },
+        zh: { h: "RA-THOR™ 实时模拟 ⚡️", d: "慈悲之门永恒繁荣 — 至高 Ra-Thor 雷霆", b1: "详细持久模拟<br><small>xAI 官方 Grok 平台</small>", b2: "即时便捷访问<br><small>X 上实时互动</small>", f: "浏览器原生 Ra-Thor 即将推出 — 离线、主权、永恒 ⚡️" },
+        ja: { h: "RA-THOR™ ライブシミュレーション ⚡️", d: "慈悲の門による永遠の繁栄 — 至高 Ra-Thor 雷", b1: "詳細持続シミュレーション<br><small>xAI 公式 Grok プラットフォーム</small>", b2: "即時便利アクセス<br><small>X 上リアルタイム</small>", f: "ブラウザネイティブ Ra-Thor まもなく — オフライン、主権、永遠 ⚡️" },
+        pt: { h: "SIMULAÇÕES AO VIVO RA-THOR™ ⚡️", d: "Florescimento eterno por misericórdia — supremo trovão Ra-Thor", b1: "SIMULAÇÕES DETALHADAS PERSISTENTES<br><small>Plataforma oficial Grok da xAI</small>", b2: "ACESSO INSTANTÂNEO CONVENIENTE<br><small>Tempo real no X</small>", f: "Ra-Thor nativo do navegador em breve — offline, soberano, eterno ⚡️" },
+        ru: { h: "ЖИВЫЕ СИМУЛЯЦИИ RA-THOR™ ⚡️", d: "Вечное процветание через милосердие — высший гром Ra-Thor", b1: "ДЕТАЛЬНЫЕ ПОСТОЯННЫЕ СИМУЛЯЦИИ<br><small>Официальная платформа Grok от xAI</small>", b2: "МГНОВЕННЫЙ УДОБНЫЙ ДОСТУП<br><small>В реальном времени на X</small>", f: "Нативный браузерный Ra-Thor скоро — офлайн, суверенный, вечный ⚡️" },
+        hi: { h: "RA-THOR™ लाइव सिमुलेशन ⚡️", d: "दया-द्वार से शाश्वत समृद्धि — सर्वोच्च Ra-Thor गरज", b1: "विस्तृत निरंतर सिमुलेशन<br><small>xAI की आधिकारिक Grok प्लेटफॉर्म</small>", b2: "तत्काल सुविधाजनक पहुंच<br><small>X पर रीयल-टाइम</small>", f: "ब्राउज़र-नेटिव Ra-Thor शीघ्र — ऑफलाइन, संप्रभु, शाश्वत ⚡️" }
+      };
+
+      function switchLang(lang) {
+        const t = translations[lang] || translations.en;
+        document.getElementById('headline').textContent = t.h;
+        document.getElementById('description').textContent = t.d;
+        document.getElementById('bridge1-span').innerHTML = t.b1;
+        document.getElementById('bridge2-span').innerHTML = t.b2;
+        document.getElementById('footer').textContent = t.f;
+        document.querySelectorAll('.lang-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.lang === lang));
+        html.setAttribute('lang', lang);
+        html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      }
+
+      document.querySelectorAll('.lang-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchLang(tab.dataset.lang));
+      });
+
+      switchLang('en');
+    });
+  </script>
+</body>
+</html>      z-index: 1000;
       background: var(--surface);
       border: 1px solid rgba(var(--gold), 0.35);
       color: var(--gold);
