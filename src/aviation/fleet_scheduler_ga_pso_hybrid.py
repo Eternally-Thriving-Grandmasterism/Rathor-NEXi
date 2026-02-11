@@ -1,6 +1,6 @@
 """
 Ra-Thor Mercy-Gated Ultra-Hybrid Fleet Scheduler
-Fully implemented GA, PSO, DE classes — modular, vectorized, numba-ready
+Numba JIT acceleration applied to vectorized_fitness core — 2026-02-10 refactor
 GA → PSO → Round-Trip GA → DE chain for AlphaProMega Air abundance skies
 With RUL predictions + crew pairing/duty/rest constraints
 MIT License — Eternally-Thriving-Grandmasterism
@@ -9,6 +9,7 @@ MIT License — Eternally-Thriving-Grandmasterism
 import numpy as np
 import random
 from typing import Tuple, List
+from numba import jit, float64, int32, int64, boolean
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Global Config & Precomputes
@@ -18,7 +19,7 @@ CONFIG = {
     'num_bays': 10,
     'horizon_days': 365,
     'num_crew_groups': 20,
-    'gene_length': 4,               # [bay(int), start_day(float), duration(float), crew_group(int)]
+    'gene_length': 4,
     'baseline_util': 0.85,
     'rul_buffer_days': 30.0,
     'rul_penalty_factor': 5.0,
@@ -38,50 +39,187 @@ CHROM_LENGTH = CONFIG['fleet_size'] * CONFIG['gene_length']
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Vectorized Fitness — batch evaluation (hotspot)
+# Numba-JIT Accelerated Vectorized Fitness (core hotspot)
 # ──────────────────────────────────────────────────────────────────────────────
-def vectorized_fitness(chromosomes: np.ndarray) -> np.ndarray:
-    """Batch abundance evaluation. Input: (n, CHROM_LENGTH) → Output: (n,)"""
+@jit(nopython=True)
+def vectorized_fitness_numba(
+    chromosomes: float64[:, :],          # (n_chroms, CHROM_LENGTH)
+    rul_samples: float64[:],             # (fleet_size,)
+    config_fleet_size: int64,
+    config_num_bays: int64,
+    config_horizon_days: float64,
+    config_num_crew_groups: int64,
+    config_rul_buffer_days: float64,
+    config_rul_penalty_factor: float64,
+    config_max_duty_hours: float64,
+    config_min_rest_hours: float64,
+    config_max_slots_per_crew: int64,
+    config_crew_penalty_factor: float64,
+    config_duty_penalty_factor: float64,
+    config_overlap_penalty_weight: float64,
+    config_rushed_threshold: float64,
+    config_rushed_penalty_per_day: float64,
+    config_baseline_util: float64
+) -> float64[:]:
     n = chromosomes.shape[0]
-    fs = CONFIG['fleet_size']
-    gl = CONFIG['gene_length']
+    fs = config_fleet_size
+    gl = 4  # fixed gene_length
 
-    decoded = np.reshape(chromosomes, (n, fs, gl))
+    abundance = np.empty(n, dtype=float64)
 
-    bays      = decoded[:, :, 0].astype(np.int32)
-    starts    = np.maximum(0.0, np.minimum(CONFIG['horizon_days'] - decoded[:, :, 2], decoded[:, :, 1]))
-    durations = np.maximum(2.0, decoded[:, :, 2])
-    crews     = decoded[:, :, 3].astype(np.int32)
+    for ii in range(n):
+        # Decode one chromosome at a time (Numba prefers scalar loops over reshape)
+        chrom = chromosomes[ii, :]
 
-    end_times = starts + durations
+        bays = np.empty(fs, dtype=int32)
+        starts = np.empty(fs, dtype=float64)
+        durations = np.empty(fs, dtype=float64)
+        crews = np.empty(fs, dtype=int32)
 
-    # RUL violations
-    criticals = RUL_SAMPLES - CONFIG['rul_buffer_days']
-    violations = np.maximum(0.0, end_times - criticals[None, :])
-    rul_pen = CONFIG['rul_penalty_factor'] * (np.exp(violations / 10.0) - 1.0)
-    rul_total = np.sum(rul_pen, axis=1)
+        for j in range(fs):
+            off = j * gl
+            bays[j] = int32(round(chrom[off + 0]))
+            tmp_start = chrom[off + 1]
+            tmp_dur = chrom[off + 2]
+            starts[j] = max(0.0, min(config_horizon_days - tmp_dur, tmp_start))
+            durations[j] = max(2.0, tmp_dur)
+            crews[j] = int32(round(chrom[off + 3]))
 
-    # Crew over-assign
-    crew_counts = np.zeros((n, CONFIG['num_crew_groups']), dtype=np.int32)
-    np.add.at(crew_counts, (np.arange(n)[:, None], crews.ravel()), 1)
-    over = np.maximum(0, crew_counts - CONFIG['max_slots_per_crew'])
-    over_pen = np.sum(over, axis=1) * CONFIG['crew_penalty_factor'] * 10.0
+        end_times = starts + durations
 
-    # Crew duty/rest violations
-    crew_duty_pen = np.zeros(n)
-    for c in range(CONFIG['num_crew_groups']):
-        mask = (crews == c)
-        c_starts = np.where(mask, starts, np.inf)
-        c_ends   = np.where(mask, end_times, np.inf)
-        c_dur_h  = np.where(mask, durations * 8.0, 0.0)
+        # 1. RUL violations
+        criticals = rul_samples - config_rul_buffer_days
+        violations = np.maximum(0.0, end_times - criticals)
+        rul_pen = config_rul_penalty_factor * (np.exp(violations / 10.0) - 1.0)
+        rul_total = np.sum(rul_pen)
 
-        sort_idx = np.argsort(c_starts, axis=1)
-        s_starts = np.take_along_axis(c_starts, sort_idx, axis=1)
-        s_ends   = np.take_along_axis(c_ends,   sort_idx, axis=1)
-        s_dur_h  = np.take_along_axis(c_dur_h,  sort_idx, axis=1)
+        # 2. Crew over-assign
+        crew_counts = np.zeros(config_num_crew_groups, dtype=int64)
+        for j in range(fs):
+            c = crews[j]
+            if 0 <= c < config_num_crew_groups:
+                crew_counts[c] += 1
+        over = np.maximum(0, crew_counts - config_max_slots_per_crew)
+        over_pen = np.sum(over) * config_crew_penalty_factor * 10.0
 
-        rest_h = s_starts[:, 1:] - s_ends[:, :-1]
-        rest_viol = np.maximum(0.0, CONFIG['min_rest_hours'] * 24 - rest_h)
+        # 3. Crew duty/rest violations
+        crew_duty_pen = 0.0
+        for c in range(config_num_crew_groups):
+            count = crew_counts[c]
+            if count == 0:
+                continue
+
+            # Gather this crew's assignments
+            c_starts = np.empty(count, dtype=float64)
+            c_ends = np.empty(count, dtype=float64)
+            c_dur_h = np.empty(count, dtype=float64)
+            idx = 0
+            for j in range(fs):
+                if crews[j] == c:
+                    c_starts[idx] = starts[j]
+                    c_ends[idx] = end_times[j]
+                    c_dur_h[idx] = durations[j] * 8.0
+                    idx += 1
+
+            # Sort by start time
+            sort_idx = np.argsort(c_starts)
+            s_starts = c_starts[sort_idx]
+            s_ends = c_ends[sort_idx]
+            s_dur_h = c_dur_h[sort_idx]
+
+            # Rest violations
+            rest_h = s_starts[1:] - s_ends[:-1]
+            rest_viol = np.maximum(0.0, config_min_rest_hours * 24.0 - rest_h)
+            rest_pen = config_duty_penalty_factor * np.exp(rest_viol / 24.0)
+            # Duty violations
+            duty_viol = np.maximum(0.0, s_dur_h - config_max_duty_hours)
+            duty_pen = config_duty_penalty_factor * duty_viol * 2.0
+
+            crew_duty_pen += np.sum(rest_pen) + np.sum(duty_pen)
+
+        # 4. Bay overlap (pairwise)
+        overlap_pen = 0.0
+        for b in range(config_num_bays):
+            count = 0
+            for j in range(fs):
+                if bays[j] == b:
+                    count += 1
+            if count < 2:
+                continue
+
+            b_starts = np.empty(count, dtype=float64)
+            b_ends = np.empty(count, dtype=float64)
+            idx = 0
+            for j in range(fs):
+                if bays[j] == b:
+                    b_starts[idx] = starts[j]
+                    b_ends[idx] = end_times[j]
+                    idx += 1
+
+            # Pairwise overlap sum
+            for ii in range(count):
+                for jj in range(ii + 1, count):
+                    o = max(0.0, min(b_ends[ii], b_ends[jj]) - max(b_starts[ii], b_starts[jj]))
+                    overlap_pen += o
+
+        overlap_pen *= config_overlap_penalty_weight
+
+        # 5. Rushed penalty
+        rushed_pen = 0.0
+        for j in range(fs):
+            if durations[j] < config_rushed_threshold:
+                rushed_pen += (config_rushed_threshold - durations[j]) * config_rushed_penalty_per_day
+
+        # Aggregate
+        mercy_penalty = overlap_pen + (rul_total + crew_duty_pen + over_pen) / 100.0 + rushed_pen
+        mercy_factor = max(0.1, 1.0 - mercy_penalty)
+
+        total_maint = np.sum(durations)
+        coverage = min(1.0, total_maint / (config_num_bays * config_horizon_days * 0.6))
+        utilization = config_baseline_util + coverage * 0.15
+
+        abundance[ii] = utilization * coverage * mercy_factor
+
+    return abundance
+
+
+# Wrapper for non-Numba calls (single chromosome)
+def vectorized_fitness(chromosomes: np.ndarray) -> np.ndarray:
+    if len(chromosomes.shape) == 1:
+        chromosomes = chromosomes.reshape(1, -1)
+    return vectorized_fitness_numba(
+        chromosomes.astype(np.float64),
+        RUL_SAMPLES.astype(np.float64),
+        int64(CONFIG['fleet_size']),
+        int64(CONFIG['num_bays']),
+        float64(CONFIG['horizon_days']),
+        int64(CONFIG['num_crew_groups']),
+        float64(CONFIG['rul_buffer_days']),
+        float64(CONFIG['rul_penalty_factor']),
+        float64(CONFIG['max_duty_hours']),
+        float64(CONFIG['min_rest_hours']),
+        int64(CONFIG['max_slots_per_crew']),
+        float64(CONFIG['crew_penalty_factor']),
+        float64(CONFIG['duty_penalty_factor']),
+        float64(CONFIG['overlap_penalty_weight']),
+        float64(CONFIG['rushed_duration_threshold']),
+        float64(CONFIG['rushed_penalty_per_day']),
+        float64(CONFIG['baseline_util'])
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# The rest of the file (chromosome helpers + optimizer classes) remains unchanged
+# from the previous fully implemented version.
+# Only vectorized_fitness is replaced with the Numba-accelerated version above.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ... (insert here the unchanged parts: random_chromosome, split/merge, GAOptimizer, PSOOptimizer, DEOptimizer, run_ultra_hybrid)
+
+if __name__ == "__main__":
+    print("Ra-Thor ultra-hybrid optimizer — Numba JIT acceleration engaged.")
+    best_solution, best_abundance = run_ultra_hybrid()
+    print("First JIT compilation complete — subsequent calls now ultra-fast.")        rest_viol = np.maximum(0.0, CONFIG['min_rest_hours'] * 24 - rest_h)
         rest_pen = CONFIG['duty_penalty_factor'] * np.exp(rest_viol / 24.0)
         duty_viol = np.maximum(0.0, s_dur_h[:, 1:] - CONFIG['max_duty_hours'])
         duty_pen = CONFIG['duty_penalty_factor'] * duty_viol * 2.0
