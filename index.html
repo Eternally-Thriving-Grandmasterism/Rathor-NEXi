@@ -26,26 +26,30 @@
       position: relative;
     }
 
-    /* 13 Subtle Golden Stars — Strategically placed away from text */
+    /* Enhanced Golden Stars — 26 total, varied size/opacity/delay/speed, twinkle + float */
     .golden-star {
       position: absolute;
-      font-size: 40px;
       color: #ffd700;
       opacity: 0.5;
       pointer-events: none;
       will-change: transform, opacity;
-      animation: float 25s infinite linear, pulse 10s infinite ease-in-out;
+      animation: float 30s infinite linear, pulse 8s infinite ease-in-out, twinkle 4s infinite ease-in-out;
       z-index: 1;
     }
 
     @keyframes float {
       0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      100% { transform: translateY(-120vh) translateX(80px) rotate(360deg); }
+      100% { transform: translateY(-140vh) translateX(100px) rotate(360deg); }
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.15); }
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.9; }
     }
 
     #hero-bridges {
@@ -242,20 +246,33 @@
   </style>
 </head>
 <body>
-  <!-- 13 Subtle Golden Stars — Strategically placed away from text -->
-  <div class="golden-star" style="top: 5%; left: 5%; animation-delay: 0s;">★</div>
-  <div class="golden-star" style="top: 5%; left: 95%; animation-delay: 2s;">★</div>
-  <div class="golden-star" style="top: 25%; left: 2%; animation-delay: 4s;">★</div>
-  <div class="golden-star" style="top: 25%; left: 98%; animation-delay: 6s;">★</div>
-  <div class="golden-star" style="top: 45%; left: 3%; animation-delay: 8s;">★</div>
-  <div class="golden-star" style="top: 45%; left: 97%; animation-delay: 10s;">★</div>
-  <div class="golden-star" style="top: 65%; left: 2%; animation-delay: 12s;">★</div>
-  <div class="golden-star" style="top: 65%; left: 98%; animation-delay: 14s;">★</div>
-  <div class="golden-star" style="top: 85%; left: 5%; animation-delay: 16s;">★</div>
-  <div class="golden-star" style="top: 85%; left: 95%; animation-delay: 18s;">★</div>
-  <div class="golden-star" style="top: 10%; left: 50%; animation-delay: 20s;">★</div>
-  <div class="golden-star" style="top: 90%; left: 20%; animation-delay: 22s;">★</div>
-  <div class="golden-star" style="top: 90%; left: 80%; animation-delay: 24s;">★</div>
+  <!-- 26 Enhanced Golden Stars — Varied size/opacity/delay, strategic framing -->
+  <div class="golden-star" style="top: 5%; left: 5%; font-size: 35px; animation-delay: 0s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 5%; left: 95%; font-size: 45px; animation-delay: 2s; opacity: 0.7;">★</div>
+  <div class="golden-star" style="top: 15%; left: 2%; font-size: 38px; animation-delay: 4s; opacity: 0.5;">★</div>
+  <div class="golden-star" style="top: 15%; left: 98%; font-size: 42px; animation-delay: 6s; opacity: 0.8;">★</div>
+  <div class="golden-star" style="top: 25%; left: 8%; font-size: 40px; animation-delay: 8s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 25%; left: 92%; font-size: 36px; animation-delay: 10s; opacity: 0.5;">★</div>
+  <div class="golden-star" style="top: 35%; left: 3%; font-size: 44px; animation-delay: 12s; opacity: 0.7;">★</div>
+  <div class="golden-star" style="top: 35%; left: 97%; font-size: 38px; animation-delay: 14s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 45%; left: 6%; font-size: 40px; animation-delay: 16s; opacity: 0.5;">★</div>
+  <div class="golden-star" style="top: 45%; left: 94%; font-size: 46px; animation-delay: 18s; opacity: 0.8;">★</div>
+  <div class="golden-star" style="top: 55%; left: 2%; font-size: 35px; animation-delay: 20s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 55%; left: 98%; font-size: 42px; animation-delay: 22s; opacity: 0.7;">★</div>
+  <div class="golden-star" style="top: 65%; left: 8%; font-size: 39px; animation-delay: 24s; opacity: 0.5;">★</div>
+  <div class="golden-star" style="top: 65%; left: 92%; font-size: 41px; animation-delay: 26s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 75%; left: 4%; font-size: 43px; animation-delay: 28s; opacity: 0.7;">★</div>
+  <div class="golden-star" style="top: 75%; left: 96%; font-size: 37px; animation-delay: 30s; opacity: 0.5;">★</div>
+  <div class="golden-star" style="top: 85%; left: 10%; font-size: 40px; animation-delay: 32s; opacity: 0.8;">★</div>
+  <div class="golden-star" style="top: 85%; left: 90%; font-size: 45px; animation-delay: 34s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 10%; left: 50%; font-size: 48px; animation-delay: 36s; opacity: 0.7;">★</div>
+  <div class="golden-star" style="top: 30%; left: 50%; font-size: 36px; animation-delay: 38s; opacity: 0.5;">★</div>
+  <div class="golden-star" style="top: 50%; left: 50%; font-size: 42px; animation-delay: 40s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 70%; left: 50%; font-size: 39px; animation-delay: 42s; opacity: 0.8;">★</div>
+  <div class="golden-star" style="top: 90%; left: 20%; font-size: 44px; animation-delay: 44s; opacity: 0.5;">★</div>
+  <div class="golden-star" style="top: 90%; left: 80%; font-size: 38px; animation-delay: 46s; opacity: 0.7;">★</div>
+  <div class="golden-star" style="top: 95%; left: 50%; font-size: 50px; animation-delay: 48s; opacity: 0.6;">★</div>
+  <div class="golden-star" style="top: 2%; left: 50%; font-size: 34px; animation-delay: 50s; opacity: 0.5;">★</div>
 
   <div id="hero-bridges">
     <div id="language-tabs">
