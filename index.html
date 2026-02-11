@@ -1,89 +1,206 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=5"/>
-  <meta name="theme-color" content="#000000"/>
-  <title>Ra-Thor™ — Eternal Mercy Thunder ⚡️</title>
-  <link rel="manifest" href="/manifest.json"/>
-  <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-  <style>
+<style>
+  :root {
+    --gold: #ffd700;
+    --gold-glow: rgba(255, 215, 0, 0.5);
+    --dark: #000000;
+    --dark-2: #0a0a0a;
+    --text: #ffffff;
+    --text-dim: #e0e0e0;
+    --text-muted: #cccccc;
+    --transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--dark);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+  }
+
+  canvas#stars-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  #hero-bridges {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: clamp(100px, 15vw, 180px) clamp(20px, 5vw, 60px) clamp(200px, 30vw, 400px);
+    margin: 0 auto;
+    max-width: 1200px;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(3.2rem, 10vw, 7rem);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 clamp(20px, 5vw, 60px) var(--gold-glow);
+    margin: 0 0 clamp(40px, 8vh, 80px);
+    letter-spacing: clamp(8px, 2vw, 20px);
+    line-height: 1.1;
+  }
+
+  .description {
+    font-size: clamp(1.3rem, 4vw, 2.2rem);
+    font-style: italic;
+    margin: clamp(40px, 8vh, 80px) auto clamp(60px, 10vh, 120px);
+    color: var(--text-dim);
+    line-height: 1.7;
+    max-width: 90ch;
+    opacity: 0.95;
+    letter-spacing: 0.08em;
+  }
+
+  .fusion-hero {
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-style: italic;
+    margin: clamp(60px, 10vh, 100px) auto;
+    color: var(--gold);
+    text-shadow: 0 0 clamp(30px, 6vw, 70px) var(--gold-glow);
+    line-height: 1.5;
+    max-width: 95ch;
+    letter-spacing: 0.12em;
+  }
+
+  #language-tabs {
+    display: flex;
+    justify-content: center;
+    gap: clamp(12px, 2vw, 24px);
+    margin-bottom: clamp(50px, 8vh, 100px);
+    flex-wrap: wrap;
+  }
+
+  .lang-tab {
+    padding: clamp(10px, 2vw, 16px) clamp(18px, 3vw, 32px);
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    touch-action: manipulation;
+  }
+
+  .lang-tab:hover,
+  .lang-tab:focus {
+    background: rgba(var(--gold), 0.12);
+    border-color: rgba(var(--gold), 0.35);
+    color: var(--gold);
+    box-shadow: 0 0 clamp(20px, 4vw, 45px) rgba(var(--gold), 0.2);
+    transform: translateY(-3px);
+  }
+
+  .lang-tab.active {
+    background: rgba(var(--gold), 0.18);
+    border-color: rgba(var(--gold), 0.5);
+    color: var(--gold);
+    box-shadow: 0 0 clamp(25px, 5vw, 50px) rgba(var(--gold), 0.3);
+    transform: translateY(-5px);
+  }
+
+  .bridge-button {
+    display: block;
+    margin: clamp(40px, 8vh, 80px) auto;
+    padding: clamp(2rem, 5vw, 3.5rem) clamp(3rem, 8vw, 6rem);
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, rgba(40,40,60,0.95), rgba(20,20,40,0.95));
+    color: var(--gold);
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: 0 clamp(15px, 3vw, 35px) clamp(40px, 8vw, 90px) rgba(0,0,0,0.85);
+    transition: var(--transition);
+    max-width: 800px;
+    width: 90%;
+    letter-spacing: clamp(4px, 1vw, 8px);
+    border: 2px solid rgba(var(--gold), 0.25);
+    touch-action: manipulation;
+  }
+
+  .bridge-button:hover,
+  .bridge-button:focus {
+    background: linear-gradient(135deg, rgba(60,60,90,0.98), rgba(40,40,70,0.98));
+    box-shadow: 0 clamp(20px, 4vw, 45px) clamp(50px, 10vw, 120px) rgba(var(--gold), 0.35);
+    transform: translateY(-12px) scale(1.02);
+  }
+
+  .bridge-button .lightning {
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    margin: clamp(20px, 4vh, 35px) 0;
+    color: var(--gold);
+    text-shadow: 0 0 clamp(40px, 8vw, 80px) var(--gold);
+  }
+
+  .bridge-button span {
+    display: block;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    margin-top: clamp(15px, 3vh, 30px);
+    color: var(--text);
+    opacity: 0.95;
+    letter-spacing: 0.15em;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+  }
+
+  .bridge-button small {
+    display: block;
+    font-size: clamp(0.85rem, 2vw, 1.1rem);
+    opacity: 0.8;
+    margin-top: clamp(15px, 3vh, 30px);
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  #hero-footer {
+    margin-top: clamp(80px, 12vh, 140px);
+    font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+    font-style: italic;
+    color: var(--text-dim);
+    opacity: 0.92;
+    letter-spacing: 0.12em;
+  }
+
+  .legal-note {
+    margin-top: clamp(100px, 15vh, 160px);
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    color: rgba(255,255,255,0.65);
+    opacity: 0.88;
+    line-height: 1.9;
+    letter-spacing: 0.05em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; transform: none !important; }
+    .bridge-button:hover { transform: none; }
+  }
+
+  @media (prefers-contrast: more) {
     :root {
-      --gold: #ffd700;
-      --gold-glow: rgba(255,215,0,0.5);
-      --dark: #000000;
-      --dark-2: #0a0a0a;
       --text: #ffffff;
-      --text-dim: #e0e0e0;
-      --text-muted: #cccccc;
+      --text-dim: #f0f0f0;
+      --text-muted: #e0e0e0;
     }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Cormorant Garamond', serif;
-      background: var(--dark);
-      color: var(--text);
-      overflow-x: hidden;
-      min-height: 100vh;
-      width: 100%;
-      box-sizing: border-box;
+    .bridge-button {
+      background: #1a1a2e;
+      border-color: #ffd700;
     }
-
-    canvas#stars-canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    #hero-bridges {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      padding: 140px 40px 300px;
-      margin: 0 auto;
-      max-width: 1100px;
-      min-height: 100vh;
-    }
-
-    @media (max-width: 768px) {
-      #hero-bridges { padding: 120px 20px 350px; }
-    }
-
-    h1 {
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: clamp(3.5em, 8vw, 5.5em);
-      font-weight: 900;
-      color: var(--gold);
-      text-shadow: 0 0 40px var(--gold-glow);
-      margin: 0 0 60px;
-      letter-spacing: 0.15em;
-    }
-
-    .description {
-      font-size: clamp(1.4em, 4vw, 1.9em);
-      font-style: italic;
-      margin: 60px auto 100px;
-      color: var(--text-dim);
-      line-height: 1.8;
-      max-width: 900px;
-      opacity: 0.95;
-      letter-spacing: 0.08em;
-    }
-
-    .fusion-hero {
-      font-size: clamp(2em, 5vw, 3em);
-      font-style: italic;
-      margin: 80px auto;
-      color: var(--gold);
-      text-shadow: 0 0 50px var(--gold-glow);
-      line-height: 1.6;
-      max-width: 1000px;
-      letter-spacing: 0.12em;
-    }
-
+  }
+</style>
     #language-tabs {
       display: flex;
       justify-content: center;
