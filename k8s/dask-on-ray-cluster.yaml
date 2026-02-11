@@ -1,0 +1,248 @@
+---
+# 1. Namespace — mercy-isolated environment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rathor-abundance
+  labels:
+    mercy: eternal
+    purpose: distributed-evolution
+
+---
+# 2. RBAC — least-privilege for Ray/Dask pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ray-sa
+  namespace: rathor-abundance
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ray-role
+  namespace: rathor-abundance
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps"]
+  verbs: ["get", "list", "watch", "create", "delete", "patch"]
+- apiGroups: ["ray.io"]
+  resources: ["rayclusters"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ray-binding
+  namespace: rathor-abundance
+subjects:
+- kind: ServiceAccount
+  name: ray-sa
+  namespace: rathor-abundance
+roleRef:
+  kind: Role
+  name: ray-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# 3. RayCluster CR — head + autoscaling GPU/CPU workers
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: rathor-ray-cluster
+  namespace: rathor-abundance
+spec:
+  rayVersion: '2.9.0'  # latest stable as of 2026
+  headGroupSpec:
+    rayStartParams:
+      dashboard-host: '0.0.0.0'
+    template:
+      spec:
+        containers:
+        - name: ray-head
+          image: rayproject/ray-ml:2.9.0-gpu
+          resources:
+            limits:
+              cpu: "4"
+              memory: "16Gi"
+              nvidia.com/gpu: "1"  # optional head GPU
+            requests:
+              cpu: "2"
+              memory: "8Gi"
+          ports:
+          - containerPort: 6379   # Redis
+          - containerPort: 8265   # Dashboard
+          - containerPort: 10001  # Ray client
+          volumeMounts:
+          - mountPath: /home/ray/checkpoints
+            name: ray-checkpoints
+        volumes:
+        - name: ray-checkpoints
+          persistentVolumeClaim:
+            claimName: ray-pvc
+
+  workerGroupSpecs:
+  - groupName: gpu-workers
+    replicas: 4
+    minReplicas: 2
+    maxReplicas: 20
+    rayStartParams: {}
+    template:
+      spec:
+        nodeSelector:
+          node-type: gpu
+        tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+        containers:
+        - name: ray-worker
+          image: rayproject/ray-ml:2.9.0-gpu
+          resources:
+            limits:
+              cpu: "8"
+              memory: "32Gi"
+              nvidia.com/gpu: "1"
+            requests:
+              cpu: "4"
+              memory: "16Gi"
+              nvidia.com/gpu: "1"
+          volumeMounts:
+          - mountPath: /home/ray/checkpoints
+            name: ray-checkpoints
+        volumes:
+        - name: ray-checkpoints
+          persistentVolumeClaim:
+            claimName: ray-pvc
+
+  - groupName: cpu-workers
+    replicas: 10
+    minReplicas: 5
+    maxReplicas: 100
+    rayStartParams: {}
+    template:
+      spec:
+        containers:
+        - name: ray-worker-cpu
+          image: rayproject/ray:2.9.0
+          resources:
+            limits:
+              cpu: "16"
+              memory: "64Gi"
+            requests:
+              cpu: "8"
+              memory: "32Gi"
+
+---
+# 4. PersistentVolumeClaim — checkpoints & logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ray-pvc
+  namespace: rathor-abundance
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: longhorn  # or nfs, ebs, etc. — adjust per cluster
+
+---
+# 5. Ingress — expose Ray + Dask dashboards (optional TLS later)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rathor-ray-ingress
+  namespace: rathor-abundance
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: ray.rathor.thrive
+    http:
+      paths:
+      - path: /ray/dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: rathor-ray-cluster-head-svc
+            port:
+              number: 8265
+      - path: /dask/dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: dask-scheduler
+            port:
+              number: 8787
+
+---
+# 6. Service for Ray head (ClusterIP + LoadBalancer optional)
+apiVersion: v1
+kind: Service
+metadata:
+  name: rathor-ray-cluster-head-svc
+  namespace: rathor-abundance
+spec:
+  selector:
+    ray.io/group: head
+  ports:
+  - name: dashboard
+    port: 8265
+    targetPort: 8265
+  - name: redis
+    port: 6379
+    targetPort: 6379
+  - name: client
+    port: 10001
+    targetPort: 10001
+  type: ClusterIP
+
+---
+# 7. Dask Scheduler Deployment (connects to Ray head)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dask-scheduler
+  namespace: rathor-abundance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dask-scheduler
+  template:
+    metadata:
+      labels:
+        app: dask-scheduler
+    spec:
+      serviceAccountName: ray-sa
+      containers:
+      - name: dask-scheduler
+        image: daskdev/dask:latest
+        command: ["dask-scheduler"]
+        args: ["--host", "0.0.0.0"]
+        ports:
+        - containerPort: 8786
+        - containerPort: 8787
+        env:
+        - name: RAY_ADDRESS
+          value: "ray://rathor-ray-cluster-head-svc:10001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dask-scheduler
+  namespace: rathor-abundance
+spec:
+  selector:
+    app: dask-scheduler
+  ports:
+  - name: scheduler
+    port: 8786
+    targetPort: 8786
+  - name: dashboard
+    port: 8787
+    targetPort: 8787
+  type: ClusterIP
