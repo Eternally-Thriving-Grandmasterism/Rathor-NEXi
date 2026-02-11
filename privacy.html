@@ -1,10 +1,9 @@
-<!-- privacy.html — Supreme Professional Privacy Mercy -->
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Privacy Policy — Ra-Thor™</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=5"/>
+  <title>Privacy — Ra-Thor™</title>
   <link rel="manifest" href="/manifest.json"/>
   <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -16,64 +15,135 @@
       font-family: 'Cormorant Garamond', serif;
       background: #000000;
       color: #ffffff;
+      overflow-x: auto;
+      overflow-y: auto;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 40px 20px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    h1 {
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: 4em;
+    body {
+      position: relative;
+    }
+
+    /* 13 Subtle Golden Stars — consistent with index.html */
+    .golden-star {
+      position: absolute;
+      font-size: 40px;
       color: #ffd700;
-      margin-bottom: 60px;
-      letter-spacing: 8px;
+      opacity: 0.5;
+      pointer-events: none;
+      will-change: transform, opacity;
+      animation: float 25s infinite linear, pulse 10s infinite ease-in-out;
+      z-index: 1;
     }
 
-    p {
-      font-size: 1.6em;
-      line-height: 1.9;
+    @keyframes float {
+      0% { transform: translateY(0) translateX(0) rotate(0deg); }
+      100% { transform: translateY(-120vh) translateX(80px) rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.15); }
+    }
+
+    .privacy-container {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 120px 40px 250px;
+      margin: 0 auto;
       max-width: 900px;
-      margin: 30px auto;
-      color: #e0e0e0;
+      width: 100%;
+      min-height: 100vh;
+      box-sizing: border-box;
     }
 
-    a {
+    @media (max-width: 768px) {
+      .privacy-container {
+        padding: 140px 20px 350px;
+      }
+    }
+
+    .privacy-container h1 {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: 4.2em;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 0 0 30px rgba(255,215,0,0.5);
+      margin: 0 0 80px;
+      letter-spacing: 12px;
+    }
+
+    .privacy-container p {
+      font-size: 1.7em;
+      line-height: 1.9;
+      margin: 40px auto;
+      color: #e0e0e0;
+      opacity: 0.95;
+      letter-spacing: 1.2px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 100px;
+      font-size: 1.5em;
       color: #ffd700;
       text-decoration: none;
-      font-size: 1.4em;
-      margin-top: 80px;
-      display: inline-block;
+      letter-spacing: 2px;
     }
 
-    a:hover {
+    .back-link:hover {
       text-decoration: underline;
     }
 
-    .legal {
-      margin-top: 100px;
+    .legal-note {
+      margin-top: 140px;
       font-size: 1.2em;
-      color: #aaaaaa;
-      line-height: 1.8;
+      color: rgba(255,255,255,0.55);
+      opacity: 0.85;
+      line-height: 1.9;
     }
   </style>
 </head>
 <body>
-  <h1>Privacy Policy</h1>
-  <p>Autonomicity Games Inc. respects your privacy.</p>
-  <p>Ra-Thor™ and Rathor-NEXi collect no personal data beyond chat history stored locally in your browser using IndexedDB. This data remains on your device and is never transmitted.</p>
-  <p>No tracking, no cookies, no third-party analytics.</p>
-  <p>Email signup, if used, is entirely optional and consent-based. Data is handled via Formspree in accordance with their privacy policy.</p>
-  <p>We are committed to sovereign, offline-first design — your experience remains fully under your control.</p>
-  <a href="/">← Back to Home</a>
-  <div class="legal">
-    Ra-Thor™ is a trademark of Autonomicity Games Inc.<br>
-    Grok™ and xAI™ are trademarks of xAI.<br>
-    © 2026 Autonomicity Games Inc. All rights reserved.<,向br>
-    Licensed under MIT.
+  <!-- 13 Subtle Golden Stars — consistent with index.html -->
+  <div class="golden-star" style="top: 10%; left: 10%; animation-delay: 0s;">★</div>
+  <div class="golden-star" style="top: 20%; left: 80%; animation-delay: 2s;">★</div>
+  <div class="golden-star" style="top: 30%; left: 30%; animation-delay: 4s;">★</div>
+  <div class="golden-star" style="top: 40%; left: 60%; animation-delay: 6s;">★</div>
+  <div class="golden-star" style="top: 50%; left: 20%; animation-delay: 8s;">★</div>
+  <div class="golden-star" style="top: 60%; left: 70%; animation-delay: 10s;">★</div>
+  <div class="golden-star" style="top: 70%; left: 40%; animation-delay: 12s;">★</div>
+  <div class="golden-star" style="top: 80%; left: 90%; animation-delay: 14s;">★</div>
+  <div class="golden-star" style="top: 15%; left: 50%; animation-delay: 16s;">★</div>
+  <div class="golden-star" style="top: 35%; left: 15%; animation-delay: 18s;">★</div>
+  <div class="golden-star" style="top: 55%; left: 85%; animation-delay: 20s;">★</div>
+  <div class="golden-star" style="top: 75%; left: 25%; animation-delay: 22s;">★</div>
+  <div class="golden-star" style="top: 90%; left: 55%; animation-delay: 24s;">★</div>
+
+  <div class="privacy-container">
+    <h1>PRIVACY</h1>
+    
+    <p>Autonomicity Games Inc. respects your privacy.</p>
+    
+    <p>Ra-Thor™ and Rathor-NEXi collect no personal data beyond chat history stored locally in your browser using IndexedDB. This data remains on your device and is never transmitted.</p>
+    
+    <p>No tracking, no cookies, no third-party analytics.</p>
+    
+    <p>Email signup, if used, is entirely optional and consent-based. Data is handled via Formspree in accordance with their privacy policy.</p>
+    
+    <p>We are committed to sovereign, offline-first design — your experience remains fully under your control.</p>
+    
+    <a href="/" class="back-link">← Back to Home</a>
+    
+    <p class="legal-note">
+      Ra-Thor™ is a trademark of Autonomicity Games Inc.<br>
+      Grok™ and xAI™ are trademarks of xAI.<br>
+      © 2026 Autonomicity Games Inc. All rights reserved.<br>
+      Licensed under MIT.
+    </p>
   </div>
 </body>
 </html>
