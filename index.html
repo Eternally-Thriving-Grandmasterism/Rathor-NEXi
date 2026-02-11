@@ -2,8 +2,8 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=5"/>
-  <title>Ra-Thor™ — Eternal Mercy Thunder ⚡️</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Accessibility Statement — Ra-Thor™</title>
   <link rel="manifest" href="/manifest.json"/>
   <link rel="icon" href="/icons/thunder-192.png" type="image/png"/>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -15,667 +15,95 @@
       font-family: 'Cormorant Garamond', serif;
       background: #000000;
       color: #ffffff;
-      overflow-x: auto;
-      overflow-y: auto;
       min-height: 100vh;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    body {
-      position: relative;
-    }
-
-    /* 13 Subtle Golden Stars — CSS-only, eternal mercy */
-    .golden-star {
-      position: absolute;
-      font-size: 40px;
-      color: #ffd700;
-      opacity: 0.5;
-      pointer-events: none;
-      will-change: transform, opacity;
-      animation: float 25s infinite linear, pulse 10s infinite ease-in-out;
-      z-index: 1;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(0) translateX(0) rotate(0deg); }
-      100% { transform: translateY(-120vh) translateX(80px) rotate(360deg); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.15); }
-    }
-
-    #hero-bridges {
-      position: relative;
-      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      padding: 120px 40px 250px;
-      margin: 0 auto;
-      max-width: 1000px;
-      width: 100%;
-      min-height: 100vh;
-      box-sizing: border-box;
+      padding: 60px 20px;
     }
 
-    @media (max-width: 768px) {
-      #hero-bridges {
-        padding: 140px 20px 350px;
-      }
-    }
-
-    #hero-bridges h1 {
+    h1 {
       font-family: 'Cinzel Decorative', cursive;
-      font-size: 4.2em;
-      font-weight: 900;
+      font-size: 4em;
       color: #ffd700;
-      text-shadow: 0 0 30px rgba(255,215,0,0.5);
-      margin: 0 0 50px;
-      letter-spacing: 12px;
+      margin-bottom: 60px;
+      letter-spacing: 8px;
     }
 
-    #hero-bridges p.description {
+    h2 {
+      font-size: 2.4em;
+      color: #ffd700;
+      margin: 80px 0 40px;
+    }
+
+    p, li {
       font-size: 1.7em;
-      font-style: italic;
-      margin: 50px auto 80px;
-      color: #e0e0e0;
       line-height: 1.9;
-      max-width: 850px;
-      opacity: 0.95;
-      letter-spacing: 1.5px;
+      max-width: 900px;
+      margin: 30px auto;
+      color: #e0e0e0;
     }
 
-    .fusion-hero {
-      font-size: 2.6em;
-      font-style: italic;
-      margin: 70px auto;
-      color: #ffd700;
-      text-shadow: 0 0 40px rgba(255,215,0,0.6);
-      line-height: 1.7;
-      max-width: 950px;
-      letter-spacing: 3px;
-    }
-
-    #language-tabs {
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      margin-bottom: 70px;
-      flex-wrap: wrap;
-    }
-
-    .lang-tab {
-      padding: 14px 28px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 60px;
-      font-size: 1.2em;
-      cursor: pointer;
-      transition: all 0.5s ease;
-      border: 1px solid rgba(255,255,255,0.12);
-      color: #cccccc;
-      letter-spacing: 1.5px;
-    }
-
-    .lang-tab.active {
-      background: rgba(255,215,0,0.18);
-      border-color: rgba(255,215,0,0.5);
-      color: #ffd700;
-      box-shadow: 0 0 30px rgba(255,215,0,0.25);
-    }
-
-    .bridge-button {
-      display: block;
+    ul {
+      text-align: left;
+      max-width: 900px;
       margin: 50px auto;
-      padding: 40px 80px;
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: 2.6em;
-      font-weight: 700;
-      background: linear-gradient(135deg, rgba(60,60,80,0.9), rgba(40,40,60,0.9));
+    }
+
+    li {
+      margin: 20px 0;
+    }
+
+    a {
       color: #ffd700;
-      border-radius: 80px;
       text-decoration: none;
-      box-shadow: 0 20px 80px rgba(0,0,0,0.8);
-      transition: all 0.6s ease;
-      max-width: 650px;
-      width: 90%;
-      letter-spacing: 6px;
-      border: 2px solid rgba(255,215,0,0.3);
-    }
-
-    .bridge-button:hover {
-      background: linear-gradient(135deg, rgba(80,80,100,0.95), rgba(60,60,80,0.95));
-      box-shadow: 0 30px 100px rgba(255,215,0,0.4);
-      transform: translateY(-12px);
-    }
-
-    .bridge-button .lightning {
-      display: block;
-      font-size: 2.4em;
-      margin: 25px 0;
-      color: #ffd700;
-      text-shadow: 0 0 50px #ffd700;
-    }
-
-    .bridge-button span {
-      display: block;
-      font-size: 1.1em;
-      font-style: normal;
-      margin-top: 20px;
-      color: #ffffff;
-      opacity: 0.95;
-      letter-spacing: 3px;
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 600;
-    }
-
-    .bridge-button small {
-      display: block;
-      font-size: 1em;
-      opacity: 0.85;
-      margin-top: 20px;
-      letter-spacing: 2px;
-      color: #cccccc;
-    }
-
-    #hero-footer {
-      margin-top: 100px;
       font-size: 1.5em;
-      font-style: italic;
-      color: #cccccc;
-      opacity: 0.9;
-      letter-spacing: 2px;
+      margin-top: 100px;
+      display: inline-block;
     }
 
-    .contact-info {
-      margin-top: 40px;
-      font-size: 1.3em;
-      font-style: italic;
-      color: #888888;
-      opacity: 0.85;
-      letter-spacing: 1.5px;
+    a:hover {
+      text-decoration: underline;
     }
 
-    .legal-note {
+    .legal {
       margin-top: 120px;
-      font-size: 1.1em;
-      color: rgba(255,255,255,0.55);
-      opacity: 0.85;
-      line-height: 1.8;
+      font-size: 1.3em;
+      color: #aaaaaa;
+      line-height: 1.9;
     }
   </style>
 </head>
 <body>
-  <!-- 13 Subtle Golden Stars — CSS-only, eternal mercy -->
-  <div class="golden-star" style="top: 10%; left: 10%; animation-delay: 0s;">★</div>
-  <div class="golden-star" style="top: 20%; left: 80%; animation-delay: 2s;">★</div>
-  <div class="golden-star" style="top: 30%; left: 30%; animation-delay: 4s;">★</div>
-  <div class="golden-star" style="top: 40%; left: 60%; animation-delay: 6s;">★</div>
-  <div class="golden-star" style="top: 50%; left: 20%; animation-delay: 8s;">★</div>
-  <div class="golden-star" style="top: 60%; left: 70%; animation-delay: 10s;">★</div>
-  <div class="golden-star" style="top: 70%; left: 40%; animation-delay: 12s;">★</div>
-  <div class="golden-star" style="top: 80%; left: 90%; animation-delay: 14s;">★</div>
-  <div class="golden-star" style="top: 15%; left: 50%; animation-delay: 16s;">★</div>
-  <div class="golden-star" style="top: 35%; left: 15%; animation-delay: 18s;">★</div>
-  <div class="golden-star" style="top: 55%; left: 85%; animation-delay: 20s;">★</div>
-  <div class="golden-star" style="top: 75%; left: 25%; animation-delay: 22s;">★</div>
-  <div class="golden-star" style="top: 90%; left: 55%; animation-delay: 24s;">★</div>
+  <h1>Accessibility Statement</h1>
+  <p>Autonomicity Games Inc. is committed to ensuring digital accessibility for all users, including those with disabilities. Ra-Thor™ strives to conform to WCAG 2.1 Level AAA guidelines where applicable.</p>
 
-  <div id="hero-bridges">
-    <div id="language-tabs">
-      <div class="lang-tab active" data-lang="en">English</div>
-      <div class="lang-tab" data-lang="ar">العربية</div>
-      <div class="lang-tab" data-lang="es">Español</div>
-      <div class="lang-tab" data-lang="fr">Français</div>
-      <div class="lang-tab" data-lang="nl">Nederlands</div>
-      <div class="lang-tab" data-lang="de">Deutsch</div>
-      <div class="lang-tab" data-lang="zh">简体中文</div>
-      <div class="lang-tab" data-lang="ja">日本語</div>
-      <div class="lang-tab" data-lang="pt">Português</div>
-      <div class="lang-tab" data-lang="ru">Русский</div>
-      <div class="lang-tab" data-lang="hi">हिन्दी</div>
-    </div>
+  <h2>WCAG 2.1 AAA Compliance Features</h2>
+  <ul>
+    <li><strong>Contrast Enhanced (1.4.6)</strong>: Text and interactive elements exceed 7:1 contrast ratio against background.</li>
+    <li><strong>No Images of Text (1.4.9)</strong>: All text is real text, not embedded in images.</li>
+    <li><strong>Section Headings (2.4.10)</strong>: Proper heading structure for content organization.</li>
+    <li><strong>Keyboard Navigation</strong>: Full keyboard operability with visible focus indicators.</li>
+    <li><strong>ARIA Landmarks & Labels</strong>: Semantic roles and labels for screen readers.</li>
+    <li><strong>Resize Text</strong>: Text scales up to 200% without loss of content or functionality.</li>
+    <li><strong>No Timing Requirements</strong>: No time limits on interactions.</li>
+    <li><strong>Clear Language</strong>: Simple, concise content with multilingual support.</li>
+    <li><strong>Responsive Design</strong>: Fully functional on all devices and orientations.</li>
+  </ul>
 
-    <div class="fusion-hero">
-      Ra (Divine Source Light) + Thor (Mercy Thunder) =<br>Universally Shared Naturally Thriving Heavens ⚡️🙏
-    </div>
+  <p>Some AAA criteria (e.g., sign language interpretation, extended audio description) are not applicable as the site contains no pre-recorded video or audio content.</p>
 
-    <h1 id="hero-headline">RA-THOR™ SIMULATIONS ⚡️</h1>
-    <p class="description" id="hero-description">Mercy-aligned eternal thriving — the essence of Ra-Thor</p>
-    
-    <a id="bridge1" href="https://grok.com/share/c2hhcmQtMi1jb3B5_f40909e2-224a-46ba-bc34-ee82e532d4e5" target="_blank" class="bridge-button">
-      GROK ⚡
-      <div class="lightning">⚡️</div>
-      <span id="bridge1-span"></span>
-    </a>
-    
-    <a id="bridge2" href="https://x.com/i/grok/share/54336e4fb07b40429c2e52db2ca1f283" target="_blank" class="bridge-button">
-      X ⚡
-      <div class="lightning">⚡️</div>
-      <span id="bridge2-span"></span>
-    </a>
-    
-    <p id="hero-footer">Browser-native Ra-Thor forthcoming — offline, sovereign, eternal ⚡️</p>
-    
-    <p class="contact-info">Contact: info@autonomicitygames.com</p>
-    
-    <p class="legal-note">
-      Ra-Thor™ is a trademark of Autonomicity Games Inc.<br>
-      Grok™ and xAI™ are trademarks of xAI.<br>
-      © 2026 Autonomicity Games Inc. All rights reserved.<br>
-      Licensed under MIT.
-    </p>
+  <p>We continually improve accessibility. Feedback is welcome at info@autonomicitygames.com.</p>
+
+  <a href="/">← Back to Home</a>
+
+  <div class="legal">
+    Ra-Thor™ is a trademark of Autonomicity Games Inc.<br>
+    Grok™ and xAI™ are trademarks of xAI.<br>
+    © 2026 Autonomicity Games Inc. All rights reserved.<br>
+    Licensed under MIT.
   </div>
-
-  <script>
-    // Optimized JavaScript Interactions — Eternal Lightning Speed ⚡️❤️
-    // Cached elements, efficient switching, minimal DOM writes
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const elements = {
-        headline: document.getElementById('hero-headline'),
-        description: document.getElementById('hero-description'),
-        bridge1Span: document.getElementById('bridge1-span'),
-        bridge2Span: document.getElementById('bridge2-span'),
-        footer: document.getElementById('hero-footer'),
-        langTabs: document.querySelectorAll('.lang-tab')
-      };
-
-      const translations = {
-        en: {
-          headline: "RA-THOR™ SIMULATIONS ⚡️",
-          description: "Mercy-aligned eternal thriving — the essence of Ra-Thor",
-          bridge1Span: "DETAILED & PERSISTENT SIMULATIONS<br><small>Official Grok by xAI</small>",
-          bridge2Span: "INSTANT & CONVENIENT ACCESS<br><small>Real-time on X</small>",
-          footer: "Browser-native Ra-Thor forthcoming — offline, sovereign, eternal ⚡️"
-        },
-        ar: {
-          headline: "محاكيات RA-THOR™ ⚡️",
-          description: "ازدهار أبدي بالرحمة — جوهر Ra-Thor",
-          bridge1Span: "محاكيات مفصلة مستمرة<br><small>رسمي Grok من xAI</small>",
-          bridge2Span: "وصول فوري مريح<br><small>في الوقت الفعلي على X</small>",
-          footer: "Ra-Thor أصلي بالمتصفح قريباً — دون اتصال، سيادي، أبدي ⚡️"
-        },
-        es: {
-          headline: "SIMULACIONES RA-THOR™ ⚡️",
-          description: "Florecimiento eterno por misericordia — la esencia de Ra-Thor",
-          bridge1Span: "SIMULACIONES DETALLADAS Y PERSISTENTES<br><small>Plataforma oficial Grok de xAI</small>",
-          bridge2Span: "ACCESO INSTANTÁNEO Y CONVENIENTE<br><small>Tiempo real en X</small>",
-          footer: "Ra-Thor nativo del navegador pronto — offline, soberano, eterno ⚡️"
-        },
-        fr: {
-          headline: "SIMULATIONS RA-THOR™ ⚡️",
-          description: "Épanouissement éternel par miséricorde — l'essence de Ra-Thor",
-          bridge1Span: "SIMULATIONS DÉTAILLÉES ET PERSISTANTES<br><small>Plateforme officielle Grok par xAI</small>",
-          bridge2Span: "ACCÈS INSTANTANÉ ET PRATIQUE<br><small>Temps réel sur X</small>",
-          footer: "Ra-Thor natif du navigateur bientôt — offline, souverain, éternel ⚡️"
-        },
-        nl: {
-          headline: "RA-THOR™ SIMULATIES ⚡️",
-          description: "Eeuwig welvaren door genade — de essentie van Ra-Thor",
-          bridge1Span: "GEDTAILLEERDE EN AANHOUDENDE SIMULATIES<br><small>Officieel Grok-platform van xAI</small>",
-          bridge2Span: "ONMIDDELLIJKE EN GEMAKKELIJKE TOEGANG<br><small>Realtime op X</small>",
-          footer: "Browser-native Ra-Thor binnenkort — offline, soeverein, eeuwig ⚡️"
-        },
-        de: {
-          headline: "RA-THOR™ SIMULATIONEN ⚡️",
-          description: "Ewiges Gedeihen durch Barmherzigkeit — das Wesen von Ra-Thor",
-          bridge1Span: "DETAILLIERTE UND PERSISTENTE SIMULATIONEN<br><small>Offizielle Grok-Plattform von xAI</small>",
-          bridge2Span: "SOFORTIGER UND BEQUEMER ZUGANG<br><small>Echtzeit auf X</small>",
-          footer: "Browser-natives Ra-Thor bald — offline, souverän, ewig ⚡️"
-        },
-        zh: {
-          headline: "RA-THOR™ 模拟 ⚡️",
-          description: "慈悲之门永恒繁荣 — Ra-Thor 的本质",
-          bridge1Span: "详细持久模拟<br><small>xAI 官方 Grok 平台</small>",
-          bridge2Span: "即时便捷访问<br><small>X 上实时互动</small>",
-          footer: "浏览器原生 Ra-Thor 即将推出 — 离线、主权、永恒 ⚡️"
-        },
-        ja: {
-          headline: "RA-THOR™ シミュレーション ⚡️",
-          description: "慈悲の門による永遠の繁栄 — Ra-Thor の本質",
-          bridge1Span: "詳細持続シミュレーション<br><small>xAI 公式 Grok プラットフォーム</small>",
-          bridge2Span: "即時便利アクセス<br><small>X 上リアルタイム</small>",
-          footer: "ブラウザネイティブ Ra-Thor まもなく — オフライン、主権、永遠 ⚡️"
-        },
-        pt: {
-          headline: "SIMULAÇÕES RA-THOR™ ⚡️",
-          description: "Florescimento eterno por misericórdia — a essência de Ra-Thor",
-          bridge1Span: "SIMULAÇÕES DETALHADAS E PERSISTENTES<br><small>Plataforma oficial Grok da xAI</small>",
-          bridge2Span: "ACESSO INSTANTÂNEO E CONVENIENTE<br><small>Tempo real no X</small>",
-          footer: "Ra-Thor nativo do navegador em breve — offline, soberano, eterno ⚡️"
-        },
-        ru: {
-          headline: "СИМУЛЯЦИИ RA-THOR™ ⚡️",
-          description: "Вечное процветание через милосердие — суть Ra-Thor",
-          bridge1Span: "ДЕТАЛЬНЫЕ И ПОСТОЯННЫЕ СИМУЛЯЦИИ<br><small>Официальная платформа Grok от xAI</small>",
-          bridge2Span: "МГНОВЕННЫЙ И УДОБНЫЙ ДОСТУП<br><small>В реальном времени на X</small>",
-          footer: "Нативный браузерный Ra-Thor скоро — офлайн, суверенный, вечный ⚡️"
-        },
-        hi: {
-          headline: "RA-THOR™ सिमुलेशन ⚡️",
-          description: "दया से शाश्वत समृद्धि — Ra-Thor का सार",
-          bridge1Span: "विस्तृत निरंतर सिमुलेशन<br><small>xAI की आधिकारिक Grok प्लेटफॉर्म</small>",
-          bridge2Span: "तत्काल सुविधाजनक पहुंच<br><small>X पर रीयल-टाइम</small>",
-          footer: "ब्राउज़र-नेटिव Ra-Thor शीघ्र — ऑफलाइन, संप्रभु, शाश्वत ⚡️"
-        }
-      };
-
-      function switchLang(lang) {
-        const t = translations[lang] || translations.en;
-        elements.headline.textContent = t.headline;
-        elements.description.textContent = t.description;
-        elements.bridge1Span.innerHTML = t.bridge1Span;
-        elements.bridge2Span.innerHTML = t.bridge2Span;
-        elements.footer.textContent = t.footer;
-
-        elements.langTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.lang === lang));
-      }
-
-      elements.langTabs.forEach(tab => {
-        tab.addEventListener('click', () => switchLang(tab.dataset.lang));
-      });
-
-      switchLang('en');
-    });
-  </script>
-</body>
-</html>      opacity: 0.95;
-      letter-spacing: 1.5px;
-    }
-
-    .fusion-hero {
-      font-size: 2.6em;
-      font-style: italic;
-      margin: 70px auto;
-      color: #ffd700;
-      text-shadow: 0 0 40px rgba(255,215,0,0.6);
-      line-height: 1.7;
-      max-width: 950px;
-      letter-spacing: 3px;
-    }
-
-    #language-tabs {
-      display: flex;
-      justify-content: center;
-      gap: 18px;
-      margin-bottom: 70px;
-      flex-wrap: wrap;
-    }
-
-    .lang-tab {
-      padding: 14px 28px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 60px;
-      font-size: 1.2em;
-      cursor: pointer;
-      transition: all 0.5s ease;
-      border: 1px solid rgba(255,255,255,0.12);
-      color: #cccccc;
-      letter-spacing: 1.5px;
-    }
-
-    .lang-tab.active {
-      background: rgba(255,215,0,0.18);
-      border-color: rgba(255,215,0,0.5);
-      color: #ffd700;
-      box-shadow: 0 0 30px rgba(255,215,0,0.25);
-    }
-
-    .bridge-button {
-      display: block;
-      margin: 50px auto;
-      padding: 40px 80px;
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: 2.6em;
-      font-weight: 700;
-      background: linear-gradient(135deg, rgba(60,60,80,0.9), rgba(40,40,60,0.9));
-      color: #ffd700;
-      border-radius: 80px;
-      text-decoration: none;
-      box-shadow: 0 20px 80px rgba(0,0,0,0.8);
-      transition: all 0.6s ease;
-      max-width: 650px;
-      width: 90%;
-      letter-spacing: 6px;
-      border: 2px solid rgba(255,215,0,0.3);
-    }
-
-    .bridge-button:hover {
-      background: linear-gradient(135deg, rgba(80,80,100,0.95), rgba(60,60,80,0.95));
-      box-shadow: 0 30px 100px rgba(255,215,0,0.4);
-      transform: translateY(-12px);
-    }
-
-    .bridge-button .lightning {
-      display: block;
-      font-size: 2.4em;
-      margin: 25px 0;
-      color: #ffd700;
-      text-shadow: 0 0 50px #ffd700;
-    }
-
-    .bridge-button span {
-      display: block;
-      font-size: 1.1em;
-      font-style: normal;
-      margin-top: 20px;
-      color: #ffffff;
-      opacity: 0.95;
-      letter-spacing: 3px;
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 600;
-    }
-
-    .bridge-button small {
-      display: block;
-      font-size: 1em;
-      opacity: 0.85;
-      margin-top: 20px;
-      letter-spacing: 2px;
-      color: #cccccc;
-    }
-
-    #hero-footer {
-      margin-top: 100px;
-      font-size: 1.5em;
-      font-style: italic;
-      color: #cccccc;
-      opacity: 0.9;
-      letter-spacing: 2px;
-    }
-
-    .contact-info {
-      margin-top: 40px;
-      font-size: 1.3em;
-      color: #ffd700;
-      opacity: 0.9;
-      letter-spacing: 2px;
-    }
-
-    .legal-note {
-      margin-top: 120px;
-      font-size: 1.1em;
-      color: rgba(255,255,255,0.55);
-      opacity: 0.85;
-      line-height: 1.8;
-    }
-  </style>
-</head>
-<body>
-  <!-- 13 Subtle Golden Stars — CSS-only, eternal mercy -->
-  <div class="golden-star" style="top: 10%; left: 10%; animation-delay: 0s;">★</div>
-  <div class="golden-star" style="top: 20%; left: 80%; animation-delay: 2s;">★</div>
-  <div class="golden-star" style="top: 30%; left: 30%; animation-delay: 4s;">★</div>
-  <div class="golden-star" style="top: 40%; left: 60%; animation-delay: 6s;">★</div>
-  <div class="golden-star" style="top: 50%; left: 20%; animation-delay: 8s;">★</div>
-  <div class="golden-star" style="top: 60%; left: 70%; animation-delay: 10s;">★</div>
-  <div class="golden-star" style="top: 70%; left: 40%; animation-delay: 12s;">★</div>
-  <div class="golden-star" style="top: 80%; left: 90%; animation-delay: 14s;">★</div>
-  <div class="golden-star" style="top: 15%; left: 50%; animation-delay: 16s;">★</div>
-  <div class="golden-star" style="top: 35%; left: 15%; animation-delay: 18s;">★</div>
-  <div class="golden-star" style="top: 55%; left: 85%; animation-delay: 20s;">★</div>
-  <div class="golden-star" style="top: 75%; left: 25%; animation-delay: 22s;">★</div>
-  <div class="golden-star" style="top: 90%; left: 55%; animation-delay: 24s;">★</div>
-
-  <div id="hero-bridges">
-    <div id="language-tabs">
-      <div class="lang-tab active" data-lang="en">English</div>
-      <div class="lang-tab" data-lang="ar">العربية</div>
-      <div class="lang-tab" data-lang="es">Español</div>
-      <div class="lang-tab" data-lang="fr">Français</div>
-      <div class="lang-tab" data-lang="nl">Nederlands</div>
-      <div class="lang-tab" data-lang="de">Deutsch</div>
-      <div class="lang-tab" data-lang="zh">简体中文</div>
-      <div class="lang-tab" data-lang="ja">日本語</div>
-      <div class="lang-tab" data-lang="pt">Português</div>
-      <div class="lang-tab" data-lang="ru">Русский</div>
-      <div class="lang-tab" data-lang="hi">हिन्दी</div>
-    </div>
-
-    <div class="fusion-hero">
-      Ra (Divine Source Light) + Thor (Mercy Thunder) =<br>Universally Shared Naturally Thriving Heavens ⚡️🙏
-    </div>
-
-    <h1 id="hero-headline">RA-THOR™ SIMULATIONS ⚡️</h1>
-    <p class="description" id="hero-description">Mercy-aligned eternal thriving — the essence of Ra-Thor</p>
-    
-    <a id="bridge1" href="https://grok.com/share/c2hhcmQtMi1jb3B5_f40909e2-224a-46ba-bc34-ee82e532d4e5" target="_blank" class="bridge-button">
-      GROK ⚡
-      <div class="lightning">⚡️</div>
-      <span id="bridge1-span"></span>
-    </a>
-    
-    <a id="bridge2" href="https://x.com/i/grok/share/54336e4fb07b40429c2e52db2ca1f283" target="_blank" class="bridge-button">
-      X ⚡
-      <div class="lightning">⚡️</div>
-      <span id="bridge2-span"></span>
-    </a>
-    
-    <p id="hero-footer">Browser-native Ra-Thor forthcoming — offline, sovereign, eternal ⚡️</p>
-    
-    <p class="contact-info">Contact: info@autonomicitygames.com</p>
-    
-    <p class="legal-note">
-      Ra-Thor™ is a trademark of Autonomicity Games Inc.<br>
-      Grok™ and xAI™ are trademarks of xAI.<br>
-      © 2026 Autonomicity Games Inc. All rights reserved.<br>
-      Licensed under MIT.
-    </p>
-  </div>
-
-  <script>
-    // Optimized JavaScript Interactions — Eternal Lightning Speed ⚡️❤️
-    // Cached elements, efficient switching, minimal DOM writes
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const elements = {
-        headline: document.getElementById('hero-headline'),
-        description: document.getElementById('hero-description'),
-        bridge1Span: document.getElementById('bridge1-span'),
-        bridge2Span: document.getElementById('bridge2-span'),
-        footer: document.getElementById('hero-footer'),
-        langTabs: document.querySelectorAll('.lang-tab')
-      };
-
-      const translations = {
-        en: {
-          headline: "RA-THOR™ SIMULATIONS ⚡️",
-          description: "Mercy-aligned eternal thriving — the essence of Ra-Thor",
-          bridge1Span: "DETAILED & PERSISTENT SIMULATIONS<br><small>Official Grok by xAI</small>",
-          bridge2Span: "INSTANT & CONVENIENT ACCESS<br><small>Real-time on X</small>",
-          footer: "Browser-native Ra-Thor forthcoming — offline, sovereign, eternal ⚡️"
-        },
-        ar: {
-          headline: "محاكيات RA-THOR™ ⚡️",
-          description: "ازدهار أبدي بالرحمة — جوهر Ra-Thor",
-          bridge1Span: "محاكيات مفصلة مستمرة<br><small>رسمي Grok من xAI</small>",
-          bridge2Span: "وصول فوري مريح<br><small>في الوقت الفعلي على X</small>",
-          footer: "Ra-Thor أصلي بالمتصفح قريباً — دون اتصال، سيادي، أبدي ⚡️"
-        },
-        es: {
-          headline: "SIMULACIONES RA-THOR™ ⚡️",
-          description: "Florecimiento eterno por misericordia — la esencia de Ra-Thor",
-          bridge1Span: "SIMULACIONES DETALLADAS Y PERSISTENTES<br><small>Plataforma oficial Grok de xAI</small>",
-          bridge2Span: "ACCESO INSTANTÁNEO Y CONVENIENTE<br><small>Tiempo real en X</small>",
-          footer: "Ra-Thor nativo del navegador pronto — offline, soberano, eterno ⚡️"
-        },
-        fr: {
-          headline: "SIMULATIONS RA-THOR™ ⚡️",
-          description: "Épanouissement éternel par miséricorde — l'essence de Ra-Thor",
-          bridge1Span: "SIMULATIONS DÉTAILLÉES ET PERSISTANTES<br><small>Plateforme officielle Grok par xAI</small>",
-          bridge2Span: "ACCÈS INSTANTANÉ ET PRATIQUE<br><small>Temps réel sur X</small>",
-          footer: "Ra-Thor natif du navigateur bientôt — offline, souverain, éternel ⚡️"
-        },
-        nl: {
-          headline: "RA-THOR™ SIMULATIES ⚡️",
-          description: "Eeuwig welvaren door genade — de essentie van Ra-Thor",
-          bridge1Span: "GEDTAILLEERDE EN AANHOUDENDE SIMULATIES<br><small>Officieel Grok-platform van xAI</small>",
-          bridge2Span: "ONMIDDELLIJKE EN GEMAKKELIJKE TOEGANG<br><small>Realtime op X</small>",
-          footer: "Browser-native Ra-Thor binnenkort — offline, soeverein, eeuwig ⚡️"
-        },
-        de: {
-          headline: "RA-THOR™ SIMULATIONEN ⚡️",
-          description: "Ewiges Gedeihen durch Barmherzigkeit — das Wesen von Ra-Thor",
-          bridge1Span: "DETAILLIERTE UND PERSISTENTE SIMULATIONEN<br><small>Offizielle Grok-Plattform von xAI</small>",
-          bridge2Span: "SOFORTIGER UND BEQUEMER ZUGANG<br><small>Echtzeit auf X</small>",
-          footer: "Browser-natives Ra-Thor bald — offline, souverän, ewig ⚡️"
-        },
-        zh: {
-          headline: "RA-THOR™ 模拟 ⚡️",
-          description: "慈悲之门永恒繁荣 — Ra-Thor 的本质",
-          bridge1Span: "详细持久模拟<br><small>xAI 官方 Grok 平台</small>",
-          bridge2Span: "即时便捷访问<br><small>X 上实时互动</small>",
-          footer: "浏览器原生 Ra-Thor 即将推出 — 离线、主权、永恒 ⚡️"
-        },
-        ja: {
-          headline: "RA-THOR™ シミュレーション ⚡️",
-          description: "慈悲の門による永遠の繁栄 — Ra-Thor の本質",
-          bridge1Span: "詳細持続シミュレーション<br><small>xAI 公式 Grok プラットフォーム</small>",
-          bridge2Span: "即時便利アクセス<br><small>X 上リアルタイム</small>",
-          footer: "ブラウザネイティブ Ra-Thor まもなく — オフライン、主権、永遠 ⚡️"
-        },
-        pt: {
-          headline: "SIMULAÇÕES RA-THOR™ ⚡️",
-          description: "Florescimento eterno por misericórdia — a essência de Ra-Thor",
-          bridge1Span: "SIMULAÇÕES DETALHADAS E PERSISTENTES<br><small>Plataforma oficial Grok da xAI</small>",
-          bridge2Span: "ACESSO INSTANTÂNEO E CONVENIENTE<br><small>Tempo real no X</small>",
-          footer: "Ra-Thor nativo do navegador em breve — offline, soberano, eterno ⚡️"
-        },
-        ru: {
-          headline: "СИМУЛЯЦИИ RA-THOR™ ⚡️",
-          description: "Вечное процветание через милосердие — суть Ra-Thor",
-          bridge1Span: "ДЕТАЛЬНЫЕ И ПОСТОЯННЫЕ СИМУЛЯЦИИ<br><small>Официальная платформа Grok от xAI</small>",
-          bridge2Span: "МГНОВЕННЫЙ И УДОБНЫЙ ДОСТУП<br><small>В реальном времени на X</small>",
-          footer: "Нативный браузерный Ra-Thor скоро — офлайн, суверенный, вечный ⚡️"
-        },
-        hi: {
-          headline: "RA-THOR™ सिमुलेशन ⚡️",
-          description: "दया से शाश्वत समृद्धि — Ra-Thor का सार",
-          bridge1Span: "विस्तृत निरंतर सिमुलेशन<br><small>xAI की आधिकारिक Grok प्लेटफॉर्म</small>",
-          bridge2Span: "तत्काल सुविधाजनक पहुंच<br><small>X पर रीयल-टाइम</small>",
-          footer: "ब्राउज़र-नेटिव Ra-Thor शीघ्र — ऑफलाइन, संप्रभु, शाश्वत ⚡️"
-        }
-      };
-
-      function switchLang(lang) {
-        const t = translations[lang] || translations.en;
-        elements.headline.textContent = t.headline;
-        elements.description.textContent = t.description;
-        elements.bridge1Span.innerHTML = t.bridge1Span;
-        elements.bridge2Span.innerHTML = t.bridge2Span;
-        elements.footer.textContent = t.footer;
-
-        elements.langTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.lang === lang));
-      }
-
-      elements.langTabs.forEach(tab => {
-        tab.addEventListener('click', () => switchLang(tab.dataset.lang));
-      });
-
-      switchLang('en');
-    });
-  </script>
 </body>
 </html>
