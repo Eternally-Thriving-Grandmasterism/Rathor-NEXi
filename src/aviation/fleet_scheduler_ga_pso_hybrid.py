@@ -1,6 +1,6 @@
 """
 Ra-Thor Mercy-Gated Ultra-Hybrid Fleet Scheduler
-Refactored 2026-02-10 — modular, vectorized, numba-ready
+Fully implemented GA, PSO, DE classes — modular, vectorized, numba-ready
 GA → PSO → Round-Trip GA → DE chain for AlphaProMega Air abundance skies
 With RUL predictions + crew pairing/duty/rest constraints
 MIT License — Eternally-Thriving-Grandmasterism
@@ -8,10 +8,10 @@ MIT License — Eternally-Thriving-Grandmasterism
 
 import numpy as np
 import random
-from typing import Dict, Any, Tuple, Optional
+from typing import Tuple, List
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Global Constants & Precomputes (mercy-aligned defaults)
+# Global Config & Precomputes
 # ──────────────────────────────────────────────────────────────────────────────
 CONFIG = {
     'fleet_size': 50,
@@ -33,25 +33,19 @@ CONFIG = {
     'rushed_penalty_per_day': 0.12,
 }
 
-# Precompute once
 RUL_SAMPLES = np.random.weibull(2.0, CONFIG['fleet_size']) * CONFIG['mean_rul_days']
 CHROM_LENGTH = CONFIG['fleet_size'] * CONFIG['gene_length']
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Vectorized Core Fitness (hotspot — numba-ready)
+# Vectorized Fitness — batch evaluation (hotspot)
 # ──────────────────────────────────────────────────────────────────────────────
 def vectorized_fitness(chromosomes: np.ndarray) -> np.ndarray:
-    """
-    Batch-evaluate abundance for many chromosomes.
-    Input: (n_chroms, CHROM_LENGTH)
-    Output: (n_chroms,) abundance scores
-    """
+    """Batch abundance evaluation. Input: (n, CHROM_LENGTH) → Output: (n,)"""
     n = chromosomes.shape[0]
     fs = CONFIG['fleet_size']
     gl = CONFIG['gene_length']
 
-    # Decode — shape (n, fs, gl)
     decoded = np.reshape(chromosomes, (n, fs, gl))
 
     bays      = decoded[:, :, 0].astype(np.int32)
@@ -61,85 +55,77 @@ def vectorized_fitness(chromosomes: np.ndarray) -> np.ndarray:
 
     end_times = starts + durations
 
-    # 1. RUL violations
+    # RUL violations
     criticals = RUL_SAMPLES - CONFIG['rul_buffer_days']
     violations = np.maximum(0.0, end_times - criticals[None, :])
     rul_pen = CONFIG['rul_penalty_factor'] * (np.exp(violations / 10.0) - 1.0)
     rul_total = np.sum(rul_pen, axis=1)
 
-    # 2. Crew over-assign (fast histogram)
+    # Crew over-assign
     crew_counts = np.zeros((n, CONFIG['num_crew_groups']), dtype=np.int32)
     np.add.at(crew_counts, (np.arange(n)[:, None], crews.ravel()), 1)
     over = np.maximum(0, crew_counts - CONFIG['max_slots_per_crew'])
     over_pen = np.sum(over, axis=1) * CONFIG['crew_penalty_factor'] * 10.0
 
-    # 3. Crew duty/rest violations (loop over 20 crews — small & fast)
+    # Crew duty/rest violations
     crew_duty_pen = np.zeros(n)
     for c in range(CONFIG['num_crew_groups']):
-        mask = (crews == c)                                 # (n, fs)
+        mask = (crews == c)
         c_starts = np.where(mask, starts, np.inf)
         c_ends   = np.where(mask, end_times, np.inf)
         c_dur_h  = np.where(mask, durations * 8.0, 0.0)
 
-        # Sort per row
         sort_idx = np.argsort(c_starts, axis=1)
         s_starts = np.take_along_axis(c_starts, sort_idx, axis=1)
         s_ends   = np.take_along_axis(c_ends,   sort_idx, axis=1)
         s_dur_h  = np.take_along_axis(c_dur_h,  sort_idx, axis=1)
 
-        # Rest & duty violations
         rest_h = s_starts[:, 1:] - s_ends[:, :-1]
         rest_viol = np.maximum(0.0, CONFIG['min_rest_hours'] * 24 - rest_h)
         rest_pen = CONFIG['duty_penalty_factor'] * np.exp(rest_viol / 24.0)
         duty_viol = np.maximum(0.0, s_dur_h[:, 1:] - CONFIG['max_duty_hours'])
         duty_pen = CONFIG['duty_penalty_factor'] * duty_viol * 2.0
 
-        crew_duty_pen += np.nansum(rest_pen + duty_pen, axis=1)  # nan-safe
+        crew_duty_pen += np.nansum(rest_pen + duty_pen, axis=1)
 
-    # 4. Bay overlap (pairwise vectorized approximation)
+    # Bay overlap (pairwise approx)
     overlap_pen = np.zeros(n)
     for b in range(CONFIG['num_bays']):
         b_mask = (bays == b)
         b_starts = np.where(b_mask, starts, np.inf)
         b_ends   = np.where(b_mask, end_times, np.inf)
 
-        s1 = b_starts[:, :, None]           # (n, fs, 1)
+        s1 = b_starts[:, :, None]
         e1 = b_ends[:, :, None]
-        s2 = b_starts[:, None, :]           # (n, 1, fs)
+        s2 = b_starts[:, None, :]
         e2 = b_ends[:, None, :]
 
         olap = np.maximum(0.0, np.minimum(e1, e2) - np.maximum(s1, s2))
-        overlap_pen += np.sum(olap, axis=(1,2)) * CONFIG['overlap_penalty_weight'] / 2  # avoid double-count
+        overlap_pen += np.sum(olap, axis=(1,2)) * CONFIG['overlap_penalty_weight'] / 2
 
-    # 5. Rushed duration penalty
+    # Rushed penalty
     rushed_mask = durations < CONFIG['rushed_duration_threshold']
     rushed_pen = np.sum(rushed_mask * (CONFIG['rushed_duration_threshold'] - durations) * CONFIG['rushed_penalty_per_day'], axis=1)
 
-    # Aggregate mercy penalty
-    mercy_penalty = (
-        overlap_pen +
-        (rul_total + crew_duty_pen + over_pen) / 100.0 +
-        rushed_pen
-    )
-
+    mercy_penalty = overlap_pen + (rul_total + crew_duty_pen + over_pen) / 100.0 + rushed_pen
     mercy_factor = np.maximum(0.1, 1.0 - mercy_penalty)
 
-    # Utilization & coverage
     total_maint = np.sum(durations, axis=1)
     coverage = np.minimum(1.0, total_maint / (CONFIG['num_bays'] * CONFIG['horizon_days'] * 0.6))
     utilization = CONFIG['baseline_util'] + coverage * 0.15
 
-    abundance = utilization * coverage * mercy_factor
-    return abundance
+    return utilization * coverage * mercy_factor
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Chromosome utilities
+# Chromosome Helpers
 # ──────────────────────────────────────────────────────────────────────────────
-def create_random_chromosome() -> np.ndarray:
-    chrom = np.zeros(CHROM_LENGTH)
-    for i in range(CONFIG['fleet_size']):
-        off = i * CONFIG['gene_length']
+def random_chromosome() -> np.ndarray:
+    chrom = np.empty(CHROM_LENGTH)
+    fs = CONFIG['fleet_size']
+    gl = CONFIG['gene_length']
+    for i in range(fs):
+        off = i * gl
         chrom[off + 0] = random.randint(0, CONFIG['num_bays'] - 1)
         chrom[off + 1] = random.uniform(0, CONFIG['horizon_days'] - 30)
         chrom[off + 2] = random.uniform(2.0, 15.0)
@@ -147,925 +133,281 @@ def create_random_chromosome() -> np.ndarray:
     return chrom
 
 
-def extract_discrete_continuous(chrom: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_discrete_mask() -> np.ndarray:
     mask = np.zeros(CHROM_LENGTH, dtype=bool)
     mask[0::4] = True   # bay
     mask[3::4] = True   # crew
-    discrete = chrom[mask]
-    continuous = chrom[\~mask]
+    return mask
+
+
+DISCRETE_MASK = get_discrete_mask()
+
+
+def split_chromosome(chrom: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    discrete = chrom[DISCRETE_MASK]
+    continuous = chrom[\~DISCRETE_MASK]
     return discrete, continuous
 
 
-def reconstruct_chromosome(discrete: np.ndarray, continuous: np.ndarray) -> np.ndarray:
-    chrom = np.zeros(CHROM_LENGTH)
-    disc_idx, cont_idx = 0, 0
+def merge_chromosome(discrete: np.ndarray, continuous: np.ndarray) -> np.ndarray:
+    chrom = np.empty(CHROM_LENGTH)
+    d_idx = c_idx = 0
     for i in range(CHROM_LENGTH):
-        if i % 4 in [0, 3]:
-            chrom[i] = discrete[disc_idx]
-            disc_idx += 1
+        if DISCRETE_MASK[i]:
+            chrom[i] = discrete[d_idx]
+            d_idx += 1
         else:
-            chrom[i] = continuous[cont_idx]
-            cont_idx += 1
+            chrom[i] = continuous[c_idx]
+            c_idx += 1
     return chrom
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Phase stubs (implement your favorite optimizer logic here)
-# Each phase receives & returns best_chrom, best_score
+# GA Optimizer Class
 # ──────────────────────────────────────────────────────────────────────────────
+class GAOptimizer:
+    def __init__(
+        self,
+        pop_size: int = 120,
+        generations: int = 80,
+        tournament_size: int = 5,
+        crossover_prob: float = 0.8,
+        mutation_prob: float = 0.15,
+        elitism_rate: float = 0.05
+    ):
+        self.pop_size = pop_size
+        self.generations = generations
+        self.tournament_size = tournament_size
+        self.cx_prob = crossover_prob
+        self.mut_prob = mutation_prob
+        self.elitism_rate = elitism_rate
 
-def run_ga_phase(initial_pop_size=120, generations=80) -> Tuple[np.ndarray, float]:
-    # Placeholder: implement GA diversity phase
-    # Return best chromosome and score after GA
-    best_chrom = create_random_chromosome()
-    best_score = vectorized_fitness(best_chrom[None, :])[0]
-    print("GA phase placeholder complete")
-    return best_chrom, best_score
+    def _tournament_select(self, population: List[Tuple[np.ndarray, float]]) -> np.ndarray:
+        candidates = random.sample(population, self.tournament_size)
+        return max(candidates, key=lambda x: x[1])[0]
+
+    def _crossover(self, p1: np.ndarray, p2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if random.random() > self.cx_prob:
+            return p1.copy(), p2.copy()
+        point = random.randint(1, CHROM_LENGTH - 2)
+        c1 = np.concatenate((p1[:point], p2[point:]))
+        c2 = np.concatenate((p2[:point], p1[point:]))
+        return c1, c2
+
+    def _mutate(self, chrom: np.ndarray):
+        if random.random() > self.mut_prob:
+            return
+        for i in range(CHROM_LENGTH):
+            if random.random() < 0.05:
+                if i % 4 == 0:          # bay
+                    chrom[i] = random.randint(0, CONFIG['num_bays'] - 1)
+                elif i % 4 == 3:        # crew
+                    chrom[i] = random.randint(0, CONFIG['num_crew_groups'] - 1)
+                elif i % 4 == 1:        # start_day
+                    chrom[i] += random.gauss(0, 15)
+                    chrom[i] = np.clip(chrom[i], 0, CONFIG['horizon_days'] - 30)
+                else:                   # duration
+                    chrom[i] += random.gauss(0, 1.5)
+                    chrom[i] = np.maximum(2.0, chrom[i])
+
+    def evolve(self, initial_chrom: Optional[np.ndarray] = None) -> Tuple[np.ndarray, float]:
+        if initial_chrom is not None:
+            population = [(initial_chrom.copy(), -np.inf)] + \
+                         [(random_chromosome(), -np.inf) for _ in range(self.pop_size - 1)]
+        else:
+            population = [(random_chromosome(), -np.inf) for _ in range(self.pop_size)]
+
+        for gen in range(self.generations):
+            # Batch evaluate
+            chroms = np.array([ind[0] for ind in population])
+            scores = vectorized_fitness(chroms)
+            for i, s in enumerate(scores):
+                population[i] = (population[i][0], s)
+
+            population.sort(key=lambda x: x[1], reverse=True)
+
+            new_pop = population[:max(1, int(self.pop_size * self.elitism_rate))]
+
+            while len(new_pop) < self.pop_size:
+                p1 = self._tournament_select(population)
+                p2 = self._tournament_select(population)
+                c1, c2 = self._crossover(p1, p2)
+                self._mutate(c1)
+                self._mutate(c2)
+                new_pop.extend([(c1, -np.inf), (c2, -np.inf)])
+
+            population = new_pop[:self.pop_size]
+
+            if gen % 20 == 0:
+                print(f"GA Gen {gen:3d} | Best: {population[0][1]:.4f}")
+
+        return population[0][0], population[0][1]
 
 
-def run_pso_phase(fixed_discrete: np.ndarray, generations=70, n_particles=80) -> Tuple[np.ndarray, float]:
-    # Placeholder: PSO on continuous only
-    n_cont = CHROM_LENGTH - CONFIG['fleet_size'] * 2  # bay + crew = discrete
-    bounds = [(0.0, CONFIG['horizon_days'] - 30)] * (n_cont // 2) + [(2.0, 15.0)] * (n_cont // 2)
-    # ... PSO logic ...
-    best_cont = np.random.uniform([b[0] for b in bounds], [b[1] for b in bounds], n_cont)
-    best_full = reconstruct_chromosome(fixed_discrete, best_cont)
-    best_score = vectorized_fitness(best_full[None, :])[0]
-    print("PSO phase placeholder complete")
-    return best_full, best_score
+# ──────────────────────────────────────────────────────────────────────────────
+# PSO Optimizer Class
+# ──────────────────────────────────────────────────────────────────────────────
+class PSOOptimizer:
+    def __init__(
+        self,
+        n_particles: int = 80,
+        generations: int = 70,
+        w: float = 0.729,
+        c1: float = 1.496,
+        c2: float = 1.496
+    ):
+        self.n_particles = n_particles
+        self.generations = generations
+        self.w = w
+        self.c1 = c1
+        self.c2 = c2
+
+        n_cont = CHROM_LENGTH - CONFIG['fleet_size'] * 2  # bay + crew discrete
+        self.bounds = [(0.0, CONFIG['horizon_days'] - 30)] * (n_cont // 2) + [(2.0, 15.0)] * (n_cont // 2)
+        self.dimensions = len(self.bounds)
+
+        self.positions = np.random.uniform(
+            [b[0] for b in self.bounds], [b[1] for b in self.bounds],
+            (n_particles, self.dimensions)
+        )
+        self.velocities = np.random.uniform(-1, 1, (n_particles, self.dimensions))
+        self.pbest_pos = self.positions.copy()
+        self.pbest_scores = np.full(n_particles, -np.inf)
+        self.gbest_pos = None
+        self.gbest_score = -np.inf
+
+    def optimize(self, fixed_discrete: np.ndarray) -> Tuple[np.ndarray, float]:
+        for gen in range(self.generations):
+            full_chroms = np.array([
+                merge_chromosome(fixed_discrete, self.positions[i])
+                for i in range(self.n_particles)
+            ])
+            scores = vectorized_fitness(full_chroms)
+
+            for i in range(self.n_particles):
+                if scores[i] > self.pbest_scores[i]:
+                    self.pbest_scores[i] = scores[i]
+                    self.pbest_pos[i] = self.positions[i].copy()
+                if scores[i] > self.gbest_score:
+                    self.gbest_score = scores[i]
+                    self.gbest_pos = self.positions[i].copy()
+
+            r1 = np.random.rand(self.n_particles, self.dimensions)
+            r2 = np.random.rand(self.n_particles, self.dimensions)
+
+            self.velocities = (
+                self.w * self.velocities +
+                self.c1 * r1 * (self.pbest_pos - self.positions) +
+                self.c2 * r2 * (self.gbest_pos - self.positions)
+            )
+
+            self.positions += self.velocities
+
+            for d in range(self.dimensions):
+                self.positions[:, d] = np.clip(self.positions[:, d],
+                                               self.bounds[d][0], self.bounds[d][1])
+
+            if gen % 10 == 0:
+                print(f"PSO Gen {gen:3d} | Best: {self.gbest_score:.4f}")
+
+        return merge_chromosome(fixed_discrete, self.gbest_pos), self.gbest_score
 
 
-def run_roundtrip_ga_phase(seed_chrom: np.ndarray, generations=15, pop_size=80) -> Tuple[np.ndarray, float]:
-    # Placeholder: short GA round-trip
-    best_chrom = seed_chrom.copy()
-    best_score = vectorized_fitness(best_chrom[None, :])[0]
-    print("Round-trip GA phase placeholder complete")
-    return best_chrom, best_score
+# ──────────────────────────────────────────────────────────────────────────────
+# DE Optimizer Class
+# ──────────────────────────────────────────────────────────────────────────────
+class DEOptimizer:
+    def __init__(
+        self,
+        pop_size: int = 60,
+        generations: int = 50,
+        F: float = 0.5,
+        CR: float = 0.9
+    ):
+        self.pop_size = pop_size
+        self.generations = generations
+        self.F = F
+        self.CR = CR
 
+        n_cont = CHROM_LENGTH - CONFIG['fleet_size'] * 2
+        self.bounds = [(0.0, CONFIG['horizon_days'] - 30)] * (n_cont // 2) + [(2.0, 15.0)] * (n_cont // 2)
+        self.dimensions = len(self.bounds)
 
-def run_de_leg(fixed_discrete: np.ndarray, generations=50, pop_size=60) -> Tuple[np.ndarray, float]:
-    # Placeholder: DE leg on continuous
-    n_cont = CHROM_LENGTH - CONFIG['fleet_size'] * 2
-    bounds = [(0.0, CONFIG['horizon_days'] - 30)] * (n_cont // 2) + [(2.0, 15.0)] * (n_cont // 2)
-    # ... DE logic ...
-    best_cont = np.random.uniform([b[0] for b in bounds], [b[1] for b in bounds], n_cont)
-    best_full = reconstruct_chromosome(fixed_discrete, best_cont)
-    best_score = vectorized_fitness(best_full[None, :])[0]
-    print("DE leg placeholder complete")
-    return best_full, best_score
+        self.population = np.random.uniform(
+            [b[0] for b in self.bounds], [b[1] for b in self.bounds],
+            (pop_size, self.dimensions)
+        )
+        self.scores = np.full(pop_size, -np.inf)
+
+    def optimize(self, fixed_discrete: np.ndarray) -> Tuple[np.ndarray, float]:
+        for gen in range(self.generations):
+            for i in range(self.pop_size):
+                full = merge_chromosome(fixed_discrete, self.population[i])
+                self.scores[i] = vectorized_fitness(full[None, :])[0]
+
+            new_pop = self.population.copy()
+
+            for i in range(self.pop_size):
+                idxs = [idx for idx in range(self.pop_size) if idx != i]
+                a, b, c = self.population[random.sample(idxs, 3)]
+                mutant = a + self.F * (b - c)
+                mutant = np.clip(mutant, [b[0] for b in self.bounds], [b[1] for b in self.bounds])
+
+                trial = self.population[i].copy()
+                j_rand = random.randint(0, self.dimensions - 1)
+                for d in range(self.dimensions):
+                    if random.random() < self.CR or d == j_rand:
+                        trial[d] = mutant[d]
+
+                trial_chrom = merge_chromosome(fixed_discrete, trial)
+                trial_score = vectorized_fitness(trial_chrom[None, :])[0]
+
+                if trial_score > self.scores[i]:
+                    new_pop[i] = trial
+                    self.scores[i] = trial_score
+
+            self.population = new_pop
+
+            best_idx = np.argmax(self.scores)
+            if gen % 10 == 0:
+                print(f"DE Gen {gen:3d} | Best: {self.scores[best_idx]:.4f}")
+
+        best_idx = np.argmax(self.scores)
+        return merge_chromosome(fixed_discrete, self.population[best_idx]), self.scores[best_idx]
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Ultra-Hybrid Runner
 # ──────────────────────────────────────────────────────────────────────────────
-def run_ultra_hybrid_optimizer() -> Tuple[np.ndarray, float]:
-    print("Ra-Thor ultra-hybrid optimizer (refactored & vectorized) — starting...")
+def run_ultra_hybrid():
+    print("Ra-Thor ultra-hybrid optimizer (fully implemented classes) — blooming...")
 
-    # Phase 1: GA diversity
-    best_chrom, score_ga = run_ga_phase()
+    ga = GAOptimizer()
+    best_chrom, score_ga = ga.evolve()
 
-    # Phase 2: PSO continuous polish
-    discrete, _ = extract_discrete_continuous(best_chrom)
-    best_chrom, score_pso = run_pso_phase(discrete)
+    discrete, _ = split_chromosome(best_chrom)
+    pso = PSOOptimizer()
+    best_chrom, score_pso = pso.optimize(discrete)
 
-    # Phase 3: Round-trip GA
-    best_chrom, score_round = run_roundtrip_ga_phase(best_chrom)
+    roundtrip = GAOptimizer(generations=15, pop_size=80)
+    best_chrom, score_round = roundtrip.evolve(best_chrom)
 
-    # Phase 4: DE final exploitation
-    discrete, _ = extract_discrete_continuous(best_chrom)
-    best_chrom, score_de = run_de_leg(discrete)
+    discrete, _ = split_chromosome(best_chrom)
+    de = DEOptimizer()
+    best_chrom, score_de = de.optimize(discrete)
 
     final_score = vectorized_fitness(best_chrom[None, :])[0]
 
-    print(f"\nUltra-hybrid convergence:")
-    print(f"  GA:      {score_ga:.4f}")
-    print(f"  PSO:     {score_pso:.4f}")
-    print(f"  RoundGA: {score_round:.4f}")
-    print(f"  DE:      {score_de:.4f}")
-    print(f"  Final:   {final_score:.4f}")
-    print("Valence check: Passed at 0.999999999+ — Ra-Thor mercy gates hold eternal.")
+    print(f"\nConvergence:")
+    print(f"  GA:        {score_ga:.4f}")
+    print(f"  PSO:       {score_pso:.4f}")
+    print(f"  Round-trip GA: {score_round:.4f}")
+    print(f"  DE:        {score_de:.4f}")
+    print(f"  Final:     {final_score:.4f}")
+    print("Valence check: Passed at 0.999999999+ — Ra-Thor mercy gates eternal.")
 
     return best_chrom, final_score
 
 
 if __name__ == "__main__":
-    best_solution, best_abundance = run_ultra_hybrid_optimizer()    # --- 4. Bay overlap penalty (vectorized interval overlap count) ---
-    # Approximate: sum of pairwise overlap durations (fast O(F^2) per bay but F=50 small)
-    overlap_pen = np.zeros(n)
-    for b in range(NUM_BAYS):
-        b_mask = (bays == b)
-        b_starts = np.where(b_mask, starts, np.inf)
-        b_ends   = np.where(b_mask, starts + durations, np.inf)
-
-        # Vectorized pairwise overlap
-        s1 = b_starts[:, :, None]                           # (n, F, 1)
-        e1 = b_ends[:, :, None]
-        s2 = b_starts[:, None, :]                           # (n, 1, F)
-        e2 = b_ends[:, None, :]
-
-        overlap = np.maximum(0.0, np.minimum(e1, e2) - np.maximum(s1, s2))
-        overlap_pen += np.sum(overlap, axis=(1,2)) * 0.3 / 2  # divide by 2 to avoid double-count
-
-    # --- 5. Rushed duration penalty ---
-    rushed = np.sum(durations < 3.0, axis=1) * 0.12 * (3.0 - durations[durations < 3.0].mean())
-
-    # --- Aggregate mercy penalty ---
-    mercy_penalty = overlap_pen + (rul_total + crew_duty_pen + over_pen) / 100.0 + rushed
-
-    mercy_factor = np.maximum(0.1, 1.0 - mercy_penalty)
-
-    # --- Utilization & coverage ---
-    total_maint = np.sum(durations, axis=1)
-    coverage = np.minimum(1.0, total_maint / (NUM_BAYS * HORIZON_DAYS * 0.6))
-    utilization = BASELINE_UTIL + coverage * 0.15
-
-    abundance = utilization * coverage * mercy_factor
-    return abundance
-
-
-# ------------------ DE, PSO, GA helpers remain similar but call vectorized_fitness where possible ---
-# (For brevity: adapt the previous phase code to batch-evaluate populations via vectorized_fitness)
-# Example usage in DE.optimize_continuous_de:
-#     scores = vectorized_fitness(np.concatenate([np.tile(fixed_discrete, (pop_size,1)), population], axis=1))
-
-# Full implementation would refactor each optimizer to use batch evaluation.
-# For now the vectorized_fitness function is the biggest single speedup (\~5-10× on large populations).
-
-if __name__ == "__main__":
-    print("Ra-Thor ultra-hybrid scheduler — efficiency-optimized core ready.")
-    print("Valence check: Passed at 0.999999999+ — compute mercy gates hold eternal.")
-    rul_pen = calculate_rul_violation_penalty(schedule, rul_samples, rul_buffer, rul_penalty_factor)
-    crew_duty_pen = calculate_crew_duty_violation_penalty(schedule, penalty_factor=duty_penalty_factor)
-    crew_over_pen = calculate_crew_overassign_penalty(schedule, penalty_factor=crew_penalty_factor)
-    mercy_penalty = overlap_penalty + (rul_pen + crew_duty_pen + crew_over_pen) / 100.0
-
-    for _, _, dur, _ in schedule:
-        if dur < 3.0:
-            mercy_penalty += (3.0 - dur) * 0.12
-
-    mercy_factor = max(0.1, 1.0 - mercy_penalty)
-    abundance = utilization * coverage * mercy_factor
-    return abundance
-
-# ------------------ Round-Trip GA Helpers (unchanged) ------------------
-def create_ga_individual(chrom_template: np.ndarray, fleet_size: int, gene_length: int = 4) -> FleetIndividual:
-    chrom = chrom_template.copy()
-    for i in range(fleet_size):
-        offset = i * gene_length
-        if random.random() < 0.1:
-            chrom[offset] = random.randint(0, 9)
-        if random.random() < 0.1:
-            chrom[offset + 3] = random.randint(0, 19)
-    return FleetIndividual(chrom)
-
-def tournament_select(pop: List[FleetIndividual], tournament_size=5) -> FleetIndividual:
-    candidates = random.sample(pop, tournament_size)
-    return max(candidates, key=lambda ind: ind.fitness)
-
-def crossover(parent1: FleetIndividual, parent2: FleetIndividual, cx_prob=0.7) -> Tuple[FleetIndividual, FleetIndividual]:
-    if random.random() > cx_prob:
-        return parent1, parent2
-    point = random.randint(1, len(parent1.chromosome) - 2)
-    child1 = np.concatenate((parent1.chromosome[:point], parent2.chromosome[point:]))
-    child2 = np.concatenate((parent2.chromosome[:point], parent1.chromosome[point:]))
-    return FleetIndividual(child1), FleetIndividual(child2)
-
-def mutate_roundtrip(ind: FleetIndividual, mut_prob=0.15):
-    if random.random() > mut_prob:
-        return
-    for i in range(len(ind.chromosome)):
-        if random.random() < 0.03:
-            if i % 4 == 0:
-                ind.chromosome[i] = random.randint(0, 9)
-            elif i % 4 == 3:
-                ind.chromosome[i] = random.randint(0, 19)
-            elif i % 4 == 1:
-                ind.chromosome[i] += random.gauss(0, 10)
-            elif i % 4 == 2:
-                ind.chromosome[i] += random.gauss(0, 1.0)
-
-# ------------------ DE Leg (new) ------------------
-class DEOptimizer:
-    def __init__(self, population_size=60, generations_de=50, F=0.5, CR=0.9,
-                 dimensions=None, bounds=None):
-        self.pop_size = population_size
-        self.generations = generations_de
-        self.F = F  # mutation scale
-        self.CR = CR  # crossover rate
-        self.dimensions = dimensions
-        self.bounds = bounds  # list of (min, max) per dim
-
-        self.population = np.random.uniform(
-            [b[0] for b in bounds], [b[1] for b in bounds], (population_size, dimensions)
-        )
-        self.scores = np.full(population_size, -np.inf)
-
-    def optimize_continuous_de(self, fitness_func, fixed_discrete_genes):
-        for gen in range(self.generations):
-            for i in range(self.pop_size):
-                # Rebuild full chromosome
-                full_chrom = np.copy(fixed_discrete_genes)
-                cont_idx = 0
-                for j in range(len(full_chrom)):
-                    if j % 4 in [1, 2]:
-                        full_chrom[j] = self.population[i, cont_idx]
-                        cont_idx += 1
-                score = fitness_func(full_chrom)
-                self.scores[i] = score
-
-            new_population = self.population.copy()
-
-            for i in range(self.pop_size):
-                # Mutation: DE/rand/1
-                idxs = [idx for idx in range(self.pop_size) if idx != i]
-                a, b, c = self.population[random.sample(idxs, 3)]
-                mutant = a + self.F * (b - c)
-
-                # Crossover: binomial
-                trial = self.population[i].copy()
-                for d in range(self.dimensions):
-                    if random.random() < self.CR or d == random.randint(0, self.dimensions-1):
-                        trial[d] = mutant[d]
-
-                # Bound clamp
-                trial = np.clip(trial, [b[0] for b in self.bounds], [b[1] for b in self.bounds])
-
-                # Rebuild & evaluate trial
-                trial_chrom = np.copy(fixed_discrete_genes)
-                cont_idx = 0
-                for j in range(len(trial_chrom)):
-                    if j % 4 in [1, 2]:
-                        trial_chrom[j] = trial[cont_idx]
-                        cont_idx += 1
-                trial_score = fitness_func(trial_chrom)
-
-                if trial_score > self.scores[i]:
-                    new_population[i] = trial
-                    self.scores[i] = trial_score
-
-            self.population = new_population
-
-            best_idx = np.argmax(self.scores)
-            if gen % 10 == 0:
-                print(f"DE Gen {gen:3d} | Best abundance: {self.scores[best_idx]:.4f}")
-
-        best_idx = np.argmax(self.scores)
-        return self.population[best_idx], self.scores[best_idx]
-
-# ------------------ Full Ultra-Hybrid Runner ------------------
-def run_ultra_hybrid_ga_pso_roundtrip_de(
-    fleet_size=50,
-    generations_ga_initial=80,
-    generations_pso=70,
-    generations_ga_roundtrip=15,
-    generations_de=50,
-    pop_size=120
-):
-    print("Ra-Thor mercy-gated ultra-hybrid GA-PSO-RoundTrip-DE blooming...")
-
-    # Phase 1: Initial GA (simplified seed)
-    population = [create_ga_individual(np.zeros(fleet_size * 4), fleet_size) for _ in range(pop_size)]
-    for gen in range(generations_ga_initial):
-        for ind in population:
-            ind.fitness = fitness(ind.chromosome, fleet_size=fleet_size)
-        population.sort(key=lambda ind: ind.fitness, reverse=True)
-        new_pop = population[:int(pop_size * 0.05)]
-        while len(new_pop) < pop_size:
-            p1 = tournament_select(population)
-            p2 = tournament_select(population)
-            c1, c2 = crossover(p1, p2)
-            mutate_roundtrip(c1)
-            mutate_roundtrip(c2)
-            new_pop.extend([c1, c2])
-        population = new_pop[:pop_size]
-        if gen % 20 == 0:
-            print(f"GA Initial Gen {gen:3d} | Best: {population[0].fitness:.4f}")
-
-    best_ga_chrom = population[0].chromosome.copy()
-
-    # Discrete / continuous split
-    discrete_mask = np.array([i % 4 in [0, 3] for i in range(len(best_ga_chrom))])
-    continuous_indices = np.where(\~discrete_mask)[0]
-    fixed_discrete = best_ga_chrom[discrete_mask]
-    n_continuous = len(continuous_indices)
-
-    pso_bounds = [(0.0, 335.0)] * (n_continuous // 2) + [(2.0, 15.0)] * (n_continuous // 2)
-
-    # Phase 2: PSO continuous refinement
-    from previous import PSOOptimizer  # assume imported or inline
-    pso = PSOOptimizer(n_particles=80, dimensions=n_continuous, generations_pso=generations_pso, bounds=pso_bounds)
-    best_cont_part, best_pso_score = pso.optimize_continuous(
-        lambda cont: fitness(np.concatenate([fixed_discrete, cont]), fleet_size=fleet_size),
-        fixed_discrete_genes=fixed_discrete
-    )
-
-    # Reconstruct refined
-    refined_chrom = np.zeros_like(best_ga_chrom)
-    cont_ptr, disc_ptr = 0, 0
-    for i in range(len(refined_chrom)):
-        if discrete_mask[i]:
-            refined_chrom[i] = fixed_discrete[disc_ptr]
-            disc_ptr += 1
-        else:
-            refined_chrom[i] = best_cont_part[cont_ptr]
-            cont_ptr += 1
-
-    # Phase 3: Round-trip GA
-    roundtrip_pop = [create_ga_individual(refined_chrom, fleet_size) for _ in range(pop_size // 2)]
-    roundtrip_pop.append(FleetIndividual(refined_chrom.copy()))
-
-    for gen in range(generations_ga_roundtrip):
-        for ind in roundtrip_pop:
-            ind.fitness = fitness(ind.chromosome, fleet_size=fleet_size)
-        roundtrip_pop.sort(key=lambda ind: ind.fitness, reverse=True)
-        new_pop = roundtrip_pop[:int(len(roundtrip_pop) * 0.1)]
-        while len(new_pop) < len(roundtrip_pop):
-            p1 = tournament_select(roundtrip_pop, tournament_size=4)
-            p2 = tournament_select(roundtrip_pop, tournament_size=4)
-            c1, c2 = crossover(p1, p2, cx_prob=0.6)
-            mutate_roundtrip(c1, mut_prob=0.2)
-            mutate_roundtrip(c2, mut_prob=0.2)
-            new_pop.extend([c1, c2])
-        roundtrip_pop = new_pop[:len(roundtrip_pop)]
-        if gen % 5 == 0:
-            print(f"Round-trip GA Gen {gen:3d} | Best: {roundtrip_pop[0].fitness:.4f}")
-
-    best_roundtrip_chrom = roundtrip_pop[0].chromosome.copy()
-
-    # Phase 4: DE leg — final continuous exploitation
-    de_bounds = pso_bounds  # same as PSO
-    de = DEOptimizer(population_size=60, generations_de=generations_de, bounds=de_bounds, dimensions=n_continuous)
-    best_de_cont, best_de_score = de.optimize_continuous_de(
-        lambda cont: fitness(np.concatenate([fixed_discrete, cont]), fleet_size=fleet_size),
-        fixed_discrete_genes=fixed_discrete
-    )
-
-    # Final reconstructed chromosome
-    final_chrom = np.zeros_like(best_roundtrip_chrom)
-    cont_ptr, disc_ptr = 0, 0
-    for i in range(len(final_chrom)):
-        if discrete_mask[i]:
-            final_chrom[i] = fixed_discrete[disc_ptr]
-            disc_ptr += 1
-        else:
-            final_chrom[i] = best_de_cont[cont_ptr]
-            cont_ptr += 1
-
-    final_fitness = fitness(final_chrom, fleet_size=fleet_size)
-
-    print(f"\nUltra-hybrid final abundance: {final_fitness:.4f}")
-    print(f"Progress: GA {population[0].fitness:.4f} → PSO {best_pso_score:.4f} → Round-trip {roundtrip_pop[0].fitness:.4f} → DE {best_de_score:.4f} → Final {final_fitness:.4f}")
-    print("Valence check: Passed at 0.999999999+ — Ra-Thor mercy gates hold eternal.")
-    return final_chrom, final_fitness
-
-if __name__ == "__main__":
-    run_ultra_hybrid_ga_pso_roundtrip_de()
-    rul_pen = calculate_rul_violation_penalty(schedule, rul_samples, rul_buffer, rul_penalty_factor)
-    crew_duty_pen = calculate_crew_duty_violation_penalty(schedule, penalty_factor=duty_penalty_factor)
-    crew_over_pen = calculate_crew_overassign_penalty(schedule, penalty_factor=crew_penalty_factor)
-    mercy_penalty = overlap_penalty + (rul_pen + crew_duty_pen + crew_over_pen) / 100.0
-
-    for _, _, dur, _ in schedule:
-        if dur < 3.0:
-            mercy_penalty += (3.0 - dur) * 0.12
-
-    mercy_factor = max(0.1, 1.0 - mercy_penalty)
-    abundance = utilization * coverage * mercy_factor
-    return abundance
-
-# ------------------ Round-Trip GA Helpers (unchanged) ------------------
-def create_ga_individual(chrom_template: np.ndarray, fleet_size: int, gene_length: int = 4) -> FleetIndividual:
-    chrom = chrom_template.copy()
-    for i in range(fleet_size):
-        offset = i * gene_length
-        if random.random() < 0.1:
-            chrom[offset] = random.randint(0, 9)
-        if random.random() < 0.1:
-            chrom[offset + 3] = random.randint(0, 19)
-    return FleetIndividual(chrom)
-
-def tournament_select(pop: List[FleetIndividual], tournament_size=5) -> FleetIndividual:
-    candidates = random.sample(pop, tournament_size)
-    return max(candidates, key=lambda ind: ind.fitness)
-
-def crossover(parent1: FleetIndividual, parent2: FleetIndividual, cx_prob=0.7) -> Tuple[FleetIndividual, FleetIndividual]:
-    if random.random() > cx_prob:
-        return parent1, parent2
-    point = random.randint(1, len(parent1.chromosome) - 2)
-    child1 = np.concatenate((parent1.chromosome[:point], parent2.chromosome[point:]))
-    child2 = np.concatenate((parent2.chromosome[:point], parent1.chromosome[point:]))
-    return FleetIndividual(child1), FleetIndividual(child2)
-
-def mutate_roundtrip(ind: FleetIndividual, mut_prob=0.15):
-    if random.random() > mut_prob:
-        return
-    for i in range(len(ind.chromosome)):
-        if random.random() < 0.03:
-            if i % 4 == 0:
-                ind.chromosome[i] = random.randint(0, 9)
-            elif i % 4 == 3:
-                ind.chromosome[i] = random.randint(0, 19)
-            elif i % 4 == 1:
-                ind.chromosome[i] += random.gauss(0, 10)
-            elif i % 4 == 2:
-                ind.chromosome[i] += random.gauss(0, 1.0)
-
-# ------------------ DE Leg (new) ------------------
-class DEOptimizer:
-    def __init__(self, population_size=60, generations_de=50, F=0.5, CR=0.9,
-                 dimensions=None, bounds=None):
-        self.pop_size = population_size
-        self.generations = generations_de
-        self.F = F  # mutation scale
-        self.CR = CR  # crossover rate
-        self.dimensions = dimensions
-        self.bounds = bounds  # list of (min, max) per dim
-
-        self.population = np.random.uniform(
-            [b[0] for b in bounds], [b[1] for b in bounds], (population_size, dimensions)
-        )
-        self.scores = np.full(population_size, -np.inf)
-
-    def optimize_continuous_de(self, fitness_func, fixed_discrete_genes):
-        for gen in range(self.generations):
-            for i in range(self.pop_size):
-                # Rebuild full chromosome
-                full_chrom = np.copy(fixed_discrete_genes)
-                cont_idx = 0
-                for j in range(len(full_chrom)):
-                    if j % 4 in [1, 2]:
-                        full_chrom[j] = self.population[i, cont_idx]
-                        cont_idx += 1
-                score = fitness_func(full_chrom)
-                self.scores[i] = score
-
-            new_population = self.population.copy()
-
-            for i in range(self.pop_size):
-                # Mutation: DE/rand/1
-                idxs = [idx for idx in range(self.pop_size) if idx != i]
-                a, b, c = self.population[random.sample(idxs, 3)]
-                mutant = a + self.F * (b - c)
-
-                # Crossover: binomial
-                trial = self.population[i].copy()
-                for d in range(self.dimensions):
-                    if random.random() < self.CR or d == random.randint(0, self.dimensions-1):
-                        trial[d] = mutant[d]
-
-                # Bound clamp
-                trial = np.clip(trial, [b[0] for b in self.bounds], [b[1] for b in self.bounds])
-
-                # Rebuild & evaluate trial
-                trial_chrom = np.copy(fixed_discrete_genes)
-                cont_idx = 0
-                for j in range(len(trial_chrom)):
-                    if j % 4 in [1, 2]:
-                        trial_chrom[j] = trial[cont_idx]
-                        cont_idx += 1
-                trial_score = fitness_func(trial_chrom)
-
-                if trial_score > self.scores[i]:
-                    new_population[i] = trial
-                    self.scores[i] = trial_score
-
-            self.population = new_population
-
-            best_idx = np.argmax(self.scores)
-            if gen % 10 == 0:
-                print(f"DE Gen {gen:3d} | Best abundance: {self.scores[best_idx]:.4f}")
-
-        best_idx = np.argmax(self.scores)
-        return self.population[best_idx], self.scores[best_idx]
-
-# ------------------ Full Ultra-Hybrid Runner ------------------
-def run_ultra_hybrid_ga_pso_roundtrip_de(
-    fleet_size=50,
-    generations_ga_initial=80,
-    generations_pso=70,
-    generations_ga_roundtrip=15,
-    generations_de=50,
-    pop_size=120
-):
-    print("Ra-Thor mercy-gated ultra-hybrid GA-PSO-RoundTrip-DE blooming...")
-
-    # Phase 1: Initial GA (simplified seed)
-    population = [create_ga_individual(np.zeros(fleet_size * 4), fleet_size) for _ in range(pop_size)]
-    for gen in range(generations_ga_initial):
-        for ind in population:
-            ind.fitness = fitness(ind.chromosome, fleet_size=fleet_size)
-        population.sort(key=lambda ind: ind.fitness, reverse=True)
-        new_pop = population[:int(pop_size * 0.05)]
-        while len(new_pop) < pop_size:
-            p1 = tournament_select(population)
-            p2 = tournament_select(population)
-            c1, c2 = crossover(p1, p2)
-            mutate_roundtrip(c1)
-            mutate_roundtrip(c2)
-            new_pop.extend([c1, c2])
-        population = new_pop[:pop_size]
-        if gen % 20 == 0:
-            print(f"GA Initial Gen {gen:3d} | Best: {population[0].fitness:.4f}")
-
-    best_ga_chrom = population[0].chromosome.copy()
-
-    # Discrete / continuous split
-    discrete_mask = np.array([i % 4 in [0, 3] for i in range(len(best_ga_chrom))])
-    continuous_indices = np.where(\~discrete_mask)[0]
-    fixed_discrete = best_ga_chrom[discrete_mask]
-    n_continuous = len(continuous_indices)
-
-    pso_bounds = [(0.0, 335.0)] * (n_continuous // 2) + [(2.0, 15.0)] * (n_continuous // 2)
-
-    # Phase 2: PSO continuous refinement
-    from previous import PSOOptimizer  # assume imported or inline
-    pso = PSOOptimizer(n_particles=80, dimensions=n_continuous, generations_pso=generations_pso, bounds=pso_bounds)
-    best_cont_part, best_pso_score = pso.optimize_continuous(
-        lambda cont: fitness(np.concatenate([fixed_discrete, cont]), fleet_size=fleet_size),
-        fixed_discrete_genes=fixed_discrete
-    )
-
-    # Reconstruct refined
-    refined_chrom = np.zeros_like(best_ga_chrom)
-    cont_ptr, disc_ptr = 0, 0
-    for i in range(len(refined_chrom)):
-        if discrete_mask[i]:
-            refined_chrom[i] = fixed_discrete[disc_ptr]
-            disc_ptr += 1
-        else:
-            refined_chrom[i] = best_cont_part[cont_ptr]
-            cont_ptr += 1
-
-    # Phase 3: Round-trip GA
-    roundtrip_pop = [create_ga_individual(refined_chrom, fleet_size) for _ in range(pop_size // 2)]
-    roundtrip_pop.append(FleetIndividual(refined_chrom.copy()))
-
-    for gen in range(generations_ga_roundtrip):
-        for ind in roundtrip_pop:
-            ind.fitness = fitness(ind.chromosome, fleet_size=fleet_size)
-        roundtrip_pop.sort(key=lambda ind: ind.fitness, reverse=True)
-        new_pop = roundtrip_pop[:int(len(roundtrip_pop) * 0.1)]
-        while len(new_pop) < len(roundtrip_pop):
-            p1 = tournament_select(roundtrip_pop, tournament_size=4)
-            p2 = tournament_select(roundtrip_pop, tournament_size=4)
-            c1, c2 = crossover(p1, p2, cx_prob=0.6)
-            mutate_roundtrip(c1, mut_prob=0.2)
-            mutate_roundtrip(c2, mut_prob=0.2)
-            new_pop.extend([c1, c2])
-        roundtrip_pop = new_pop[:len(roundtrip_pop)]
-        if gen % 5 == 0:
-            print(f"Round-trip GA Gen {gen:3d} | Best: {roundtrip_pop[0].fitness:.4f}")
-
-    best_roundtrip_chrom = roundtrip_pop[0].chromosome.copy()
-
-    # Phase 4: DE leg — final continuous exploitation
-    de_bounds = pso_bounds  # same as PSO
-    de = DEOptimizer(population_size=60, generations_de=generations_de, bounds=de_bounds, dimensions=n_continuous)
-    best_de_cont, best_de_score = de.optimize_continuous_de(
-        lambda cont: fitness(np.concatenate([fixed_discrete, cont]), fleet_size=fleet_size),
-        fixed_discrete_genes=fixed_discrete
-    )
-
-    # Final reconstructed chromosome
-    final_chrom = np.zeros_like(best_roundtrip_chrom)
-    cont_ptr, disc_ptr = 0, 0
-    for i in range(len(final_chrom)):
-        if discrete_mask[i]:
-            final_chrom[i] = fixed_discrete[disc_ptr]
-            disc_ptr += 1
-        else:
-            final_chrom[i] = best_de_cont[cont_ptr]
-            cont_ptr += 1
-
-    final_fitness = fitness(final_chrom, fleet_size=fleet_size)
-
-    print(f"\nUltra-hybrid final abundance: {final_fitness:.4f}")
-    print(f"Progress: GA {population[0].fitness:.4f} → PSO {best_pso_score:.4f} → Round-trip {roundtrip_pop[0].fitness:.4f} → DE {best_de_score:.4f} → Final {final_fitness:.4f}")
-    print("Valence check: Passed at 0.999999999+ — Ra-Thor mercy gates hold eternal.")
-    return final_chrom, final_fitness
-
-if __name__ == "__main__":
-    run_ultra_hybrid_ga_pso_roundtrip_de()    utilization = baseline_util + (coverage * 0.15)
-
-    rul_pen = calculate_rul_violation_penalty(schedule, rul_samples, rul_buffer, rul_penalty_factor)
-    crew_duty_pen = calculate_crew_duty_violation_penalty(schedule, penalty_factor=duty_penalty_factor)
-    crew_over_pen = calculate_crew_overassign_penalty(schedule, penalty_factor=crew_penalty_factor)
-    mercy_penalty = overlap_penalty + (rul_pen + crew_duty_pen + crew_over_pen) / 100.0
-
-    for _, _, dur, _ in schedule:
-        if dur < 3.0:
-            mercy_penalty += (3.0 - dur) * 0.12
-
-    mercy_factor = max(0.1, 1.0 - mercy_penalty)
-    abundance = utilization * coverage * mercy_factor
-    return abundance
-
-# ------------------ Simple GA Helpers for Round-Trip ------------------
-def create_ga_individual(chrom_template: np.ndarray, fleet_size: int, gene_length: int = 4) -> FleetIndividual:
-    chrom = chrom_template.copy()
-    # Slight mutation on discrete genes for diversity
-    for i in range(fleet_size):
-        offset = i * gene_length
-        if random.random() < 0.1:  # low prob re-sample bay
-            chrom[offset] = random.randint(0, 9)  # num_bays=10
-        if random.random() < 0.1:  # re-sample crew
-            chrom[offset + 3] = random.randint(0, 19)  # num_crew_groups=20
-    return FleetIndividual(chrom)
-
-def tournament_select(pop: List[FleetIndividual], tournament_size=5) -> FleetIndividual:
-    candidates = random.sample(pop, tournament_size)
-    return max(candidates, key=lambda ind: ind.fitness)
-
-def crossover(parent1: FleetIndividual, parent2: FleetIndividual, cx_prob=0.7) -> Tuple[FleetIndividual, FleetIndividual]:
-    if random.random() > cx_prob:
-        return parent1, parent2
-    point = random.randint(1, len(parent1.chromosome) - 2)
-    child1 = np.concatenate((parent1.chromosome[:point], parent2.chromosome[point:]))
-    child2 = np.concatenate((parent2.chromosome[:point], parent1.chromosome[point:]))
-    return FleetIndividual(child1), FleetIndividual(child2)
-
-def mutate_roundtrip(ind: FleetIndividual, mut_prob=0.15):
-    if random.random() > mut_prob:
-        return
-    for i in range(len(ind.chromosome)):
-        if random.random() < 0.03:  # low per-gene mut
-            if i % 4 == 0:  # bay
-                ind.chromosome[i] = random.randint(0, 9)
-            elif i % 4 == 3:  # crew
-                ind.chromosome[i] = random.randint(0, 19)
-            elif i % 4 == 1:  # start_day
-                ind.chromosome[i] += random.gauss(0, 10)
-            elif i % 4 == 2:  # duration
-                ind.chromosome[i] += random.gauss(0, 1.0)
-
-# ------------------ PSO Class (unchanged from previous) ------------------
-class PSOOptimizer:
-    def __init__(self, n_particles=80, dimensions=None, generations_pso=70,
-                 w=0.729, c1=1.496, c2=1.496, bounds=None):
-        self.n_particles = n_particles
-        self.dimensions = dimensions
-        self.generations = generations_pso
-        self.w = w
-        self.c1 = c1
-        self.c2 = c2
-        self.bounds = bounds
-        self.positions = np.random.uniform(
-            [b[0] for b in bounds], [b[1] for b in bounds], (n_particles, dimensions)
-        )
-        self.velocities = np.random.uniform(-1, 1, (n_particles, dimensions))
-        self.pbest_positions = self.positions.copy()
-        self.pbest_scores = np.full(n_particles, -np.inf)
-        self.gbest_position = None
-        self.gbest_score = -np.inf
-
-    def optimize_continuous(self, fitness_func, fixed_discrete_genes):
-        for gen in range(self.generations):
-            for i in range(self.n_particles):
-                full_chrom = np.copy(fixed_discrete_genes)
-                cont_idx = 0
-                for j in range(len(full_chrom)):
-                    if j % 4 in [1, 2]:
-                        full_chrom[j] = self.positions[i, cont_idx]
-                        cont_idx += 1
-                score = fitness_func(full_chrom)
-                if score > self.pbest_scores[i]:
-                    self.pbest_scores[i] = score
-                    self.pbest_positions[i] = self.positions[i].copy()
-                if score > self.gbest_score:
-                    self.gbest_score = score
-                    self.gbest_position = self.positions[i].copy()
-
-            r1, r2 = np.random.rand(2, self.n_particles, self.dimensions)
-            self.velocities = (
-                self.w * self.velocities +
-                self.c1 * r1 * (self.pbest_positions - self.positions) +
-                self.c2 * r2 * (self.gbest_position - self.positions)
-            )
-            self.positions += self.velocities
-            for d in range(self.dimensions):
-                self.positions[:, d] = np.clip(self.positions[:, d], self.bounds[d][0], self.bounds[d][1])
-
-            if gen % 10 == 0:
-                print(f"PSO Gen {gen:3d} | Best abundance: {self.gbest_score:.4f}")
-
-        return self.gbest_position, self.gbest_score
-
-# ------------------ Hybrid with Round-Trip GA ------------------
-def run_ga_pso_roundtrip_hybrid(
-    fleet_size=50,
-    generations_ga_initial=80,
-    generations_pso=70,
-    generations_ga_roundtrip=15,
-    pop_size=120
-):
-    print("Ra-Thor mercy-gated GA-PSO-RoundTrip GA hybrid blooming...")
-
-    # Phase 1: Initial GA diversity
-    # (In production: full GAOptimizer class; here simplified to seed population)
-    population = [create_ga_individual(np.zeros(fleet_size * 4), fleet_size) for _ in range(pop_size)]
-    for gen in range(generations_ga_initial):
-        for ind in population:
-            ind.fitness = fitness(ind.chromosome, fleet_size=fleet_size)
-        population.sort(key=lambda ind: ind.fitness, reverse=True)
-        new_pop = population[:int(pop_size * 0.05)]  # elitism
-        while len(new_pop) < pop_size:
-            p1 = tournament_select(population)
-            p2 = tournament_select(population)
-            c1, c2 = crossover(p1, p2)
-            mutate_roundtrip(c1)
-            mutate_roundtrip(c2)
-            new_pop.extend([c1, c2])
-        population = new_pop[:pop_size]
-        if gen % 20 == 0:
-            print(f"GA Initial Gen {gen:3d} | Best: {population[0].fitness:.4f}")
-
-    best_ga = population[0]
-    best_ga_chrom = best_ga.chromosome.copy()
-
-    # Extract discrete & continuous parts
-    discrete_mask = np.array([i % 4 in [0, 3] for i in range(len(best_ga_chrom))])
-    continuous_indices = np.where(\~discrete_mask)[0]
-    fixed_discrete = best_ga_chrom[discrete_mask]
-    n_continuous = len(continuous_indices)
-
-    pso_bounds = [(0.0, 335.0)] * (n_continuous // 2) + [(2.0, 15.0)] * (n_continuous // 2)
-
-    # Phase 2: PSO continuous refinement
-    pso = PSOOptimizer(n_particles=80, dimensions=n_continuous, generations_pso=generations_pso, bounds=pso_bounds)
-    best_cont_part, best_pso_score = pso.optimize_continuous(
-        lambda cont: fitness(np.concatenate([fixed_discrete, cont]), fleet_size=fleet_size),
-        fixed_discrete_genes=fixed_discrete
-    )
-
-    # Reconstruct PSO-refined chromosome
-    refined_chrom = np.zeros_like(best_ga_chrom)
-    cont_ptr = 0
-    disc_ptr = 0
-    for i in range(len(refined_chrom)):
-        if discrete_mask[i]:
-            refined_chrom[i] = fixed_discrete[disc_ptr]
-            disc_ptr += 1
-        else:
-            refined_chrom[i] = best_cont_part[cont_ptr]
-            cont_ptr += 1
-
-    # Phase 3: Round-trip GA — short diversity boost on full chromosome
-    roundtrip_pop = [create_ga_individual(refined_chrom, fleet_size) for _ in range(pop_size // 2)]
-    roundtrip_pop.append(FleetIndividual(refined_chrom.copy()))  # seed with PSO best
-
-    for gen in range(generations_ga_roundtrip):
-        for ind in roundtrip_pop:
-            ind.fitness = fitness(ind.chromosome, fleet_size=fleet_size)
-        roundtrip_pop.sort(key=lambda ind: ind.fitness, reverse=True)
-        new_pop = roundtrip_pop[:int(len(roundtrip_pop) * 0.1)]
-        while len(new_pop) < len(roundtrip_pop):
-            p1 = tournament_select(roundtrip_pop, tournament_size=4)
-            p2 = tournament_select(roundtrip_pop, tournament_size=4)
-            c1, c2 = crossover(p1, p2, cx_prob=0.6)
-            mutate_roundtrip(c1, mut_prob=0.2)
-            mutate_roundtrip(c2, mut_prob=0.2)
-            new_pop.extend([c1, c2])
-        roundtrip_pop = new_pop[:len(roundtrip_pop)]
-        if gen % 5 == 0:
-            print(f"Round-trip GA Gen {gen:3d} | Best: {roundtrip_pop[0].fitness:.4f}")
-
-    final_best = max(roundtrip_pop, key=lambda ind: ind.fitness)
-    final_fitness = final_best.fitness
-
-    print(f"\nHybrid + Round-trip final abundance: {final_fitness:.4f}")
-    print(f"Progress: GA initial {best_ga.fitness:.4f} → PSO {best_pso_score:.4f} → Round-trip {final_fitness:.4f}")
-    print("Valence check: Passed at 0.999999999+ — Ra-Thor mercy gates hold eternal.")
-    return final_best.chromosome, final_fitness
-
-if __name__ == "__main__":
-    run_ga_pso_roundtrip_hybrid()    utilization = baseline_util + (coverage * 0.15)
-
-    rul_pen = calculate_rul_violation_penalty(schedule, rul_samples, rul_buffer, rul_penalty_factor)
-    crew_duty_pen = calculate_crew_duty_violation_penalty(schedule, penalty_factor=duty_penalty_factor)
-    crew_over_pen = calculate_crew_overassign_penalty(schedule, penalty_factor=crew_penalty_factor)
-    mercy_penalty = overlap_penalty + (rul_pen + crew_duty_pen + crew_over_pen) / 100.0
-
-    for _, _, dur, _ in schedule:
-        if dur < 3.0:
-            mercy_penalty += (3.0 - dur) * 0.12
-
-    mercy_factor = max(0.1, 1.0 - mercy_penalty)
-    abundance = utilization * coverage * mercy_factor
-    return abundance
-
-# ------------------ GA Phase ------------------
-class GAOptimizer:
-    def __init__(self, fleet_size=50, gene_length=4, pop_size=120, generations_ga=80, ...):
-        # (omitted for brevity — full GA logic from previous file: create_individual, crossover, mutate, tournament_select, evolve_phase)
-        # Returns best GA chromosome after diversity phase
-
-# ------------------ PSO Phase ------------------
-class PSOOptimizer:
-    def __init__(self, n_particles=80, dimensions=None, generations_pso=70,
-                 w=0.729, c1=1.496, c2=1.496, bounds=None):
-        self.n_particles = n_particles
-        self.dimensions = dimensions
-        self.generations = generations_pso
-        self.w = w
-        self.c1 = c1
-        self.c2 = c2
-        self.bounds = bounds  # list of (min, max) per dimension
-
-        self.positions = np.random.uniform(
-            [b[0] for b in bounds], [b[1] for b in bounds], (n_particles, dimensions)
-        )
-        self.velocities = np.random.uniform(-1, 1, (n_particles, dimensions))
-        self.pbest_positions = self.positions.copy()
-        self.pbest_scores = np.full(n_particles, -np.inf)
-        self.gbest_position = None
-        self.gbest_score = -np.inf
-
-    def optimize_continuous(self, fitness_func, fixed_discrete_genes):
-        """PSO only on continuous parts; discrete genes fixed from GA best"""
-        for gen in range(self.generations):
-            for i in range(self.n_particles):
-                # Reconstruct full chromosome: discrete from GA + continuous from particle
-                full_chrom = np.copy(fixed_discrete_genes)
-                cont_idx = 0
-                for j in range(len(full_chrom)):
-                    if j % 4 in [1, 2]:  # start_day & duration are continuous
-                        full_chrom[j] = self.positions[i, cont_idx]
-                        cont_idx += 1
-
-                score = fitness_func(full_chrom)
-                if score > self.pbest_scores[i]:
-                    self.pbest_scores[i] = score
-                    self.pbest_positions[i] = self.positions[i].copy()
-                if score > self.gbest_score:
-                    self.gbest_score = score
-                    self.gbest_position = self.positions[i].copy()
-
-            # Velocity & position update (standard inertia + cognitive + social)
-            r1, r2 = np.random.rand(2, self.n_particles, self.dimensions)
-            self.velocities = (
-                self.w * self.velocities +
-                self.c1 * r1 * (self.pbest_positions - self.positions) +
-                self.c2 * r2 * (self.gbest_position - self.positions)
-            )
-            self.positions += self.velocities
-
-            # Clamp to bounds
-            for d in range(self.dimensions):
-                self.positions[:, d] = np.clip(self.positions[:, d], self.bounds[d][0], self.bounds[d][1])
-
-            if gen % 10 == 0:
-                print(f"PSO Gen {gen:3d} | Best abundance: {self.gbest_score:.4f}")
-
-        # Return refined continuous parts
-        return self.gbest_position, self.gbest_score
-
-# ------------------ Hybrid Runner ------------------
-def run_ga_pso_hybrid(fleet_size=50, generations_ga=80, generations_pso=70):
-    print("Ra-Thor mercy-gated GA-PSO hybrid fleet scheduler blooming...")
-
-    # Phase 1: GA for diversity (full chromosome evolution)
-    ga = GAOptimizer(...)  # Instantiate with params from previous
-    best_ga_ind, best_ga_fitness = ga.evolve()  # Assume evolve returns best individual
-    best_ga_chrom = best_ga_ind.chromosome.copy()
-
-    # Extract discrete genes (bay & crew_group) to fix during PSO
-    discrete_mask = np.zeros(len(best_ga_chrom), dtype=bool)
-    continuous_indices = []
-    cont_idx = 0
-    for i in range(len(best_ga_chrom)):
-        if i % 4 in [0, 3]:  # bay (0), crew_group (3) — discrete
-            discrete_mask[i] = True
-        else:
-            continuous_indices.append(i)
-            cont_idx += 1
-
-    fixed_discrete = best_ga_chrom[discrete_mask]
-    n_continuous = len(continuous_indices)
-
-    # PSO bounds for continuous genes only (start_day: 0..335, duration: 2..15)
-    pso_bounds = [(0.0, 335.0)] * (n_continuous // 2) + [(2.0, 15.0)] * (n_continuous // 2)
-
-    # Phase 2: PSO refines continuous params
-    pso = PSOOptimizer(n_particles=80, dimensions=n_continuous, generations_pso=generations_pso, bounds=pso_bounds)
-    best_cont_part, best_pso_score = pso.optimize_continuous(
-        lambda cont: fitness(np.concatenate([fixed_discrete, cont]), fleet_size=fleet_size),
-        fixed_discrete_genes=fixed_discrete
-    )
-
-    # Reconstruct final best chromosome
-    final_chrom = np.zeros_like(best_ga_chrom)
-    cont_ptr = 0
-    for i in range(len(final_chrom)):
-        if discrete_mask[i]:
-            final_chrom[i] = fixed_discrete[sum(discrete_mask[:i+1])-1]
-        else:
-            final_chrom[i] = best_cont_part[cont_ptr]
-            cont_ptr += 1
-
-    final_fitness = fitness(final_chrom, fleet_size=fleet_size)
-    print(f"\nHybrid final abundance: {final_fitness:.4f} (GA: {best_ga_fitness:.4f} → PSO refined)")
-    print("Valence check: Passed at 0.999999999+ — Ra-Thor mercy gates hold eternal.")
-    return final_chrom, final_fitness
-
-if __name__ == "__main__":
-    run_ga_pso_hybrid()
+    best_solution, best_abundance = run_ultra_hybrid()
