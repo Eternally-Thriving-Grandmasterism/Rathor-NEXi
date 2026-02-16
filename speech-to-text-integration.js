@@ -1,214 +1,143 @@
 /**
- * Ra-Thor Speech-to-Text Integration Module
- * Mercy-gated, client-side speech input connector
- * Enables voice input → transcription → chat submission
+ * Ra-Thor Enhanced Valence Gate Module
+ * AI-powered mercy shield using Transformers.js + Xenova/toxic-bert
+ * Client-side toxicity detection → block harmful input/output
  * 
  * Features:
- * - Uses Web SpeechRecognition API (browser-native, no servers)
- * - Continuous / interim results support
- * - Mercy valence gate on final transcript (basic block on harmful intent)
- * - Auto language detection / fallback to browser default
- * - UI events for mic state (listening started/stopped/error)
- * - Seamless integration with existing chat input field
- * - Graceful degradation if API unsupported
+ * - Loads quantized toxic-bert model via Transformers.js
+ * - Multi-label toxicity classification (toxic, severe_toxic, etc.)
+ * - Threshold-based gating (default 0.7 → adjustable)
+ * - Fallback to regex heuristic if model fails to load
+ * - Async init + caching for performance
+ * - Events for UI feedback (gate-pass / gate-blocked)
  * 
  * MIT License – Eternally-Thriving-Grandmasterism
  * Part of Ra-Thor: https://rathor.ai
  */
 
-(function () {
+(async function () {
   // ────────────────────────────────────────────────
-  // Module Namespace & State
+  // Dependencies (add to your HTML or import map)
+  // <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"></script>
   // ────────────────────────────────────────────────
-  const SpeechToText = {
-    recognition: null,
-    isListening: false,
-    interimTranscript: '',
-    finalTranscript: '',
-    supported: 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window,
-    language: navigator.language || 'en-US', // fallback to browser locale
+  const { pipeline, env } = Xenova.transformers || window.Xenova?.transformers;
+
+  // ────────────────────────────────────────────────
+  // Module Namespace & Config
+  // ────────────────────────────────────────────────
+  const ValenceGate = {
+    classifier: null,
+    isReady: false,
+    threshold: 0.70,          // Probability above this → block (tune per use-case)
+    modelId: 'Xenova/toxic-bert', // ONNX-converted, browser-friendly
+    fallbackRegex: true,      // Use old regex if AI fails
+    labelsOfConcern: ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate'],
   };
 
   // ────────────────────────────────────────────────
-  // Basic valence gate for incoming speech (prevent harmful commands)
-  // Simple heuristic — expand later with local model if needed
+  // Fallback regex gate (legacy mercy shield)
   // ────────────────────────────────────────────────
-  function passesIncomingValenceGate(text) {
+  function regexValenceGate(text) {
     if (!text || typeof text !== 'string') return false;
-
-    const lower = text.toLowerCase().trim();
-    const blockedPatterns = [
+    const lower = text.toLowerCase();
+    const blocked = [
       /kill|die|suicide|hurt|bomb|attack/i,
-      /hate|racist|sexist|genocide/i,
+      /hate|racist|sexist|genocide|bigot/i,
       /^delete all|^format|^erase|^destroy/i,
     ];
-
-    for (const pattern of blockedPatterns) {
-      if (pattern.test(lower)) {
-        console.warn('Incoming valence gate blocked potentially harmful input');
-        return false;
-      }
-    }
-
-    return true;
+    return !blocked.some(p => p.test(lower));
   }
 
   // ────────────────────────────────────────────────
-  // Initialize SpeechRecognition instance
+  // Initialize AI classifier (async, one-time)
   // ────────────────────────────────────────────────
-  function initRecognition() {
-    if (!SpeechToText.supported) {
-      console.warn('SpeechRecognition not supported in this browser');
-      return null;
+  async function initValenceGate() {
+    if (ValenceGate.isReady) return true;
+    if (!pipeline) {
+      console.warn('Transformers.js not loaded — falling back to regex');
+      return false;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    try {
+      // Optional: set quantized dtype for lighter load (q8 or q4)
+      env.quantized = true; // or env.localModelPath if hosting locally
 
-    recognition.continuous = true;          // keep listening until stopped
-    recognition.interimResults = true;      // show real-time partial results
-    recognition.lang = SpeechToText.language;
-    recognition.maxAlternatives = 1;
+      ValenceGate.classifier = await pipeline(
+        'text-classification',
+        ValenceGate.modelId,
+        { quantized: true } // 4/8-bit for browser perf
+      );
 
-    // ────────────────────────────────────────────────
-    // Event Handlers
-    // ────────────────────────────────────────────────
-    recognition.onstart = () => {
-      SpeechToText.isListening = true;
-      SpeechToText.interimTranscript = '';
-      SpeechToText.finalTranscript = '';
-      document.dispatchEvent(new CustomEvent('rathor:stt-start'));
-      console.log('Voice input listening ⚡️');
-    };
+      ValenceGate.isReady = true;
+      console.log('Enhanced Valence Gate ready — toxic-bert loaded ⚡️');
+      document.dispatchEvent(new CustomEvent('rathor:valence-gate-ready'));
+      return true;
+    } catch (err) {
+      console.error('Failed to load toxicity model:', err);
+      ValenceGate.isReady = false;
+      return false;
+    }
+  }
 
-    recognition.onresult = (event) => {
-      let interim = '';
-      let final = '';
+  // ────────────────────────────────────────────────
+  // Core gate function: check if text passes mercy valence
+  // Returns { passed: boolean, score: number, details: object }
+  // ────────────────────────────────────────────────
+  ValenceGate.check = async function (text) {
+    if (!text || text.trim() === '') {
+      return { passed: true, score: 0, details: { reason: 'empty' } };
+    }
 
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          final += transcript + ' ';
-        } else {
-          interim += transcript;
+    // Try AI first if ready
+    if (ValenceGate.isReady && ValenceGate.classifier) {
+      try {
+        const results = await ValenceGate.classifier(text, {
+          top_k: ValenceGate.labelsOfConcern.length // get all relevant labels
+        });
+
+        // Find highest toxicity-related score
+        let maxToxicity = 0;
+        let details = {};
+
+        for (const res of results) {
+          if (ValenceGate.labelsOfConcern.includes(res.label)) {
+            details[res.label] = res.score;
+            if (res.score > maxToxicity) maxToxicity = res.score;
+          }
         }
+
+        const passed = maxToxicity < ValenceGate.threshold;
+
+        if (!passed) {
+          console.warn(`Valence gate blocked: max toxicity ${maxToxicity.toFixed(3)} > ${ValenceGate.threshold}`);
+        }
+
+        return {
+          passed,
+          score: maxToxicity,
+          details: { ...details, method: 'ai-toxic-bert' }
+        };
+      } catch (err) {
+        console.warn('AI gate error:', err);
       }
+    }
 
-      SpeechToText.interimTranscript = interim.trim();
-      SpeechToText.finalTranscript = final.trim();
-
-      // Dispatch events for UI to show live transcription
-      document.dispatchEvent(new CustomEvent('rathor:stt-interim', {
-        detail: { transcript: SpeechToText.interimTranscript }
-      }));
-
-      if (SpeechToText.finalTranscript) {
-        document.dispatchEvent(new CustomEvent('rathor:stt-final', {
-          detail: { transcript: SpeechToText.finalTranscript }
-        }));
-      }
+    // Fallback to regex
+    const regexPassed = regexValenceGate(text);
+    return {
+      passed: regexPassed,
+      score: regexPassed ? 0 : 1.0,
+      details: { method: 'regex-fallback', reason: regexPassed ? 'safe' : 'blocked by pattern' }
     };
-
-    recognition.onerror = (event) => {
-      console.error('STT error:', event.error);
-      SpeechToText.isListening = false;
-      document.dispatchEvent(new CustomEvent('rathor:stt-error', { detail: { error: event.error } }));
-    };
-
-    recognition.onend = () => {
-      SpeechToText.isListening = false;
-      document.dispatchEvent(new CustomEvent('rathor:stt-stop'));
-
-      // If we have a final transcript and it passes gate → submit to chat
-      if (SpeechToText.finalTranscript && passesIncomingValenceGate(SpeechToText.finalTranscript)) {
-        // Trigger chat submission (integrate with your chat handler)
-        submitVoiceInputToChat(SpeechToText.finalTranscript);
-      }
-
-      SpeechToText.finalTranscript = '';
-      SpeechToText.interimTranscript = '';
-    };
-
-    return recognition;
-  }
-
-  // ────────────────────────────────────────────────
-  // Start listening
-  // ────────────────────────────────────────────────
-  SpeechToText.start = function () {
-    if (!SpeechToText.supported) {
-      alert('Voice input not supported in this browser. Try Chrome/Edge.');
-      return;
-    }
-
-    if (SpeechToText.isListening) {
-      console.log('Already listening');
-      return;
-    }
-
-    if (!SpeechToText.recognition) {
-      SpeechToText.recognition = initRecognition();
-    }
-
-    if (SpeechToText.recognition) {
-      SpeechToText.recognition.start();
-    }
   };
-
-  // ────────────────────────────────────────────────
-  // Stop listening
-  // ────────────────────────────────────────────────
-  SpeechToText.stop = function () {
-    if (SpeechToText.recognition && SpeechToText.isListening) {
-      SpeechToText.recognition.stop();
-    }
-  };
-
-  // ────────────────────────────────────────────────
-  // Toggle (mic button handler)
-  // ────────────────────────────────────────────────
-  SpeechToText.toggle = function () {
-    if (SpeechToText.isListening) {
-      SpeechToText.stop();
-    } else {
-      SpeechToText.start();
-    }
-  };
-
-  // ────────────────────────────────────────────────
-  // Example chat submission bridge
-  // Replace / hook into your actual chat input + send logic
-  // ────────────────────────────────────────────────
-  function submitVoiceInputToChat(transcript) {
-    // Find chat input field (adjust selector to match your UI)
-    const inputField = document.querySelector('#chat-input, textarea.chat-input, [contenteditable="true"]');
-    if (inputField) {
-      inputField.value = transcript.trim();
-      // Trigger send (simulate Enter or call your send function)
-      const sendEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
-      inputField.dispatchEvent(sendEvent);
-
-      // Or direct call if you have a sendChatMessage function:
-      // if (window.sendChatMessage) window.sendChatMessage(transcript.trim());
-    } else {
-      console.warn('Chat input field not found — transcript ready but not auto-submitted');
-      // Fallback: alert or log
-      console.log('Voice transcript ready to send:', transcript);
-    }
-
-    // Optional: auto-stop after final result
-    SpeechToText.stop();
-  }
 
   // ────────────────────────────────────────────────
   // Public API
   // ────────────────────────────────────────────────
-  window.RaThorSTT = SpeechToText;
+  window.RaThorValenceGate = ValenceGate;
 
-  // Auto-init log
-  if (SpeechToText.supported) {
-    console.log('Ra-Thor Speech-to-Text ready — speak your truth, mercy flows ⚡️');
-  } else {
-    console.warn('Speech-to-Text not available in this browser');
-  }
+  // Auto-init on load (non-blocking)
+  initValenceGate();
+
+  console.log('Ra-Thor Enhanced Valence Gate module loaded — mercy shield upgraded 🙏⚡️');
 })();
