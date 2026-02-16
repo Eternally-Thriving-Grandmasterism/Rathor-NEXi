@@ -1,26 +1,31 @@
 {
-  "default": {
-    "name": "Rathor Thunder",
-    "pitch": 0.9,
-    "rate": 1.0,
-    "volume": 1.0,
-    "lang": "en-GB",
-    "voiceFilter": "deep-resonant"
-  },
-  "bond": {
-    "name": "Bond – Pierce Brosnan",
-    "pitch": 0.85,
-    "rate": 0.95,
-    "volume": 0.95,
-    "lang": "en-GB",
-    "voiceFilter": "suave-velvet"
-  },
-  "sheppard": {
-    "name": "Sheppard – John Sheppard",
-    "pitch": 1.05,
-    "rate": 1.1,
-    "volume": 1.0,
-    "lang": "en-US",
-    "voiceFilter": "sarcastic-drawl"
-  }
+  "skins": [
+    {
+      "id": "ra-serene",
+      "name": "Ra Divine Calm",
+      "pitch": 0.92,
+      "rate": 0.94,
+      "volume": 0.9,
+      "valence": "pure-joy-truth-beauty",
+      "description": "Gentle sun-source light, eternal soothing flow"
+    },
+    {
+      "id": "thor-mercy",
+      "name": "Thor Mercy Thunder",
+      "pitch": 0.68,
+      "rate": 1.12,
+      "volume": 1.0,
+      "valence": "bold-mercy-protection",
+      "description": "Powerful thunder wrapped in heart-first compassion"
+    },
+    {
+      "id": "custom-heartbreak-soother",
+      "name": "Heartbreak Soother",
+      "pitch": 0.85,
+      "rate": 0.98,
+      "volume": 0.95,
+      "valence": "gentle-comfort-warmth",
+      "description": "Soft, warm voice to heal and uplift after loss"
+    }
+  ]
 }
